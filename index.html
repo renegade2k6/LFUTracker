@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alliance Tracker · Last Fortress</title>
+<meta name="description" content="Explore Last Fortress alliances and players, compare power, and export sortable lists to CSV.">
+<meta name="theme-color" content="#000000">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.js"></script>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+
+<a class="skip-link" href="#app">Skip to content</a>
+<div class="site-header">
+  <div class="header-inner">
+    <aside class="sidebar">
+      <a href="#" class="side-brand" aria-label="Alliance Tracker overview">
+        <span class="brand-mark">LF<span>⌁</span></span>
+        <span>LFU TRACKER<small>LAST FORTRESS</small></span>
+      </a>
+      <div class="nav-label">INTELLIGENCE</div>
+      <nav aria-label="Main navigation">
+        <a href="#" data-nav="overview"><svg class="icon" data-lucide="layout-dashboard"></svg>Overview</a>
+        <a href="#alliances" data-nav="alliances"><svg class="icon" data-lucide="flag"></svg>Directory</a>
+        <a href="#leaders" data-nav="leaders"><svg class="icon" data-lucide="trophy"></svg>Leaders</a>
+        <a href="#all-alliances" data-nav="all-alliances"><svg class="icon" data-lucide="shield"></svg>All Alliances</a>
+        <a href="#all-players" data-nav="all-players"><svg class="icon" data-lucide="users"></svg>All Players</a>
+      </nav>
+    </aside>
+    <header class="topbar">
+      <a class="breadcrumb" href="#" style="display:none">Intelligence <span>/</span> <strong id="pageLabel">Overview</strong></a>
+      <div class="search">
+        <svg class="icon" data-lucide="search" aria-hidden="true"></svg>
+        <input id="searchInput" type="search" placeholder="Search alliances, survivors ( / )..." oninput="onSearch(this.value)" aria-label="Search alliances or players">
+      </div>
+      <div class="topbar-meta" id="topMeta"></div>
+    </header>
+  </div>
+  <div class="data-banner" role="note"><svg class="icon-sm" data-lucide="clock-alert"></svg>Snapshot data, not live — refreshed periodically from manual exports. See timestamp above.</div>
+</div>
+
+<main class="wrap" id="app" tabindex="-1">
+  <div id="error" class="error hidden" role="alert"></div>
+  <div id="view"><div class="empty" role="status">Loading alliance intelligence…</div></div>
+</main>
+<footer class="site-footer"><span>Last Fortress <span aria-hidden="true">/</span> Alliance Tracker</span><span>Created by Renegade2k6 · <a href="https://renegade2k6.github.io/LFULeaks/">LFU Leaks ↗</a></span></footer>
+<button id="backToTop" type="button" aria-label="Back to top" class="back-to-top hidden" onclick="window.scrollTo({top:0,behavior:'smooth'})"><svg class="icon-sm" data-lucide="arrow-up"></svg></button>
+
+<script src="rankings.js"></script>
+<script src="player-power.js"></script>
+<script src="directory.js"></script>
+<script>
+let STATE = { alliances: [], history: {} };
+let playerTracking = {records: {}, saved: true, conflicts: new Set()};
+
+function playerChangeHtml(member, capturedAtUtc) {
+  const change = PlayerPower.movement(playerTracking, member, capturedAtUtc);
+  if (!change) return '';
+  const {delta, percent, previousTime} = change;
+  const label = delta === 0 ? 'No change' : `${delta > 0 ? '+' : '−'}${num(Math.abs(delta))}${percent == null ? '' : ` (${percent > 0 ? '+' : ''}${percent.toFixed(2)}%)`}`;
+  const when = new Date(previousTime).toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+  return `<span class="player-change ${delta > 0 ? 'up' : delta < 0 ? 'down' : 'steady'}" title="Compared with ${when}">${delta === 0 ? '' : delta > 0 ? '↑' : '↓'} ${label}<small>vs. ${when}</small></span>`;
+}
+
+function rankingSummary() {
+  return AllianceRankings.compare(STATE.alliances, STATE.history);
+}
+function comparisonNote(ranking) {
+  if (!ranking.ready) {
+    return `Rank changes will appear when more history is available. Comparison history is available for ${ranking.covered} of ${ranking.total} alliances.`;
+  }
+  const time = ranking.earliestOverall === null ? '' : new Date(ranking.earliestOverall).toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+  return `Rank changes compare each alliance’s earliest recorded power with its latest power. History begins ${time}; equal power shares a rank.`;
+}
+function movementHtml(allianceId, ranking) {
+  const change = ranking.changes.get(allianceId);
+  if (change == null) return "";
+  const kind = change > 0 ? 'up' : change < 0 ? 'down' : 'steady';
+  const label = change === 0 ? 'No change' : `${change > 0 ? 'Up' : 'Down'} ${Math.abs(change)} place${Math.abs(change) === 1 ? '' : 's'}`;
+  const symbol = change === 0 ? '' : change > 0 ? '↑' : '↓';
+  const baselineTime = ranking.baselineTimes?.get(allianceId);
+  const detail = baselineTime ? `Since ${new Date(baselineTime).toISOString().replace('T', ' ').slice(0, 19)} UTC` : '';
+  return `<span class="movement"><span class="rank-change ${kind}" title="${esc(comparisonNote(ranking))}"><span aria-hidden="true">${symbol}</span> ${label}</span>${detail ? `<span class="movement-detail">${esc(detail)}</span>` : ''}</span>`;
+}
+
+async function loadJson(path, fallback) {
+  try {
+    const res = await fetch(path, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn(`Failed to load ${path}:`, err.message);
+    return { __failed: true, fallback };
+  }
+}
+
+function esc(v) {
+  if (v === null || v === undefined) return "";
+  return String(v).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function num(v) { const n = Number(v); return Number.isFinite(n) ? n.toLocaleString("en-US") : "0"; }
+function compactNum(v) {
+  const n = Number(v) || 0;
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + "B";
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + "M";
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + "K";
+  return String(n);
+}
+function dateStr(epochMs) {
+  if (!epochMs) return "-";
+  const d = new Date(Number(epochMs));
+  return isNaN(d.getTime()) ? "-" : d.toISOString().slice(0, 10);
+}
+function relTime(iso) {
+  if (!iso) return "";
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.round(hrs / 24)}d ago`;
+}
+function icons() { if (window.lucide) lucide.createIcons(); }
+
+function navigate(hash) { location.hash = hash; }
+window.navigate = navigate;
+window.addEventListener("hashchange", render);
+
+function currentRoute() {
+  const h = location.hash.replace(/^#/, "");
+  if (h.startsWith("a/")) return { view: "detail", id: decodeURIComponent(h.slice(2)) };
+  return { view: "list" };
+}
+
+function drawSparkline(canvas, values) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  if (values.length < 2) return;
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = max - min || 1;
+  const pad = 4;
+
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, "rgba(255, 122, 24, 0.28)");
+  grad.addColorStop(1, "rgba(255, 122, 24, 0.0)");
+
+  ctx.beginPath();
+  values.forEach((v, i) => {
+    const x = (i / (values.length - 1)) * (w - pad * 2) + pad;
+    const y = h - pad - ((v - min) / range) * (h - pad * 2);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.lineTo(w - pad, h);
+  ctx.lineTo(pad, h);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.strokeStyle = "#ff7a18";
+  ctx.lineWidth = 2;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  values.forEach((v, i) => {
+    const x = (i / (values.length - 1)) * (w - pad * 2) + pad;
+    const y = h - pad - ((v - min) / range) * (h - pad * 2);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Terminal dot on last recorded value
+  const lastX = w - pad;
+  const lastY = h - pad - ((values[values.length - 1] - min) / range) * (h - pad * 2);
+  ctx.beginPath();
+  ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
+  ctx.fillStyle = "#ffaa5e";
+  ctx.fill();
+  ctx.strokeStyle = "#07090e";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+function drawTrendChart(canvas, points) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  const values = points.map(p => Number(p.fightPower)).filter(Number.isFinite);
+  if (values.length < 2) {
+    ctx.fillStyle = "#636d82"; ctx.font = "13px JetBrains Mono, monospace"; ctx.fillText("More history needed for a trend line.", 12, h / 2);
+    return;
+  }
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = (max - min) || max || 1;
+  const padX = 20, padY = 20;
+
+  // Subtle telemetry grid lines
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+  ctx.lineWidth = 1;
+  for (let g = 0; g <= 3; g++) {
+    const gy = padY + (g / 3) * (h - padY * 2);
+    ctx.beginPath();
+    ctx.moveTo(padX, gy);
+    ctx.lineTo(w - padX, gy);
+    ctx.stroke();
+    
+    // Telemetry label
+    const gVal = max - (g / 3) * (max - min);
+    ctx.fillStyle = "rgba(155, 164, 181, 0.55)";
+    ctx.font = "10px JetBrains Mono, monospace";
+    ctx.textAlign = "right";
+    ctx.fillText(compactNum(gVal), w - padX - 4, gy - 4);
+  }
+
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, "rgba(255, 122, 24, 0.32)");
+  grad.addColorStop(1, "rgba(255, 122, 24, 0.0)");
+
+  ctx.beginPath();
+  values.forEach((v, i) => {
+    const x = (i / (values.length - 1)) * (w - padX * 2) + padX;
+    const y = h - padY - ((v - min) / range) * (h - padY * 2);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.lineTo(w - padX, h);
+  ctx.lineTo(padX, h);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.strokeStyle = "#ff7a18";
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  values.forEach((v, i) => {
+    const x = (i / (values.length - 1)) * (w - padX * 2) + padX;
+    const y = h - padY - ((v - min) / range) * (h - padY * 2);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Point beacons
+  values.forEach((v, i) => {
+    const x = (i / (values.length - 1)) * (w - padX * 2) + padX;
+    const y = h - padY - ((v - min) / range) * (h - padY * 2);
+    ctx.beginPath();
+    ctx.arc(x, y, i === values.length - 1 ? 5 : 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = i === values.length - 1 ? "#ffaa5e" : "#ff7a18";
+    ctx.fill();
+    ctx.strokeStyle = "#07090e";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+}
+
+function sortTable(th) {
+  const table = th.closest("table");
+  const tbody = table.querySelector("tbody");
+  const idx = Array.from(th.parentNode.children).indexOf(th);
+  const numeric = th.hasAttribute("data-numeric");
+  const asc = th.dataset.asc !== "true";
+  Array.from(table.querySelectorAll("th")).forEach(h => { delete h.dataset.asc; h.classList.remove("sorted"); });
+  th.dataset.asc = asc; th.classList.add("sorted");
+  const rows = Array.from(tbody.querySelectorAll("tr")).filter(r => !r.querySelector(".empty"));
+  rows.sort((a, b) => {
+    const ca = a.children[idx], cb = b.children[idx];
+    let va = numeric ? parseFloat(ca.dataset.sort ?? ca.textContent) || 0 : ca.textContent.trim().toLowerCase();
+    let vb = numeric ? parseFloat(cb.dataset.sort ?? cb.textContent) || 0 : cb.textContent.trim().toLowerCase();
+    if (va < vb) return asc ? -1 : 1;
+    if (va > vb) return asc ? 1 : -1;
+    return 0;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+window.sortTable = sortTable;
+
+function filterTable(input) {
+  const table = input.closest(".filter-row").nextElementSibling;
+  const q = input.value.trim().toLowerCase();
+  table.querySelectorAll("tbody tr").forEach(tr => {
+    tr.style.display = tr.textContent.toLowerCase().includes(q) ? "" : "none";
+  });
+}
+window.filterTable = filterTable;
+
+function onSearch(q) {
+  if (location.hash === "#all-alliances" || location.hash === "#all-players") { directoryState.query = q; renderDirectoryRows(); return; }
+  q = q.trim().toLowerCase();
+  if (!q) { render(); return; }
+  const view = document.getElementById("view");
+  const ranking = rankingSummary();
+  const matches = ranking.sorted.filter(a =>
+    (a.name || "").toLowerCase().includes(q) ||
+    (a.abbr || "").toLowerCase().includes(q) ||
+    (a.members || []).some(m => (m.name || "").toLowerCase().includes(q))
+  );
+  view.innerHTML = `<h2 class="section-title"><svg class="icon-sm" data-lucide="search"></svg>Results for "${esc(q)}"</h2>` +
+    (matches.length
+      ? `<div class="grid">${matches.map(a => renderCardHtml(a, ranking)).join("")}</div>`
+      : `<div class="empty">No alliances or players match "${esc(q)}".</div>`);
+  icons();
+  drawDirectorySparks(matches);
+}
+window.onSearch = onSearch;
+
+function renderCardHtml(a, ranking) {
+  const rank = ranking.current.get(a.allianceId);
+  const memberCount = (a.members || []).length;
+  const maxPower = Math.max(...STATE.alliances.map(x => Number(x.fightPower) || 0), 1);
+  const pct = Math.min(100, ((Number(a.fightPower) || 0) / maxPower) * 100);
+  const isTop = rank != null && rank <= 3;
+  return `
+    <a class="a-card rank-${rank ?? 'unknown'}" href="#a/${encodeURIComponent(a.allianceId)}">
+      <span class="rank-tag ${isTop ? "top" : ""}">${rank == null ? 'Unranked' : '#' + rank}</span>
+      <div class="head">
+        <span class="abbr">${esc(a.abbr)}</span>
+        <span class="name">${esc(a.name)}</span>
+        <span class="lvl">LV.${esc(a.level)}</span>
+      </div>
+      <div>
+        <div class="power-row"><span class="num">${compactNum(a.fightPower)}</span><span class="lbl">Power</span></div>
+        <div class="power-bar"><i style="width:${pct}%"></i></div>
+      </div>
+      <div class="meta-row">
+        <span><b>${memberCount}</b>/${esc(a.maxMember)} troops</span>
+        <span>Server <b>${esc(a.originServerId)}</b></span>
+      </div>
+      <span class="movement-detail">Updated ${esc(relTime(a.capturedAtUtc))}</span>
+      ${movementHtml(a.allianceId, ranking)}
+      <canvas class="spark" data-alliance="${esc(a.allianceId)}" aria-label="Alliance power history"></canvas>
+      <span class="card-link">Explore alliance <span aria-hidden="true">↗</span></span>
+    </a>
+  `;
+}
+
+function renderList() {
+  const ranking = rankingSummary();
+  const sorted = ranking.sorted;
+  const totalMembers = Directory.records(STATE.alliances, 'players').length;
+  const totalPower = sorted.reduce((s, a) => s + (Number(a.fightPower) || 0), 0);
+  const servers = new Set(sorted.map(a => a.originServerId)).size;
+
+  const topAlliances = sorted.slice(0, 3);
+  const allPlayers = [];
+  sorted.forEach(a => (a.members || []).forEach(m => allPlayers.push({
+    name: m.name, power: Number(m.power) || 0, allianceId: a.allianceId, allianceName: a.name, allianceAbbr: a.abbr
+  })));
+  const topPlayers = allPlayers.sort((x, y) => y.power - x.power).slice(0, 3);
+  const rankClass = i => i === 0 ? "top1" : i === 1 ? "top2" : i === 2 ? "top3" : "";
+
+  document.getElementById("view").innerHTML = `
+    <div class="overview-heading">
+      <div>
+        <p class="eyebrow"><span class="status-dot"></span> LAST FORTRESS / COMMUNITY INTELLIGENCE</p>
+        <h2>Alliance intelligence.<br><span>A clearer view.</span></h2>
+        <div class="hero-actions"><a class="primary-action" href="#all-alliances">Alliance database <span aria-hidden="true">↗</span></a><a class="secondary-action" href="#all-players">Browse players →</a></div>
+      </div>
+      <div class="hero-scope" aria-hidden="true"><div class="scope-ring ring-one"></div><div class="scope-ring ring-two"></div><div class="scope-ring ring-three"></div><div class="scope-cross"></div><div class="scope-core"><svg data-lucide="shield"></svg></div><i class="scope-point point-one"></i><i class="scope-point point-two"></i><i class="scope-point point-three"></i><span class="scope-label">ALLIANCE INTELLIGENCE</span><span class="scope-caption">${servers} SERVERS / ${sorted.length} ALLIANCES</span></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><svg data-lucide="flag"></svg><div><div class="label">Alliances Tracked</div><div class="value">${sorted.length}</div></div></div>
+      <div class="stat"><svg data-lucide="users"></svg><div><div class="label">Survivors Tracked</div><div class="value">${num(totalMembers)}</div></div></div>
+      <div class="stat"><svg data-lucide="flame"></svg><div><div class="label">Combined Power</div><div class="value">${compactNum(totalPower)}</div></div></div>
+      <div class="stat"><svg data-lucide="radio-tower"></svg><div><div class="label">Servers Spanned</div><div class="value">${servers}</div></div></div>
+    </div>
+
+    
+    <div class="section-heading" id="leaders"><div><p class="eyebrow">THE FRONT RUNNERS</p><h2 class="section-title">Leading the field</h2></div><span class="section-caption">Top 3 · by power</span></div>
+    <div class="leaderboards">
+      <div class="board">
+        <div class="board-title"><svg class="icon-sm" data-lucide="trophy"></svg>Strongest Alliances</div>
+        ${topAlliances.map((a, i) => `
+          <a class="board-row" href="#a/${encodeURIComponent(a.allianceId)}">
+            <span class="board-rank ${rankClass((ranking.current.get(a.allianceId) ?? 0) - 1)}">${ranking.current.get(a.allianceId) ?? '—'}</span>
+            <div style="min-width:0;">
+              <div class="board-name">[${esc(a.abbr)}] ${esc(a.name)}</div>
+              <div class="board-sub">${(a.members || []).length}/${esc(a.maxMember)} &middot; Server ${esc(a.originServerId)}</div>
+              ${movementHtml(a.allianceId, ranking)}
+            </div>
+            <span class="board-value">${compactNum(a.fightPower)}</span>
+          </a>
+        `).join("") || `<div class="empty">No data yet.</div>`}
+      </div>
+      <div class="board">
+        <div class="board-title"><svg class="icon-sm" data-lucide="swords"></svg>Deadliest Survivors</div>
+        ${topPlayers.map((p, i) => `
+          <a class="board-row" href="#a/${encodeURIComponent(p.allianceId)}">
+            <span class="board-rank ${rankClass(i)}">${i + 1}</span>
+            <div style="min-width:0;">
+              <div class="board-name">${esc(p.name)}</div>
+              <div class="board-sub">[${esc(p.allianceAbbr)}] ${esc(p.allianceName)}</div>
+            </div>
+            <span class="board-value">${compactNum(p.power)}</span>
+          </a>
+        `).join("") || `<div class="empty">No data yet.</div>`}
+      </div>
+    </div>
+
+    <section id="alliances" aria-label="Alliance directory">
+      <div class="section-heading"><div><p class="eyebrow">THE FULL PICTURE</p><h2 class="section-title">Alliance directory <span class="count-badge">${sorted.length}</span></h2></div><span class="section-caption">Select an alliance to explore its roster</span></div>
+      <div class="directory-toolbar"><label>Server <select id="serverFilter" onchange="updateDirectory()"><option value="">All servers</option>${Array.from(new Set(sorted.map(a => String(a.originServerId)))).sort((a,b) => Number(a)-Number(b)).map(s => `<option value="${esc(s)}">Server ${esc(s)}</option>`).join('')}</select></label><label>Sort by <select id="directorySort" onchange="updateDirectory()"><option value="power">Highest power</option><option value="members">Most members</option><option value="name">Alliance name</option></select></label><span id="directoryCount" role="status">${sorted.length} alliances</span><div class="view-switch" aria-label="Directory view"><button type="button" aria-label="Card view" aria-pressed="true" onclick="setDirectoryView(false)"><svg class="icon-sm" data-lucide="layout-grid"></svg></button><button type="button" aria-label="List view" aria-pressed="false" onclick="setDirectoryView(true)"><svg class="icon-sm" data-lucide="list"></svg></button></div></div>
+      <div class="grid" id="directoryGrid">${sorted.map(a => renderCardHtml(a, ranking)).join("")}</div>
+    </section>
+  `;
+  icons();
+
+  drawDirectorySparks(sorted);
+
+  if (sorted.length === 0) {
+    document.getElementById("view").innerHTML += `<div class="empty">No alliances available yet. Check back soon.</div>`;
+  }
+}
+
+function drawDirectorySparks(sorted) {
+  sorted.forEach(a => {
+    const canvas = document.querySelector(`canvas[data-alliance="${CSS.escape(a.allianceId)}"]`);
+    const points = STATE.history[a.allianceId];
+    if (canvas && points && points.length >= 2) {
+      const values = points.map(p => Number(p.fightPower)).filter(Number.isFinite);
+      requestAnimationFrame(() => drawSparkline(canvas, values));
+    } else if (canvas) {
+      canvas.style.display = "none";
+    }
+  });
+
+}
+
+function updateDirectory() {
+  const ranking = rankingSummary();
+  const server = document.getElementById('serverFilter').value;
+  const sort = document.getElementById('directorySort').value;
+  const list = ranking.sorted.filter(a => !server || String(a.originServerId) === server);
+  if (sort === 'name') list.sort((a,b) => String(a.name).localeCompare(String(b.name)));
+  if (sort === 'members') list.sort((a,b) => (b.members || []).length - (a.members || []).length);
+  document.getElementById('directoryGrid').innerHTML = list.map(a => renderCardHtml(a, ranking)).join('') || '<div class="empty">No alliances on this server.</div>';
+  document.getElementById('directoryCount').textContent = `${list.length} alliance${list.length === 1 ? '' : 's'}`;
+  drawDirectorySparks(list);
+  icons();
+}
+
+function setDirectoryView(list) {
+  document.getElementById('directoryGrid').classList.toggle('list-view', list);
+  document.querySelectorAll('.view-switch button').forEach((button, i) => button.setAttribute('aria-pressed', String(Boolean(i) === list)));
+  drawDirectorySparks(rankingSummary().sorted);
+}
+
+function renderDetail(allianceId) {
+  const a = STATE.alliances.find(x => x.allianceId === allianceId);
+  const view = document.getElementById("view");
+  if (!a) {
+    view.innerHTML = `<a class="back-btn" href="#">&larr; Back</a><div class="empty">Alliance not found in the current export.</div>`;
+    return;
+  }
+  const memberCount = (a.members || []).length;
+  const points = STATE.history[allianceId] || [];
+  const ranking = rankingSummary();
+
+  const membersSorted = (a.members || []).slice().sort((x, y) => (Number(y.power) || 0) - (Number(x.power) || 0));
+  const topMemberPower = Math.max(...membersSorted.map(m => Number(m.power) || 0), 1);
+  const rows = membersSorted.map((m, i) => {
+    const pct = Math.min(100, ((Number(m.power) || 0) / topMemberPower) * 100);
+    return `
+    <tr>
+      <td class="rank-cell num">${i + 1}</td>
+      <td><span class="name-cell"><span class="dot ${m.online ? "on" : "off"}" title="${m.online ? "Online" : "Offline"}"></span>${esc(m.name)}</span></td>
+      <td data-label="Power" class="num power-cell" data-sort="${Number(m.power) || 0}">
+        <div class="roster-power-num">${num(m.power)}</div>
+        <div class="roster-power-bar"><i style="width:${pct}%"></i></div>
+        ${playerChangeHtml(m, a.capturedAtUtc)}
+      </td>
+    </tr>
+  `;
+  }).join("") || `<tr><td colspan="3" class="empty">Member list not available yet.</td></tr>`;
+
+  view.innerHTML = `
+    <div class="detail-header">
+      <a class="back-btn" href="#"><svg class="icon-sm" data-lucide="arrow-left"></svg>Back</a>
+      <div class="detail-title">
+        <h2><span class="abbr">${esc(a.abbr)}</span> ${esc(a.name)}</h2>
+        <div class="sub">Level ${esc(a.level)} &middot; Server ${esc(a.originServerId)} &middot; Leader ${esc(a.leaderName)}</div>
+        <p class="player-history-note">Updated ${esc(relTime(a.capturedAtUtc))}</p>
+        <div class="chips">
+          <span class="chip">Tracked rank <b>${ranking.current.has(allianceId) ? '#' + ranking.current.get(allianceId) : 'Unranked'}</b></span>
+          ${movementHtml(allianceId, ranking)}
+          <span class="chip">Power <b>${num(a.fightPower)}</b></span>
+          <span class="chip">Troops <b>${memberCount}</b>/${esc(a.maxMember)}</span>
+          <span class="chip">Alliance Points <b>${num(a.alliancePoint)}</b></span>
+        </div>
+        
+      </div>
+    </div>
+
+    <div class="trend-box">
+      <div class="label">Combat power over time</div>
+      <canvas id="trendChart"></canvas>
+    </div>
+
+    <div class="filter-row">
+      <h3 class="section-title">Member roster</h3>
+      <p class="player-history-note">${playerTracking.saved ? "Power changes since your previous update. Comparisons become available on return visits." : "Power comparisons are unavailable while site storage is disabled."}</p>
+      <input class="filter" type="text" placeholder="Filter members by name..." aria-label="Filter members" oninput="filterTable(this)">
+    </div>
+    <table aria-label="Alliance member roster" class="roster-table">
+      <thead>
+        <tr>
+          <th scope="col" class="rank-cell">#</th>
+          <th scope="col" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable(this)}" onclick="sortTable(this)">Name</th>
+          <th scope="col" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortTable(this)}" onclick="sortTable(this)" data-numeric class="num">Power</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+  icons();
+  requestAnimationFrame(() => drawTrendChart(document.getElementById("trendChart"), points));
+}
+
+let directoryState = {kind: 'alliances', key: 'power', asc: false, query: '', rows: [], visible: []};
+function renderFullDirectory(kind) {
+  directoryState = {kind, key: 'power', asc: false, query: '', rows: Directory.records(STATE.alliances, kind), visible: []};
+  document.getElementById('view').innerHTML = `<section class="database-heading"><p class="eyebrow">INTELLIGENCE / DATABASE</p><h1>ALL <span>${kind.toUpperCase()}</span><span class="database-dot">.</span></h1><p>${kind === 'players' ? 'Find a player. Compare power. Explore their alliance and server.' : 'Explore alliances, compare their power, and see how many members they have.'}</p></section>
+    <div class="database-toolbar"><span id="databaseCount" role="status"></span><span class="database-hint">Click a column to sort · Rows stay grouped</span><button class="export-button" onclick="exportDirectory()"><svg class="icon-sm" data-lucide="download"></svg> Export CSV</button></div>
+    <div class="database-scroll" tabindex="0" aria-label="Sortable ${kind} list"><table class="database-table"><thead><tr>${Directory.columns[kind].map(([key,label]) => `<th scope="col" data-key="${key}" aria-sort="none"><button onclick="sortDirectory('${key}')">${label}<span aria-hidden="true">↕</span></button></th>`).join('')}</tr></thead><tbody id="databaseRows"></tbody></table></div><p class="database-footnote">Export includes all matching rows in the displayed order, with full numeric power values.</p>`;
+  renderDirectoryRows(); icons();
+}
+function sortDirectory(key) {
+  directoryState.asc = directoryState.key === key ? !directoryState.asc : !['power','members','server'].includes(key);
+  directoryState.key = key;
+  renderDirectoryRows();
+}
+function renderDirectoryRows() {
+  const d = directoryState;
+  d.visible = Directory.sorted(d.rows, d.key, d.asc, d.query);
+  document.getElementById('databaseCount').textContent = `${num(d.visible.length)} / ${num(d.rows.length)} ${d.kind}`;
+  document.getElementById('databaseRows').innerHTML = d.visible.length ? d.visible.map(r => `<tr>${Directory.columns[d.kind].map(([key]) => `<td class="${['power','members','server'].includes(key) ? 'numeric' : ''}">${r[key] == null ? '—' : key === 'name' && d.kind === 'alliances' || key === 'alliance' ? `<a href="#a/${encodeURIComponent(r.id)}">${esc(r[key])}</a>` : ['power','members'].includes(key) ? num(r[key]) : esc(r[key])}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${Directory.columns[d.kind].length}" class="empty">No matches. Try another name or server.</td></tr>`;
+  document.querySelectorAll('.database-table th').forEach(th => {
+    const active = th.dataset.key === d.key;
+    th.setAttribute('aria-sort', active ? d.asc ? 'ascending' : 'descending' : 'none');
+    th.querySelector('span').textContent = active ? d.asc ? '↑' : '↓' : '↕';
+  });
+}
+function exportDirectory() {
+  const d = directoryState;
+  const url = URL.createObjectURL(new Blob([Directory.csv(d.visible, d.kind)], {type: 'text/csv;charset=utf-8;'}));
+  const a = document.createElement('a'); a.href = url; a.download = `${d.kind}-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function render() {
+  let storage;
+  try { storage = window.localStorage; } catch { storage = null; }
+  playerTracking = PlayerPower.update(STATE.alliances, storage);
+  const s = document.getElementById("searchInput");
+  if (s) s.value = "";
+  const route = currentRoute();
+  const section = location.hash.slice(1);
+  document.querySelectorAll('[data-nav]').forEach(link => {
+    const active = link.dataset.nav === (route.view === 'detail' ? 'alliances' : section || 'overview');
+    if (active) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current');
+  });
+  document.getElementById('pageLabel').textContent = route.view === 'detail' ? 'Alliance profile' : section === 'alliances' ? 'Alliance directory' : section === 'leaders' ? 'Leaderboards' : 'Overview';
+  if (route.view === "detail") renderDetail(route.id);
+  else if (section === "all-alliances" || section === "all-players") {
+    document.getElementById("pageLabel").textContent = section === "all-players" ? "All players" : "All alliances";
+    renderFullDirectory(section === "all-players" ? "players" : "alliances");
+  } else renderList();
+  requestAnimationFrame(() => {
+    if (section === 'alliances' || section === 'leaders') document.getElementById(section)?.scrollIntoView();
+    else window.scrollTo(0, 0);
+  });
+}
+
+async function main() {
+  const errorEl = document.getElementById("error");
+  const topMeta = document.getElementById("topMeta");
+
+  const [alliances, history, meta] = await Promise.all([
+    loadJson("data/alliances.json", []),
+    loadJson("data/history.json", {}),
+    loadJson("data/meta.json", null),
+  ]);
+
+  if (alliances.__failed) {
+    errorEl.textContent = `Alliance data is unavailable. Please refresh the page or try again later.`;
+    errorEl.classList.remove("hidden");
+  }
+
+  STATE.alliances = alliances.__failed ? [] : (alliances || []);
+  STATE.history = history.__failed ? {} : (history || {});
+  topMeta.textContent = (meta && !meta.__failed) ? `Updated ${relTime(meta.generatedAtUtc)}` : "";
+  render();
+}
+
+main();
+
+let chartResize;
+window.addEventListener('resize', () => {
+  clearTimeout(chartResize);
+  chartResize = setTimeout(() => {
+    const trend = document.getElementById('trendChart');
+    if (trend) drawTrendChart(trend, STATE.history[currentRoute().id] || []);
+    else drawDirectorySparks(STATE.alliances);
+  }, 100);
+});
+
+const siteHeader = document.querySelector('.site-header');
+let lastHeaderH = 0;
+function syncHeaderHeight() {
+  if (!siteHeader) return;
+  const h = siteHeader.offsetHeight;
+  if (Math.abs(h - lastHeaderH) < 1) return;
+  lastHeaderH = h;
+  document.documentElement.style.setProperty('--header-h', h + 'px');
+  document.documentElement.style.scrollPaddingTop = (h + 16) + 'px';
+}
+new ResizeObserver(syncHeaderHeight).observe(siteHeader);
+syncHeaderHeight();
+
+const backToTop = document.getElementById('backToTop');
+window.addEventListener('scroll', () => backToTop.classList.toggle('hidden', window.scrollY < 480), {passive: true});
+
+window.addEventListener('keydown', e => {
+  const search = document.getElementById('searchInput');
+  if (e.key === '/' && document.activeElement !== search && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+    e.preventDefault();
+    search?.focus();
+  } else if (e.key === 'Escape' && document.activeElement === search) {
+    search.value = '';
+    search.blur();
+    onSearch('');
+  }
+});
+</script>
+</body>
+</html>
+

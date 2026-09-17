@@ -1,0 +1,15 @@
+# Website-only repository: keep local tools and working files off GitHub.
+/*
+!/.gitignore
+!/.github/
+!/index.html
+!/theme.css
+!/directory.js
+!/rankings.js
+!/player-power.js
+!/README.md
+!/data/
+/data/*
+!/data/alliances.json
+!/data/history.json
+!/data/meta.json
