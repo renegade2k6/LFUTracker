@@ -1601,7 +1601,8 @@ tr:last-child td {
 .database-table th button {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 6px;
   width: 100%;
   padding: 14px 20px;
   background: none;
@@ -1611,7 +1612,7 @@ tr:last-child td {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition: color 0.15s ease;
 }
 
@@ -1627,6 +1628,7 @@ tr:last-child td {
   padding: 14px 20px;
   border-bottom: 1px solid var(--border-subtle);
   font-size: 13.5px;
+  text-align: center;
 }
 
 .database-table tbody tr:nth-child(even) {
@@ -1640,7 +1642,7 @@ tr:last-child td {
 .database-table td.numeric {
   font: 600 13px var(--mono);
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  text-align: center;
 }
 
 .database-table a {
