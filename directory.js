@@ -1,11 +1,11 @@
 /* Complete records are sorted together; exports use the same filtered order. */
 const Directory = (() => {
   const columns = {
-    alliances: [['name', 'Alliance name'], ['power', 'Alliance power'], ['members', 'Member count']],
+    alliances: [['name', 'Alliance name'], ['abbr', 'Abbreviation'], ['server', 'Server number'], ['power', 'Alliance power'], ['members', 'Member count']],
     players: [['name', 'Player name'], ['alliance', 'Alliance'], ['power', 'Player power'], ['server', 'Server number']]
   };
   function records(alliances, kind) {
-    if (kind === 'alliances') return alliances.map(a => ({name: a.name || a.abbr || 'Unknown', power: a.fightPower ?? null, members: a.curMember ?? null, id: a.allianceId}));
+    if (kind === 'alliances') return alliances.map(a => ({name: a.name || a.abbr || 'Unknown', abbr: a.abbr || null, server: a.originServerId ?? null, power: a.fightPower ?? null, members: a.curMember ?? null, id: a.allianceId}));
     const players = new Map();
     alliances.forEach(a => (a.members || []).forEach((m, i) => {
       const key = m.uid ? String(m.uid) : `${a.allianceId}/${i}`;
