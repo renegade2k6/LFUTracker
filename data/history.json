@@ -78,6 +78,22 @@
                                                  "fightPower":  "4736046435"
                                              }
                                          ],
+    "da9a953d2afa402f88fd2b0fda25c678":  [
+                                             {
+                                                 "capturedAtUtc":  "2026-09-14T10:05:03.3722145Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  261859638,
+                                                 "fightPower":  "10615500151"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T05:12:46.3073888Z",
+                                                 "level":  20,
+                                                 "curMember":  76,
+                                                 "alliancePoint":  264761443,
+                                                 "fightPower":  "8415039050"
+                                             }
+                                         ],
     "e337a2877c3f43e18386144a4b417fae":  [
                                              {
                                                  "capturedAtUtc":  "2026-09-17T05:44:21.7855944Z",
@@ -87,20 +103,13 @@
                                                  "fightPower":  "7600284331"
                                              }
                                          ],
-    "9f696aa46895465d8c316e9ea594082e":  [
+    "88f8f2216dd14e03b7a8aa033f86321b":  [
                                              {
-                                                 "capturedAtUtc":  "2026-09-16T07:15:40.8012814Z",
+                                                 "capturedAtUtc":  "2026-09-18T04:52:23.5579917Z",
                                                  "level":  20,
-                                                 "curMember":  70,
-                                                 "alliancePoint":  1342950279,
-                                                 "fightPower":  "6193641459"
-                                             },
-                                             {
-                                                 "capturedAtUtc":  "2026-09-17T05:40:04.9857252Z",
-                                                 "level":  20,
-                                                 "curMember":  71,
-                                                 "alliancePoint":  1343342669,
-                                                 "fightPower":  "6344546318"
+                                                 "curMember":  90,
+                                                 "alliancePoint":  129073832,
+                                                 "fightPower":  "10533710947"
                                              }
                                          ],
     "01d78eae0cc44bdf98b17497a260163a":  [
@@ -233,13 +242,13 @@
                                                  "fightPower":  "1140513193"
                                              }
                                          ],
-    "983cce569ea149b9a141b5f2113bb4d4":  [
+    "2952aeef5805404595831500fcd3e069":  [
                                              {
-                                                 "capturedAtUtc":  "2026-09-16T07:14:21.6670357Z",
-                                                 "level":  13,
-                                                 "curMember":  35,
-                                                 "alliancePoint":  280972542,
-                                                 "fightPower":  "948801191"
+                                                 "capturedAtUtc":  "2026-09-18T04:52:42.6823730Z",
+                                                 "level":  20,
+                                                 "curMember":  34,
+                                                 "alliancePoint":  68919153,
+                                                 "fightPower":  "2172988303"
                                              }
                                          ],
     "bf1cd099ee2245d791560392207ed69c":  [
@@ -345,6 +354,13 @@
                                                  "curMember":  65,
                                                  "alliancePoint":  240722814,
                                                  "fightPower":  "4408677171"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:53:43.7958902Z",
+                                                 "level":  20,
+                                                 "curMember":  65,
+                                                 "alliancePoint":  240889619,
+                                                 "fightPower":  "4410694729"
                                              }
                                          ],
     "7581263937ae45f8b0edf25e844d036b":  [
@@ -609,13 +625,13 @@
                                                  "fightPower":  "2247910081"
                                              }
                                          ],
-    "91d2272eef254322b0a63f5a85367c46":  [
+    "691e091d51064719881ecb957306fa43":  [
                                              {
-                                                 "capturedAtUtc":  "2026-09-17T05:48:30.9263675Z",
+                                                 "capturedAtUtc":  "2026-09-17T06:25:10.0271795Z",
                                                  "level":  20,
-                                                 "curMember":  77,
-                                                 "alliancePoint":  194189827,
-                                                 "fightPower":  "8140581548"
+                                                 "curMember":  89,
+                                                 "alliancePoint":  238804963,
+                                                 "fightPower":  "10961004133"
                                              }
                                          ],
     "1a6dfa4a342849de9039871079d263b5":  [
@@ -694,6 +710,13 @@
                                                  "curMember":  90,
                                                  "alliancePoint":  1695426092,
                                                  "fightPower":  "15091012724"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:56:38.8015651Z",
+                                                 "level":  20,
+                                                 "curMember":  90,
+                                                 "alliancePoint":  1696351432,
+                                                 "fightPower":  "15124621270"
                                              }
                                          ],
     "85ca1759dd004fb58d4a8bb346e96917":  [
@@ -953,6 +976,13 @@
                                                  "curMember":  90,
                                                  "alliancePoint":  1374005022,
                                                  "fightPower":  "12390971974"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:55:34.5870810Z",
+                                                 "level":  20,
+                                                 "curMember":  90,
+                                                 "alliancePoint":  1374942992,
+                                                 "fightPower":  "12327706748"
                                              }
                                          ],
     "0e53642530a94b66a4bf6dc092c9b9ee":  [
@@ -1199,6 +1229,22 @@
                                                  "fightPower":  "4280807017"
                                              }
                                          ],
+    "d2c1bb30d1e54ae8a3a84e72c0aeb05e":  [
+                                             {
+                                                 "capturedAtUtc":  "2026-09-16T07:24:54.7156719Z",
+                                                 "level":  20,
+                                                 "curMember":  86,
+                                                 "alliancePoint":  1024892064,
+                                                 "fightPower":  "11000119197"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T06:11:20.1431515Z",
+                                                 "level":  20,
+                                                 "curMember":  86,
+                                                 "alliancePoint":  1025901099,
+                                                 "fightPower":  "10942224987"
+                                             }
+                                         ],
     "3366c59ca34b4f96a6941ed1a53e95d8":  [
                                              {
                                                  "capturedAtUtc":  "2026-09-16T07:19:58.6933195Z",
@@ -1318,6 +1364,22 @@
                                                  "fightPower":  "12057015983"
                                              }
                                          ],
+    "fd840d58c5fc4827a05d57328ca674b0":  [
+                                             {
+                                                 "capturedAtUtc":  "2026-09-16T07:24:23.3340967Z",
+                                                 "level":  20,
+                                                 "curMember":  86,
+                                                 "alliancePoint":  186695664,
+                                                 "fightPower":  "10228460634"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T06:09:49.5197174Z",
+                                                 "level":  20,
+                                                 "curMember":  86,
+                                                 "alliancePoint":  187601404,
+                                                 "fightPower":  "10188160210"
+                                             }
+                                         ],
     "4e57a8db9a33481a93f4337929036beb":  [
                                              {
                                                  "capturedAtUtc":  "2026-09-17T05:43:56.2296284Z",
@@ -1336,29 +1398,13 @@
                                                  "fightPower":  "48238397"
                                              }
                                          ],
-    "691e091d51064719881ecb957306fa43":  [
+    "91d2272eef254322b0a63f5a85367c46":  [
                                              {
-                                                 "capturedAtUtc":  "2026-09-17T06:25:10.0271795Z",
+                                                 "capturedAtUtc":  "2026-09-17T05:48:30.9263675Z",
                                                  "level":  20,
-                                                 "curMember":  89,
-                                                 "alliancePoint":  238804963,
-                                                 "fightPower":  "10961004133"
-                                             }
-                                         ],
-    "d2c1bb30d1e54ae8a3a84e72c0aeb05e":  [
-                                             {
-                                                 "capturedAtUtc":  "2026-09-16T07:24:54.7156719Z",
-                                                 "level":  20,
-                                                 "curMember":  86,
-                                                 "alliancePoint":  1024892064,
-                                                 "fightPower":  "11000119197"
-                                             },
-                                             {
-                                                 "capturedAtUtc":  "2026-09-17T06:11:20.1431515Z",
-                                                 "level":  20,
-                                                 "curMember":  86,
-                                                 "alliancePoint":  1025901099,
-                                                 "fightPower":  "10942224987"
+                                                 "curMember":  77,
+                                                 "alliancePoint":  194189827,
+                                                 "fightPower":  "8140581548"
                                              }
                                          ],
     "fb12cdf6da2744b5870b6b7bc9e437f6":  [
@@ -1463,20 +1509,34 @@
                                                  "fightPower":  "8513611088"
                                              }
                                          ],
-    "fd840d58c5fc4827a05d57328ca674b0":  [
+    "183a1e174d0f4b5eb66f0607e668dbb8":  [
                                              {
-                                                 "capturedAtUtc":  "2026-09-16T07:24:23.3340967Z",
+                                                 "capturedAtUtc":  "2026-09-16T07:23:29.7260848Z",
                                                  "level":  20,
-                                                 "curMember":  86,
-                                                 "alliancePoint":  186695664,
-                                                 "fightPower":  "10228460634"
+                                                 "curMember":  43,
+                                                 "alliancePoint":  1088825564,
+                                                 "fightPower":  "4205662636"
                                              },
                                              {
-                                                 "capturedAtUtc":  "2026-09-17T06:09:49.5197174Z",
+                                                 "capturedAtUtc":  "2026-09-17T06:07:27.3885155Z",
                                                  "level":  20,
-                                                 "curMember":  86,
-                                                 "alliancePoint":  187601404,
-                                                 "fightPower":  "10188160210"
+                                                 "curMember":  43,
+                                                 "alliancePoint":  1089366454,
+                                                 "fightPower":  "4198656795"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T06:08:35.5358950Z",
+                                                 "level":  20,
+                                                 "curMember":  43,
+                                                 "alliancePoint":  1089366454,
+                                                 "fightPower":  "4198656795"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:53:09.1526991Z",
+                                                 "level":  20,
+                                                 "curMember":  42,
+                                                 "alliancePoint":  1089730524,
+                                                 "fightPower":  "4025355137"
                                              }
                                          ],
     "e82c71b584d040348db4baac8de8e4a3":  [
@@ -1486,6 +1546,22 @@
                                                  "curMember":  45,
                                                  "alliancePoint":  1425566496,
                                                  "fightPower":  "4457431745"
+                                             }
+                                         ],
+    "9f696aa46895465d8c316e9ea594082e":  [
+                                             {
+                                                 "capturedAtUtc":  "2026-09-16T07:15:40.8012814Z",
+                                                 "level":  20,
+                                                 "curMember":  70,
+                                                 "alliancePoint":  1342950279,
+                                                 "fightPower":  "6193641459"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T05:40:04.9857252Z",
+                                                 "level":  20,
+                                                 "curMember":  71,
+                                                 "alliancePoint":  1343342669,
+                                                 "fightPower":  "6344546318"
                                              }
                                          ],
     "3776d93473034cc485abb93d2436089e":  [
@@ -1531,20 +1607,13 @@
                                                  "fightPower":  "219540535"
                                              }
                                          ],
-    "da9a953d2afa402f88fd2b0fda25c678":  [
+    "a1387a3e87cc42a2815c010279cb6482":  [
                                              {
-                                                 "capturedAtUtc":  "2026-09-14T10:05:03.3722145Z",
+                                                 "capturedAtUtc":  "2026-09-17T06:29:24.9412427Z",
                                                  "level":  20,
-                                                 "curMember":  89,
-                                                 "alliancePoint":  261859638,
-                                                 "fightPower":  "10615500151"
-                                             },
-                                             {
-                                                 "capturedAtUtc":  "2026-09-17T05:12:46.3073888Z",
-                                                 "level":  20,
-                                                 "curMember":  76,
-                                                 "alliancePoint":  264761443,
-                                                 "fightPower":  "8415039050"
+                                                 "curMember":  63,
+                                                 "alliancePoint":  75351465,
+                                                 "fightPower":  "4457494404"
                                              }
                                          ],
     "3ecf760305014977a2e31f17024d6668":  [
@@ -1858,27 +1927,13 @@
                                                  "fightPower":  "7534525805"
                                              }
                                          ],
-    "183a1e174d0f4b5eb66f0607e668dbb8":  [
+    "0621a46590c742f28cdd160533f87a73":  [
                                              {
-                                                 "capturedAtUtc":  "2026-09-16T07:23:29.7260848Z",
-                                                 "level":  20,
-                                                 "curMember":  43,
-                                                 "alliancePoint":  1088825564,
-                                                 "fightPower":  "4205662636"
-                                             },
-                                             {
-                                                 "capturedAtUtc":  "2026-09-17T06:07:27.3885155Z",
-                                                 "level":  20,
-                                                 "curMember":  43,
-                                                 "alliancePoint":  1089366454,
-                                                 "fightPower":  "4198656795"
-                                             },
-                                             {
-                                                 "capturedAtUtc":  "2026-09-17T06:08:35.5358950Z",
-                                                 "level":  20,
-                                                 "curMember":  43,
-                                                 "alliancePoint":  1089366454,
-                                                 "fightPower":  "4198656795"
+                                                 "capturedAtUtc":  "2026-09-18T04:52:09.9129664Z",
+                                                 "level":  3,
+                                                 "curMember":  29,
+                                                 "alliancePoint":  4033550,
+                                                 "fightPower":  "2222508047"
                                              }
                                          ],
     "8b7b2e17b2db49e387041082431f0997":  [
@@ -1888,6 +1943,13 @@
                                                  "curMember":  86,
                                                  "alliancePoint":  165512895,
                                                  "fightPower":  "6923751956"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:51:41.1615188Z",
+                                                 "level":  20,
+                                                 "curMember":  86,
+                                                 "alliancePoint":  166138555,
+                                                 "fightPower":  "6925987515"
                                              }
                                          ],
     "e56b73e7efb0497187dbd97fb8a00869":  [
@@ -3176,6 +3238,202 @@
                                                  "curMember":  89,
                                                  "alliancePoint":  1185539827,
                                                  "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T09:46:44.7073371Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T10:18:59.7627732Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T11:09:35.3135462Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T11:09:54.3074228Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T12:40:45.0791134Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T13:03:07.4298191Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T13:19:16.4831892Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T13:19:37.2782554Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T13:26:06.4702752Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T13:26:16.6209008Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T13:31:31.4696074Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T13:57:26.6054621Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T14:05:25.4137221Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T14:07:17.6629779Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T14:40:51.4679767Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T14:43:01.9890227Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T15:18:51.3625997Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T15:43:50.5645902Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T15:44:48.2360799Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-17T16:01:20.0059126Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:08:38.9608060Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1185539827,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:17:07.3618228Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  9800,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:18:03.0055042Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  9800,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:21:43.6908429Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  9800,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:26:46.6724873Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  9800,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:41:48.4356250Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  9800,
+                                                 "fightPower":  "11929565718"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:54:00.8327141Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1186650567,
+                                                 "fightPower":  "12823651264"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:54:22.4862319Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  1186650567,
+                                                 "fightPower":  "12823651264"
                                              }
                                          ],
     "2485e202f658421bb1f191757ccc9f15":  [
@@ -3220,6 +3478,13 @@
                                                  "curMember":  89,
                                                  "alliancePoint":  360381003,
                                                  "fightPower":  "15158344746"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:55:44.6311224Z",
+                                                 "level":  20,
+                                                 "curMember":  89,
+                                                 "alliancePoint":  361424528,
+                                                 "fightPower":  "15230927237"
                                              }
                                          ],
     "6917c2c7abfd45448c1a5a93c24c01e7":  [
@@ -3278,6 +3543,13 @@
                                                  "curMember":  90,
                                                  "alliancePoint":  869676274,
                                                  "fightPower":  "13888359560"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:56:14.1134409Z",
+                                                 "level":  20,
+                                                 "curMember":  90,
+                                                 "alliancePoint":  875476689,
+                                                 "fightPower":  "13817099846"
                                              }
                                          ],
     "00d5643fb0af4097a391620cb6059b9d":  [
@@ -3355,6 +3627,13 @@
                                                  "curMember":  90,
                                                  "alliancePoint":  239250698,
                                                  "fightPower":  "6845358310"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:52:57.0762468Z",
+                                                 "level":  20,
+                                                 "curMember":  90,
+                                                 "alliancePoint":  239801158,
+                                                 "fightPower":  "6842805569"
                                              }
                                          ],
     "5bedfda76a2e434f9842b9292051d5da":  [
@@ -3434,13 +3713,13 @@
                                                  "fightPower":  "816723850"
                                              }
                                          ],
-    "a1387a3e87cc42a2815c010279cb6482":  [
+    "983cce569ea149b9a141b5f2113bb4d4":  [
                                              {
-                                                 "capturedAtUtc":  "2026-09-17T06:29:24.9412427Z",
-                                                 "level":  20,
-                                                 "curMember":  63,
-                                                 "alliancePoint":  75351465,
-                                                 "fightPower":  "4457494404"
+                                                 "capturedAtUtc":  "2026-09-16T07:14:21.6670357Z",
+                                                 "level":  13,
+                                                 "curMember":  35,
+                                                 "alliancePoint":  280972542,
+                                                 "fightPower":  "948801191"
                                              }
                                          ],
     "66e4d71a74c542de961e495feebda35b":  [
@@ -3486,6 +3765,13 @@
                                                  "curMember":  88,
                                                  "alliancePoint":  540235884,
                                                  "fightPower":  "7040871426"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:51:26.0167619Z",
+                                                 "level":  20,
+                                                 "curMember":  88,
+                                                 "alliancePoint":  540747544,
+                                                 "fightPower":  "7032271592"
                                              }
                                          ],
     "2ffc81e4add549d8bfff30868b421d52":  [
@@ -3706,6 +3992,13 @@
                                                  "curMember":  47,
                                                  "alliancePoint":  460490724,
                                                  "fightPower":  "3396353708"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:53:18.8559196Z",
+                                                 "level":  20,
+                                                 "curMember":  47,
+                                                 "alliancePoint":  460731314,
+                                                 "fightPower":  "3394938200"
                                              }
                                          ],
     "dc527794832344a599a940b5765982be":  [
@@ -3724,6 +4017,13 @@
                                                  "curMember":  48,
                                                  "alliancePoint":  444689152,
                                                  "fightPower":  "3816265343"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:51:54.0208777Z",
+                                                 "level":  20,
+                                                 "curMember":  49,
+                                                 "alliancePoint":  444460422,
+                                                 "fightPower":  "3869670032"
                                              }
                                          ],
     "fd514b94e8344f4785127fbbc2bfbfa4":  [
@@ -3893,6 +4193,13 @@
                                                  "curMember":  36,
                                                  "alliancePoint":  568753826,
                                                  "fightPower":  "3789684463"
+                                             },
+                                             {
+                                                 "capturedAtUtc":  "2026-09-18T04:55:54.0209828Z",
+                                                 "level":  20,
+                                                 "curMember":  36,
+                                                 "alliancePoint":  568927006,
+                                                 "fightPower":  "3875413191"
                                              }
                                          ],
     "8a5fcc0f0b834035a6977eebb788e15d":  [
