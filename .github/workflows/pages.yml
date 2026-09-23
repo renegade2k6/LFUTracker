@@ -22,9 +22,8 @@ jobs:
       - name: Stage website files only
         run: |
           mkdir -p _site/data
-          cp index.html theme.css directory.js rankings.js player-power.js merge.js _site/
-          cp data/alliances.json data/history.json data/meta.json _site/data/
-          if [ -f data/leaderboard.json ]; then cp data/leaderboard.json _site/data/; fi
+          cp index.html theme.css directory.js rankings.js player-power.js merge.js vault.js _site/
+          cp data/site.enc.json _site/data/
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v4
         with:

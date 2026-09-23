@@ -54,6 +54,7 @@
 <script src="player-power.js"></script>
 <script src="directory.js"></script>
 <script src="merge.js"></script>
+<script src="vault.js"></script>
 <script>
 let STATE = { alliances: [], history: {}, mergeReport: null };
 let playerTracking = {records: {}, saved: true, conflicts: new Set()};
@@ -586,29 +587,67 @@ function render() {
   });
 }
 
+// Site data is published only as an encrypted bundle; the master password unlocks it here.
+function askPassword(bundle) {
+  return new Promise(resolve => {
+    document.getElementById("view").innerHTML = `
+      <form class="login-card" id="loginForm" autocomplete="on">
+        <svg class="icon" data-lucide="lock"></svg>
+        <h2>Alliance intelligence is locked</h2>
+        <p>Enter the site password to continue.</p>
+        <input type="text" name="username" value="alliance-tracker" autocomplete="username" hidden>
+        <input id="sitePassword" type="password" autocomplete="current-password" placeholder="Password" aria-label="Site password" required>
+        <label class="login-remember"><input id="rememberDevice" type="checkbox"> Remember on this device</label>
+        <button type="submit" class="primary-action">Unlock</button>
+        <p class="login-error" id="loginError" role="alert"></p>
+      </form>`;
+    icons();
+    const input = document.getElementById("sitePassword");
+    input.focus();
+    document.getElementById("loginForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const button = event.target.querySelector("button");
+      const errorText = document.getElementById("loginError");
+      button.disabled = true; button.textContent = "Unlocking…"; errorText.textContent = "";
+      try {
+        const data = await SiteVault.open(bundle, input.value);
+        SiteVault.remember(input.value, document.getElementById("rememberDevice").checked);
+        resolve(data);
+      } catch (err) {
+        errorText.textContent = err.message === "Wrong password" ? "That password is not correct." : "The data could not be opened.";
+        button.disabled = false; button.textContent = "Unlock"; input.select();
+      }
+    });
+  });
+}
+
+function lockSite() { SiteVault.forget(); location.hash = ""; location.reload(); }
+window.lockSite = lockSite;
+
 async function main() {
   const errorEl = document.getElementById("error");
   const topMeta = document.getElementById("topMeta");
 
-  const [alliances, history, meta, leaderboard] = await Promise.all([
-    loadJson("data/alliances.json", []),
-    loadJson("data/history.json", {}),
-    loadJson("data/meta.json", null),
-    loadJson("data/leaderboard.json", null),
-  ]);
-
-  if (alliances.__failed) {
+  const bundle = await loadJson("data/site.enc.json", null);
+  if (bundle.__failed) {
     errorEl.textContent = `Alliance data is unavailable. Please refresh the page or try again later.`;
     errorEl.classList.remove("hidden");
+    document.getElementById("view").innerHTML = "";
+    return;
   }
+  let unlocked = null;
+  const known = SiteVault.saved();
+  if (known) { try { unlocked = await SiteVault.open(bundle, known); } catch { SiteVault.forget(); } }
+  if (!unlocked) unlocked = await askPassword(bundle);
+  const alliances = unlocked.alliances || [], history = unlocked.history || {}, meta = unlocked.meta || null, leaderboard = unlocked.leaderboard || null;
 
   // Newest observation wins, whatever in-game source it came from (see merge.js).
-  const merged = DataMerge.apply(alliances.__failed ? [] : (alliances || []), history.__failed ? {} : (history || {}),
+  const merged = DataMerge.apply(alliances, history,
     DataMerge.fromSeasonLeaderboard(leaderboard));
   STATE.alliances = merged.alliances;
   STATE.history = merged.history;
   STATE.mergeReport = merged.report;
-  topMeta.textContent = (meta && !meta.__failed) ? `Updated ${relTime(meta.generatedAtUtc)}` : "";
+  topMeta.innerHTML = `${meta ? `Updated ${esc(relTime(meta.generatedAtUtc))} · ` : ""}<button type="button" class="lock-button" onclick="lockSite()">Lock</button>`;
   render();
 }
 

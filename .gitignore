@@ -8,10 +8,9 @@
 !/rankings.js
 !/player-power.js
 !/merge.js
+!/vault.js
 !/README.md
 !/data/
 /data/*
-!/data/alliances.json
-!/data/history.json
-!/data/meta.json
-!/data/leaderboard.json
+# Only the encrypted bundle is published; plain data stays local (scripts/lfdata.py).
+!/data/site.enc.json

@@ -1843,3 +1843,34 @@ tr:last-child td {
     transform: none !important;
   }
 }
+
+/* Password gate (vault.js) */
+.login-card {
+  max-width: 380px;
+  margin: 12vh auto 0;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+.login-card > .icon { align-self: center; width: 28px; height: 28px; color: var(--hazard); }
+.login-card h2 { margin: 0; font-size: 1.15rem; color: var(--text); }
+.login-card p { margin: 0; color: var(--text-dim); }
+.login-card input[type="password"] {
+  padding: 10px 12px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font: inherit;
+}
+.login-card input[type="password"]:focus { outline: 2px solid var(--hazard); outline-offset: 1px; }
+.login-remember { display: flex; gap: 8px; align-items: center; justify-content: center; color: var(--text-dim); font-size: 0.9rem; }
+.login-card button { justify-content: center; border: 0; cursor: pointer; }
+.login-card button:disabled { opacity: 0.6; cursor: progress; }
+.login-error { min-height: 1.2em; color: var(--danger) !important; font-size: 0.9rem; }
+.lock-button { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
