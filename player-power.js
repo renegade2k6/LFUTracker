@@ -17,9 +17,10 @@ const PlayerPower = (() => {
     } catch { saved = false; }
     const latest = new Map(), conflicts = new Set();
     for (const a of alliances) {
-      const time = Date.parse(a.capturedAtUtc);
-      if (!Number.isFinite(time)) continue;
       for (const m of a.members || []) {
+        // A member can carry a newer per-player observation (season leaderboard merge).
+        const time = Date.parse(m.capturedAtUtc || a.capturedAtUtc);
+        if (!Number.isFinite(time)) continue;
         const uid = String(m.uid ?? '');
         if (!/^\d+$/.test(uid) || m.power == null || String(m.power).trim() === '') continue;
         const power = Number(m.power);

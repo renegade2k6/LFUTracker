@@ -53,8 +53,9 @@
 <script src="rankings.js"></script>
 <script src="player-power.js"></script>
 <script src="directory.js"></script>
+<script src="merge.js"></script>
 <script>
-let STATE = { alliances: [], history: {} };
+let STATE = { alliances: [], history: {}, mergeReport: null };
 let playerTracking = {records: {}, saved: true, conflicts: new Set()};
 
 function playerChangeHtml(member, capturedAtUtc) {
@@ -102,6 +103,8 @@ function esc(v) {
   if (v === null || v === undefined) return "";
   return String(v).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 }
+function activeMembers(a) { return (a.members || []).filter(m => !m.movedToAllianceId); }
+function sourceNote(source, at) { return source ? `from ${source === 'season-leaderboard' ? 'season leaderboard' : source} · ${relTime(at)}` : ''; }
 function num(v) { const n = Number(v); return Number.isFinite(n) ? n.toLocaleString("en-US") : "0"; }
 function compactNum(v) {
   const n = Number(v) || 0;
@@ -316,7 +319,7 @@ window.onSearch = onSearch;
 
 function renderCardHtml(a, ranking) {
   const rank = ranking.current.get(a.allianceId);
-  const memberCount = (a.members || []).length;
+  const memberCount = activeMembers(a).length;
   const maxPower = Math.max(...STATE.alliances.map(x => Number(x.fightPower) || 0), 1);
   const pct = Math.min(100, ((Number(a.fightPower) || 0) / maxPower) * 100);
   const isTop = rank != null && rank <= 3;
@@ -326,17 +329,17 @@ function renderCardHtml(a, ranking) {
       <div class="head">
         <span class="abbr">${esc(a.abbr)}</span>
         <span class="name">${esc(a.name)}</span>
-        <span class="lvl">LV.${esc(a.level)}</span>
+        ${a.level == null ? '' : `<span class="lvl">LV.${esc(a.level)}</span>`}
       </div>
       <div>
-        <div class="power-row"><span class="num">${compactNum(a.fightPower)}</span><span class="lbl">Power</span></div>
+        <div class="power-row"><span class="num">${a.fightPower == null ? '—' : compactNum(a.fightPower)}</span><span class="lbl">Power</span></div>
         <div class="power-bar"><i style="width:${pct}%"></i></div>
       </div>
       <div class="meta-row">
-        <span><b>${memberCount}</b>/${esc(a.maxMember)} troops</span>
+        <span><b>${memberCount}</b>/${a.maxMember == null ? '—' : esc(a.maxMember)} troops</span>
         <span>Server <b>${esc(a.originServerId)}</b></span>
       </div>
-      <span class="movement-detail">Updated ${esc(relTime(a.capturedAtUtc))}</span>
+      <span class="movement-detail">Updated ${esc(relTime(a.updatedAtUtc || a.capturedAtUtc))}${a.source ? ' · roster not captured yet' : ''}</span>
       ${movementHtml(a.allianceId, ranking)}
       <canvas class="spark" data-alliance="${esc(a.allianceId)}" aria-label="Alliance power history"></canvas>
       <span class="card-link">Explore alliance <span aria-hidden="true">↗</span></span>
@@ -353,7 +356,7 @@ function renderList() {
 
   const topAlliances = sorted.slice(0, 3);
   const allPlayers = [];
-  sorted.forEach(a => (a.members || []).forEach(m => allPlayers.push({
+  sorted.forEach(a => activeMembers(a).forEach(m => allPlayers.push({
     name: m.name, power: Number(m.power) || 0, allianceId: a.allianceId, allianceName: a.name, allianceAbbr: a.abbr
   })));
   const topPlayers = allPlayers.sort((x, y) => y.power - x.power).slice(0, 3);
@@ -385,7 +388,7 @@ function renderList() {
             <span class="board-rank ${rankClass((ranking.current.get(a.allianceId) ?? 0) - 1)}">${ranking.current.get(a.allianceId) ?? '—'}</span>
             <div style="min-width:0;">
               <div class="board-name">[${esc(a.abbr)}] ${esc(a.name)}</div>
-              <div class="board-sub">${(a.members || []).length}/${esc(a.maxMember)} &middot; Server ${esc(a.originServerId)}</div>
+              <div class="board-sub">${activeMembers(a).length}/${a.maxMember == null ? '—' : esc(a.maxMember)} &middot; Server ${esc(a.originServerId)}</div>
               ${movementHtml(a.allianceId, ranking)}
             </div>
             <span class="board-value">${compactNum(a.fightPower)}</span>
@@ -462,7 +465,7 @@ function renderDetail(allianceId) {
     view.innerHTML = `<a class="back-btn" href="#">&larr; Back</a><div class="empty">Alliance not found in the current export.</div>`;
     return;
   }
-  const memberCount = (a.members || []).length;
+  const memberCount = activeMembers(a).length;
   const points = STATE.history[allianceId] || [];
   const ranking = rankingSummary();
 
@@ -473,11 +476,12 @@ function renderDetail(allianceId) {
     return `
     <tr>
       <td class="rank-cell num">${i + 1}</td>
-      <td><span class="name-cell"><span class="dot ${m.online ? "on" : "off"}" title="${m.online ? "Online" : "Offline"}"></span>${esc(m.name)}</span></td>
+      <td><span class="name-cell"><span class="dot ${m.online ? "on" : "off"}" title="${m.online ? "Online" : "Offline"}"></span>${esc(m.name)}${m.movedToAllianceId ? ` <a class="player-history-note" href="#a/${encodeURIComponent(m.movedToAllianceId)}">moved →</a>` : ''}</span></td>
       <td data-label="Power" class="num power-cell" data-sort="${Number(m.power) || 0}">
         <div class="roster-power-num">${num(m.power)}</div>
         <div class="roster-power-bar"><i style="width:${pct}%"></i></div>
-        ${playerChangeHtml(m, a.capturedAtUtc)}
+        ${playerChangeHtml(m, m.capturedAtUtc || a.capturedAtUtc)}
+        ${m.powerSource ? `<small class="player-history-note">${esc(sourceNote(m.powerSource, m.capturedAtUtc))}</small>` : ''}
       </td>
     </tr>
   `;
@@ -488,14 +492,15 @@ function renderDetail(allianceId) {
       <a class="back-btn" href="#"><svg class="icon-sm" data-lucide="arrow-left"></svg>Back</a>
       <div class="detail-title">
         <h2><span class="abbr">${esc(a.abbr)}</span> ${esc(a.name)}</h2>
-        <div class="sub">Level ${esc(a.level)} &middot; Server ${esc(a.originServerId)} &middot; Leader ${esc(a.leaderName)}</div>
-        <p class="player-history-note">Updated ${esc(relTime(a.capturedAtUtc))}</p>
+        <div class="sub">${a.level == null ? '' : `Level ${esc(a.level)} &middot; `}Server ${esc(a.originServerId)}${a.leaderName ? ` &middot; Leader ${esc(a.leaderName)}` : ''}</div>
+        <p class="player-history-note">Updated ${esc(relTime(a.updatedAtUtc || a.capturedAtUtc))}${a.source ? ' · Seen on the season leaderboard; open its Members list in-game to capture the full roster.' : ''}</p>
         <div class="chips">
           <span class="chip">Tracked rank <b>${ranking.current.has(allianceId) ? '#' + ranking.current.get(allianceId) : 'Unranked'}</b></span>
           ${movementHtml(allianceId, ranking)}
-          <span class="chip">Power <b>${num(a.fightPower)}</b></span>
-          <span class="chip">Troops <b>${memberCount}</b>/${esc(a.maxMember)}</span>
-          <span class="chip">Alliance Points <b>${num(a.alliancePoint)}</b></span>
+          <span class="chip" title="${esc(sourceNote(a.fightPowerSource, a.fightPowerAtUtc))}">Power <b>${a.fightPower == null ? '—' : num(a.fightPower)}</b></span>
+          ${a.ranks?.['season-leaderboard'] ? `<span class="chip">Season rank <b>#${esc(a.ranks['season-leaderboard'])}</b></span>` : ''}
+          <span class="chip">Troops <b>${memberCount}</b>/${a.maxMember == null ? '—' : esc(a.maxMember)}</span>
+          ${a.alliancePoint == null ? '' : `<span class="chip">Alliance Points <b>${num(a.alliancePoint)}</b></span>`}
         </div>
         
       </div>
@@ -585,10 +590,11 @@ async function main() {
   const errorEl = document.getElementById("error");
   const topMeta = document.getElementById("topMeta");
 
-  const [alliances, history, meta] = await Promise.all([
+  const [alliances, history, meta, leaderboard] = await Promise.all([
     loadJson("data/alliances.json", []),
     loadJson("data/history.json", {}),
     loadJson("data/meta.json", null),
+    loadJson("data/leaderboard.json", null),
   ]);
 
   if (alliances.__failed) {
@@ -596,8 +602,12 @@ async function main() {
     errorEl.classList.remove("hidden");
   }
 
-  STATE.alliances = alliances.__failed ? [] : (alliances || []);
-  STATE.history = history.__failed ? {} : (history || {});
+  // Newest observation wins, whatever in-game source it came from (see merge.js).
+  const merged = DataMerge.apply(alliances.__failed ? [] : (alliances || []), history.__failed ? {} : (history || {}),
+    DataMerge.fromSeasonLeaderboard(leaderboard));
+  STATE.alliances = merged.alliances;
+  STATE.history = merged.history;
+  STATE.mergeReport = merged.report;
   topMeta.textContent = (meta && !meta.__failed) ? `Updated ${relTime(meta.generatedAtUtc)}` : "";
   render();
 }

@@ -10,7 +10,7 @@ const Directory = (() => {
     alliances.forEach(a => (a.members || []).forEach((m, i) => {
       const key = m.uid ? String(m.uid) : `${a.allianceId}/${i}`;
       const row = {name: m.name || 'Unknown', alliance: a.name || a.abbr || 'Unknown', power: m.power ?? null,
-        server: m.curServerId || m.serverId || null, id: a.allianceId, captured: Date.parse(a.capturedAtUtc) || 0};
+        server: m.originServerId ?? a.originServerId ?? null, id: a.allianceId, captured: Date.parse(m.capturedAtUtc || a.capturedAtUtc) || 0};
       if (!players.has(key) || row.captured > players.get(key).captured) players.set(key, row);
     }));
     return [...players.values()];
