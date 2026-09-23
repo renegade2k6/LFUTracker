@@ -213,31 +213,16 @@ svg.icon-sm {
   text-transform: uppercase;
 }
 
-.brand-mark {
-  display: grid;
-  place-content: center;
-  position: relative;
-  width: 38px;
+.brand-logo {
+  width: 42px;
   height: 42px;
-  background: linear-gradient(135deg, rgba(255, 122, 24, 0.18), rgba(255, 122, 24, 0.04));
-  border: 1px solid var(--hazard);
-  color: var(--hazard);
-  font: 700 16px var(--mono);
-  clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%);
-  box-shadow: 0 0 16px rgba(255, 122, 24, 0.25);
-  transition: transform 0.2s var(--ease-spring), box-shadow 0.2s ease;
+  flex: none;
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
-.side-brand:hover .brand-mark {
+.side-brand:hover .brand-logo {
   transform: translateY(-1px) scale(1.04);
-  box-shadow: 0 0 24px rgba(255, 122, 24, 0.45);
-}
-
-.brand-mark span {
-  position: absolute;
-  bottom: -4px;
-  left: 10px;
-  font-size: 14px;
+  filter: drop-shadow(0 0 10px rgba(30, 144, 255, 0.55));
 }
 
 .nav-label {
@@ -548,7 +533,7 @@ svg.icon-sm {
   height: 260px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 122, 24, 0.08) 0%, rgba(18, 22, 32, 0.6) 70%, transparent 100%);
+  background: url("hero-radar.png") center / cover no-repeat;
   border: 1px solid rgba(255, 122, 24, 0.2);
   box-shadow: inset 0 0 30px rgba(255, 122, 24, 0.12), 0 0 20px rgba(0, 0, 0, 0.5);
   overflow: hidden;
@@ -570,83 +555,31 @@ svg.icon-sm {
   100% { transform: rotate(360deg); }
 }
 
-.scope-ring {
-  position: absolute;
-  border: 1px solid rgba(255, 122, 24, 0.18);
-  border-radius: 50%;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.ring-one { width: 230px; height: 230px; border-style: dashed; }
-.ring-two { width: 160px; height: 160px; }
-.ring-three { width: 90px; height: 90px; border-color: rgba(255, 122, 24, 0.35); background: rgba(255, 122, 24, 0.05); }
-
-.scope-cross {
-  position: absolute;
-  inset: 20px;
-  background:
-    linear-gradient(transparent calc(50% - 0.5px), rgba(255, 122, 24, 0.2) 50%, transparent calc(50% + 0.5px)),
-    linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(255, 122, 24, 0.2) 50%, transparent calc(50% + 0.5px));
-  pointer-events: none;
-}
-
-.scope-core {
-  position: absolute;
-  inset: 104px;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(255, 122, 24, 0.6);
-  background: rgba(255, 122, 24, 0.15);
-  border-radius: 12px;
-  transform: rotate(45deg);
-  box-shadow: 0 0 14px rgba(255, 122, 24, 0.3);
-}
-
-.scope-core svg {
-  width: 24px;
-  height: 24px;
-  color: var(--hazard);
-  transform: rotate(-45deg);
-}
-
-.scope-point {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--hazard);
-  box-shadow: 0 0 0 4px rgba(255, 122, 24, 0.25), 0 0 12px var(--hazard);
-  animation: blip-pulse 3s infinite ease-in-out;
-}
-
-.point-one { top: 60px; left: 68px; animation-delay: 0.2s; }
-.point-two { right: 54px; top: 155px; animation-delay: 1.1s; }
-.point-three { left: 100px; bottom: 32px; animation-delay: 2.2s; }
-
-@keyframes blip-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.8); }
+.hero-radar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .scope-label, .scope-caption {
-  position: absolute;
-  width: 100%;
+  margin: 0;
   text-align: center;
   color: var(--hazard-text);
-  font: 600 8.5px var(--mono);
+  font: 600 12px var(--mono);
   letter-spacing: 0.16em;
-  bottom: 24px;
-  text-shadow: 0 1px 4px #000;
-  pointer-events: none;
+}
+
+.scope-label {
+  margin-top: 16px;
 }
 
 .scope-caption {
-  bottom: 12px;
+  margin-top: 4px;
   color: var(--text-dim);
-  font-size: 7.5px;
+  font-size: 11px;
 }
 
 /* ==========================================================================
@@ -1790,8 +1723,10 @@ tr:last-child td {
     padding: 32px 24px;
     align-items: flex-start;
   }
-  .hero-scope {
+  .hero-radar {
     align-self: center;
+  }
+  .hero-scope {
     width: 220px;
     height: 220px;
   }

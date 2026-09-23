@@ -6,6 +6,8 @@
 <title>Alliance Tracker · Last Fortress</title>
 <meta name="description" content="Explore Last Fortress alliances and players, compare power, and export sortable lists to CSV.">
 <meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -19,7 +21,7 @@
   <div class="header-inner">
     <aside class="sidebar">
       <a href="#" class="side-brand" aria-label="Alliance Tracker overview">
-        <span class="brand-mark">LF<span>⌁</span></span>
+        <img class="brand-logo" src="logo.png" width="42" height="42" alt="">
         <span>LFU TRACKER<small>LAST FORTRESS</small></span>
       </a>
       <div class="nav-label">INTELLIGENCE</div>
@@ -370,7 +372,7 @@ function renderList() {
         <h2>Alliance intelligence.<br><span>A clearer view.</span></h2>
         <div class="hero-actions"><a class="primary-action" href="#all-alliances">Alliance database <span aria-hidden="true">↗</span></a><a class="secondary-action" href="#all-players">Browse players →</a></div>
       </div>
-      <div class="hero-scope" aria-hidden="true"><div class="scope-ring ring-one"></div><div class="scope-ring ring-two"></div><div class="scope-ring ring-three"></div><div class="scope-cross"></div><div class="scope-core"><svg data-lucide="shield"></svg></div><i class="scope-point point-one"></i><i class="scope-point point-two"></i><i class="scope-point point-three"></i><span class="scope-label">ALLIANCE INTELLIGENCE</span><span class="scope-caption">${servers} SERVERS / ${sorted.length} ALLIANCES</span></div>
+      <div class="hero-radar"><div class="hero-scope" aria-hidden="true"></div><p class="scope-label">ALLIANCE INTELLIGENCE</p><p class="scope-caption">${servers} SERVERS / ${sorted.length} ALLIANCES</p></div>
     </div>
     <div class="stats">
       <div class="stat"><svg data-lucide="flag"></svg><div><div class="label">Alliances Tracked</div><div class="value">${sorted.length}</div></div></div>

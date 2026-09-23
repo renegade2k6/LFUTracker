@@ -10,6 +10,10 @@
 !/merge.js
 !/vault.js
 !/README.md
+!/favicon-32.png
+!/apple-touch-icon.png
+!/logo.png
+!/hero-radar.png
 !/data/
 /data/*
 # Only the encrypted bundle is published; plain data stays local (scripts/lfdata.py).
