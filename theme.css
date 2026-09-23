@@ -1645,6 +1645,11 @@ tr:last-child td {
   text-align: center;
 }
 
+.database-table .power-peak {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
 .database-table a {
   color: #ffffff;
   font-weight: 600;

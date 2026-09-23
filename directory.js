@@ -4,8 +4,21 @@ const Directory = (() => {
     alliances: [['name', 'Alliance name'], ['abbr', 'Abbreviation'], ['server', 'Server number'], ['power', 'Alliance power'], ['members', 'Member count']],
     players: [['name', 'Player name'], ['alliance', 'Alliance'], ['power', 'Player power'], ['server', 'Server number']]
   };
-  function records(alliances, kind) {
-    if (kind === 'alliances') return alliances.map(a => ({name: a.name || a.abbr || 'Unknown', abbr: a.abbr || null, server: a.originServerId ?? null, power: a.fightPower ?? null, members: a.curMember ?? null, id: a.allianceId}));
+  // CSV-only extra column; the on-screen table keeps `columns` as-is.
+  const csvExtra = {alliances: [['updated', 'Last updated (UTC)']], players: [['updated', 'Last updated (UTC)']]};
+  const utc = ms => ms ? new Date(ms).toISOString().slice(0, 19).replace('T', ' ') : null;
+  const power = v => v == null || String(v).trim() === '' || !(Number(v) >= 0) ? null : Number(v);
+  /* Highest power seen per uid: exported roster peaks plus every season-leaderboard capture. */
+  function peaks(playerPeaks, leaderboard) {
+    const out = new Map();
+    const see = (uid, v) => { const p = power(v); if (p != null && !(out.get(String(uid)) >= p)) out.set(String(uid), p); };
+    Object.entries(playerPeaks || {}).forEach(([uid, v]) => see(uid, v));
+    Object.entries(leaderboard?.players?.history || {}).forEach(([uid, points]) => (points || []).forEach(([, v]) => see(uid, v)));
+    return out;
+  }
+  function records(alliances, kind, peakMap = new Map()) {
+    if (kind === 'alliances') return alliances.map(a => ({name: a.name || a.abbr || 'Unknown', abbr: a.abbr || null, server: a.originServerId ?? null, power: a.fightPower ?? null, members: a.curMember ?? null, id: a.allianceId,
+      updated: utc(Date.parse(a.updatedAtUtc || a.capturedAtUtc))}));
     const players = new Map();
     alliances.forEach(a => (a.members || []).forEach((m, i) => {
       const key = m.uid ? String(m.uid) : `${a.allianceId}/${i}`;
@@ -13,7 +26,10 @@ const Directory = (() => {
         server: m.originServerId ?? a.originServerId ?? null, id: a.allianceId, captured: Date.parse(m.capturedAtUtc || a.capturedAtUtc) || 0};
       if (!players.has(key) || row.captured > players.get(key).captured) players.set(key, row);
     }));
-    return [...players.values()];
+    return [...players.entries()].map(([key, r]) => {
+      const seen = [peakMap.get(key), power(r.power)].filter(v => v != null);
+      return {...r, peak: seen.length ? Math.max(...seen) : null, updated: utc(r.captured)};
+    });
   }
   function sorted(rows, key, asc, query = '') {
     const q = query.trim().toLocaleLowerCase();
@@ -30,8 +46,11 @@ const Directory = (() => {
       if (/^[\s]*[=+@-]/.test(s)) s = "'" + s;
       return '"' + s.replace(/"/g, '""') + '"';
     };
-    return '\uFEFF' + [columns[kind].map(c => c[1]), ...rows.map(r => columns[kind].map(c => r[c[0]]))].map(r => r.map(cell).join(',')).join('\r\n');
+    const cols = [...columns[kind], ...csvExtra[kind]];
+    // Player power reads like the table: "current (max seen)".
+    const value = (r, key) => kind === 'players' && key === 'power' && r.peak != null ? `${r.power ?? ''} (${r.peak})`.trim() : r[key];
+    return '\uFEFF' + [cols.map(c => c[1]), ...rows.map(r => cols.map(c => value(r, c[0])))].map(r => r.map(cell).join(',')).join('\r\n');
   }
-  return {columns, records, sorted, csv};
+  return {columns, peaks, records, sorted, csv};
 })();
 if (typeof module !== 'undefined') module.exports = Directory;

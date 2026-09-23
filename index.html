@@ -56,7 +56,7 @@
 <script src="merge.js"></script>
 <script src="vault.js"></script>
 <script>
-let STATE = { alliances: [], history: {}, mergeReport: null };
+let STATE = { alliances: [], history: {}, mergeReport: null, peaks: new Map() };
 let playerTracking = {records: {}, saved: true, conflicts: new Set()};
 
 function playerChangeHtml(member, capturedAtUtc) {
@@ -534,10 +534,10 @@ function renderDetail(allianceId) {
 
 let directoryState = {kind: 'alliances', key: 'power', asc: false, query: '', rows: [], visible: []};
 function renderFullDirectory(kind) {
-  directoryState = {kind, key: 'power', asc: false, query: '', rows: Directory.records(STATE.alliances, kind), visible: []};
+  directoryState = {kind, key: 'power', asc: false, query: '', rows: Directory.records(STATE.alliances, kind, STATE.peaks), visible: []};
   document.getElementById('view').innerHTML = `<section class="database-heading"><p class="eyebrow">INTELLIGENCE / DATABASE</p><h1>ALL <span>${kind.toUpperCase()}</span><span class="database-dot">.</span></h1><p>${kind === 'players' ? 'Find a player. Compare power. Explore their alliance and server.' : 'Explore alliances, compare their power, and see how many members they have.'}</p></section>
     <div class="database-toolbar"><span id="databaseCount" role="status"></span><span class="database-hint">Click a column to sort · Rows stay grouped</span><button class="export-button" onclick="exportDirectory()"><svg class="icon-sm" data-lucide="download"></svg> Export CSV</button></div>
-    <div class="database-scroll" tabindex="0" aria-label="Sortable ${kind} list"><table class="database-table"><thead><tr>${Directory.columns[kind].map(([key,label]) => `<th scope="col" data-key="${key}" aria-sort="none"><button onclick="sortDirectory('${key}')">${label}<span aria-hidden="true">↕</span></button></th>`).join('')}</tr></thead><tbody id="databaseRows"></tbody></table></div><p class="database-footnote">Export includes all matching rows in the displayed order, with full numeric power values.</p>`;
+    <div class="database-scroll" tabindex="0" aria-label="Sortable ${kind} list"><table class="database-table"><thead><tr>${Directory.columns[kind].map(([key,label]) => `<th scope="col" data-key="${key}" aria-sort="none"><button onclick="sortDirectory('${key}')">${label}<span aria-hidden="true">↕</span></button></th>`).join('')}</tr></thead><tbody id="databaseRows"></tbody></table></div><p class="database-footnote">Export includes all matching rows in the displayed order, with full numeric power values.${kind === 'players' ? ' Brackets show the highest power seen for that player.' : ''}</p>`;
   renderDirectoryRows(); icons();
 }
 function sortDirectory(key) {
@@ -549,7 +549,7 @@ function renderDirectoryRows() {
   const d = directoryState;
   d.visible = Directory.sorted(d.rows, d.key, d.asc, d.query);
   document.getElementById('databaseCount').textContent = `${num(d.visible.length)} / ${num(d.rows.length)} ${d.kind}`;
-  document.getElementById('databaseRows').innerHTML = d.visible.length ? d.visible.map(r => `<tr>${Directory.columns[d.kind].map(([key]) => `<td class="${['power','members','server'].includes(key) ? 'numeric' : ''}">${r[key] == null ? '—' : key === 'name' && d.kind === 'alliances' || key === 'alliance' ? `<a href="#a/${encodeURIComponent(r.id)}">${esc(r[key])}</a>` : ['power','members'].includes(key) ? num(r[key]) : esc(r[key])}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${Directory.columns[d.kind].length}" class="empty">No matches. Try another name or server.</td></tr>`;
+  document.getElementById('databaseRows').innerHTML = d.visible.length ? d.visible.map(r => `<tr>${Directory.columns[d.kind].map(([key]) => `<td class="${['power','members','server'].includes(key) ? 'numeric' : ''}">${r[key] == null ? '—' : key === 'name' && d.kind === 'alliances' || key === 'alliance' ? `<a href="#a/${encodeURIComponent(r.id)}">${esc(r[key])}</a>` : ['power','members'].includes(key) ? num(r[key]) + (key === 'power' && r.peak != null ? ` <span class="power-peak" title="Max seen power">(${num(r.peak)})</span>` : '') : esc(r[key])}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${Directory.columns[d.kind].length}" class="empty">No matches. Try another name or server.</td></tr>`;
   document.querySelectorAll('.database-table th').forEach(th => {
     const active = th.dataset.key === d.key;
     th.setAttribute('aria-sort', active ? d.asc ? 'ascending' : 'descending' : 'none');
@@ -647,6 +647,7 @@ async function main() {
   STATE.alliances = merged.alliances;
   STATE.history = merged.history;
   STATE.mergeReport = merged.report;
+  STATE.peaks = Directory.peaks(unlocked.playerPeaks, leaderboard);
   topMeta.innerHTML = `${meta ? `Updated ${esc(relTime(meta.generatedAtUtc))} · ` : ""}<button type="button" class="lock-button" onclick="lockSite()">Lock</button>`;
   render();
 }
