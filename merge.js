@@ -36,7 +36,7 @@ const DataMerge = (() => {
 
   /* ---------- merge ---------- */
   function apply(alliances, history, observations) {
-    const report = {updatedAlliances: 0, addedAlliances: 0, updatedPlayers: 0, addedPlayers: 0, movedPlayers: 0, skipped: 0};
+    const report = {updatedAlliances: 0, addedAlliances: 0, updatedPlayers: 0, addedPlayers: 0, movedPlayers: 0, skipped: 0, removedEmpty: 0};
     const out = (alliances || []).map(a => ({...a, members: (a.members || []).map(m => ({...m}))}));
     const hist = Object.fromEntries(Object.entries(history || {}).map(([id, points]) => [id, [...(points || [])]]));
     const obs = observations || {};
@@ -104,7 +104,10 @@ const DataMerge = (() => {
         members.set(o.uid, {a: target, m});
       } else report.skipped++;
     }
-    return {alliances: out, history: hist, report};
+    // Alliances with no known members (e.g. seen only on the alliance leaderboard) are not listed.
+    const listed = out.filter(a => a.members.some(m => !m.movedToAllianceId));
+    report.removedEmpty = out.length - listed.length;
+    return {alliances: listed, history: hist, report};
   }
 
   return {apply, fromSeasonLeaderboard};
