@@ -33,13 +33,23 @@ Deployed to GitHub Pages by `.github/workflows/pages.yml` on every push to `mast
 The workflow publishes an explicit file list: a new file the page loads must be added to
 its `cp` step and to the `.gitignore` whitelist, or it 404s on the live site.
 
+## All Alliances and All Players
+
+Both tables use the same headers, in the same order:
+
+| Page | Columns |
+| --- | --- |
+| All Alliances | Alliance Name, Alliance Tag, Server Number, Members, Power |
+| All Players | Player Name, Alliance Name, Alliance Tag, Server Number, Power |
+
+Labelled search boxes sit above each table (All Players: player name, alliance name,
+alliance tag; All Alliances: alliance name, alliance tag). Every filled box must match;
+**Clear filters** empties them. The header search matches any of these fields.
+
 ## CSV exports
 
-**All Alliances** and **All Players** export the filtered rows in the displayed order. Both
-add a `Last Updated (UTC)` column. Player power is written as `current (max seen)`, e.g.
+The export button shows how many rows it will write (e.g. `Export 12 players (CSV)`) and
+exports the filtered rows in the displayed order. Columns are the table columns plus
+`Last Updated (UTC)`. Player power is written as `current (max seen)`, e.g.
 `461719324 (480112905)`, matching the table; max seen is the highest power in any verified
 roster capture or season-leaderboard capture.
-
-Both tables share headers (Name, Alliance Tag, Server Number, then Members/Power). Both pages have labelled search boxes (All Players:
-player name, alliance name, alliance tag; All Alliances: alliance name, tag); filled boxes must all
-match, and the export button shows how many rows it will write. The header search matches any field.
