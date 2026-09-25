@@ -1,11 +1,11 @@
 /* Complete records are sorted together; exports use the same filtered order. */
 const Directory = (() => {
   const columns = {
-    alliances: [['name', 'Alliance name'], ['abbr', 'Alliance tag'], ['server', 'Server number'], ['power', 'Alliance power'], ['members', 'Member count']],
-    players: [['name', 'Player name'], ['alliance', 'Alliance'], ['abbr', 'Alliance tag'], ['power', 'Player power'], ['server', 'Server number']]
+    alliances: [['name', 'Alliance Name'], ['abbr', 'Alliance Tag'], ['server', 'Server Number'], ['members', 'Members'], ['power', 'Power']],
+    players: [['name', 'Player Name'], ['alliance', 'Alliance Name'], ['abbr', 'Alliance Tag'], ['server', 'Server Number'], ['power', 'Power']]
   };
   // CSV-only extra column; the on-screen table keeps `columns` as-is.
-  const csvExtra = {alliances: [['updated', 'Last updated (UTC)']], players: [['updated', 'Last updated (UTC)']]};
+  const csvExtra = {alliances: [['updated', 'Last Updated (UTC)']], players: [['updated', 'Last Updated (UTC)']]};
   const utc = ms => ms ? new Date(ms).toISOString().slice(0, 19).replace('T', ' ') : null;
   const power = v => v == null || String(v).trim() === '' || !(Number(v) >= 0) ? null : Number(v);
   /* Highest power seen per uid: exported roster peaks plus every season-leaderboard capture. */

@@ -536,8 +536,8 @@ function renderDetail(allianceId) {
 
 let directoryState = {kind: 'alliances', key: 'power', asc: false, query: '', fields: {}, rows: [], visible: []};
 const directoryFilters = {
-  players: [['name', 'Player name', 'Any part of a name'], ['alliance', 'Alliance name', 'Any part of a name'], ['abbr', 'Alliance tag', 'e.g. PX1']],
-  alliances: [['name', 'Alliance name', 'Any part of a name'], ['abbr', 'Alliance tag', 'e.g. PX1']]
+  players: [['name', 'Player Name', 'Any part of a name'], ['alliance', 'Alliance Name', 'Any part of a name'], ['abbr', 'Alliance Tag', 'e.g. PX1']],
+  alliances: [['name', 'Alliance Name', 'Any part of a name'], ['abbr', 'Alliance Tag', 'e.g. PX1']]
 };
 function renderFullDirectory(kind) {
   directoryState = {kind, key: 'power', asc: false, query: '', fields: {}, rows: Directory.records(STATE.alliances, kind, STATE.peaks), visible: []};
