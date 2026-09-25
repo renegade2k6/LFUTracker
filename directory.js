@@ -1,7 +1,7 @@
 /* Complete records are sorted together; exports use the same filtered order. */
 const Directory = (() => {
   const columns = {
-    alliances: [['name', 'Alliance name'], ['abbr', 'Abbreviation'], ['server', 'Server number'], ['power', 'Alliance power'], ['members', 'Member count']],
+    alliances: [['name', 'Alliance name'], ['abbr', 'Alliance tag'], ['server', 'Server number'], ['power', 'Alliance power'], ['members', 'Member count']],
     players: [['name', 'Player name'], ['alliance', 'Alliance'], ['abbr', 'Alliance tag'], ['power', 'Player power'], ['server', 'Server number']]
   };
   // CSV-only extra column; the on-screen table keeps `columns` as-is.
