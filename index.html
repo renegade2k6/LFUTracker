@@ -556,6 +556,7 @@ function clearDirectoryFilters() {
   document.querySelectorAll('.database-filters input').forEach(input => { input.value = ''; });
   const search = document.getElementById('searchInput'); if (search) search.value = '';
   renderDirectoryRows();
+  document.querySelector('.database-filters input')?.focus();
 }
 window.clearDirectoryFilters = clearDirectoryFilters;
 function sortDirectory(key) {
@@ -567,7 +568,7 @@ function renderDirectoryRows() {
   const d = directoryState;
   d.visible = Directory.sorted(d.rows, d.key, d.asc, d.query, d.fields);
   document.getElementById('databaseCount').textContent = `${num(d.visible.length)} / ${num(d.rows.length)} ${d.kind}`;
-  document.getElementById('exportLabel').textContent = `Export ${num(d.visible.length)} ${d.visible.length === 1 ? d.kind.slice(0, -1) : d.kind}`;
+  document.getElementById('exportLabel').textContent = `Export ${num(d.visible.length)} ${d.visible.length === 1 ? d.kind.slice(0, -1) : d.kind} (CSV)`;
   document.getElementById('exportButton').disabled = !d.visible.length;
   document.getElementById('clearFilters').hidden = !d.query.trim() && !Object.values(d.fields).some(v => String(v).trim());
   document.getElementById('databaseRows').innerHTML = d.visible.length ? d.visible.map(r => `<tr>${Directory.columns[d.kind].map(([key]) => `<td class="${['power','members','server'].includes(key) ? 'numeric' : ''}">${r[key] == null ? '—' : key === 'name' && d.kind === 'alliances' || key === 'alliance' || key === 'abbr' && d.kind === 'players' ? `<a href="#a/${encodeURIComponent(r.id)}">${esc(r[key])}</a>` : ['power','members'].includes(key) ? num(r[key]) + (key === 'power' && r.peak != null ? ` <span class="power-peak" title="Max seen power">(${num(r.peak)})</span>` : '') : esc(r[key])}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${Directory.columns[d.kind].length}" class="empty">No matches. Try another name, tag or server.</td></tr>`;
