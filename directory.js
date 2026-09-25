@@ -2,7 +2,7 @@
 const Directory = (() => {
   const columns = {
     alliances: [['name', 'Alliance name'], ['abbr', 'Abbreviation'], ['server', 'Server number'], ['power', 'Alliance power'], ['members', 'Member count']],
-    players: [['name', 'Player name'], ['alliance', 'Alliance'], ['power', 'Player power'], ['server', 'Server number']]
+    players: [['name', 'Player name'], ['alliance', 'Alliance'], ['abbr', 'Alliance tag'], ['power', 'Player power'], ['server', 'Server number']]
   };
   // CSV-only extra column; the on-screen table keeps `columns` as-is.
   const csvExtra = {alliances: [['updated', 'Last updated (UTC)']], players: [['updated', 'Last updated (UTC)']]};
@@ -22,7 +22,7 @@ const Directory = (() => {
     const players = new Map();
     alliances.forEach(a => (a.members || []).forEach((m, i) => {
       const key = m.uid ? String(m.uid) : `${a.allianceId}/${i}`;
-      const row = {name: m.name || 'Unknown', alliance: a.name || a.abbr || 'Unknown', power: m.power ?? null,
+      const row = {name: m.name || 'Unknown', alliance: a.name || a.abbr || 'Unknown', abbr: a.abbr || null, power: m.power ?? null,
         server: m.originServerId ?? a.originServerId ?? null, id: a.allianceId, captured: Date.parse(m.capturedAtUtc || a.capturedAtUtc) || 0};
       if (!players.has(key) || row.captured > players.get(key).captured) players.set(key, row);
     }));
@@ -31,9 +31,12 @@ const Directory = (() => {
       return {...r, peak: seen.length ? Math.max(...seen) : null, updated: utc(r.captured)};
     });
   }
-  function sorted(rows, key, asc, query = '') {
+  const has = (r, k, q) => String(r[k] ?? '').toLocaleLowerCase().includes(q);
+  /* `query` matches any text field; `fields` ({name, alliance, abbr}) must each match their own column. */
+  function sorted(rows, key, asc, query = '', fields = {}) {
     const q = query.trim().toLocaleLowerCase();
-    return rows.filter(r => !q || ['name', 'alliance', 'server'].some(k => String(r[k] ?? '').toLocaleLowerCase().includes(q))).sort((a,b) => {
+    const only = Object.entries(fields).map(([k, v]) => [k, String(v ?? '').trim().toLocaleLowerCase()]).filter(([, v]) => v);
+    return rows.filter(r => (!q || ['name', 'alliance', 'abbr', 'server'].some(k => has(r, k, q))) && only.every(([k, v]) => has(r, k, v))).sort((a,b) => {
       if (a[key] == null) return b[key] == null ? 0 : 1;
       if (b[key] == null) return -1;
       const comparison = ['power','members','server'].includes(key) ? Number(a[key]) - Number(b[key]) : String(a[key]).localeCompare(String(b[key]));

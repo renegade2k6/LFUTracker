@@ -1467,6 +1467,61 @@ tr:last-child td {
   margin: 6px 0 0;
 }
 
+.database-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 18px;
+}
+
+.database-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 200px;
+}
+
+.database-filter span {
+  font: 600 11px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.database-filters .filter {
+  max-width: none;
+}
+
+.clear-filters {
+  align-self: flex-end;
+  min-height: 42px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-dim);
+  font: 600 13px var(--font);
+  cursor: pointer;
+}
+
+.clear-filters:hover {
+  border-color: var(--hazard);
+  color: var(--hazard-text);
+}
+
+.clear-filters[hidden] {
+  display: none;
+}
+
+.export-button:disabled,
+.export-button:disabled:hover {
+  background: linear-gradient(135deg, #ff8c2b, #e05e00);
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .database-toolbar {
   display: flex;
   align-items: center;

@@ -39,3 +39,7 @@ its `cp` step and to the `.gitignore` whitelist, or it 404s on the live site.
 add a `Last updated (UTC)` column. Player power is written as `current (max seen)`, e.g.
 `461719324 (480112905)`, matching the table; max seen is the highest power in any verified
 roster capture or season-leaderboard capture.
+
+All Players also has an `Alliance tag` column. Both pages have labelled search boxes (All Players:
+player name, alliance name, alliance tag; All Alliances: alliance name, tag); filled boxes must all
+match, and the export button shows how many rows it will write. The header search matches any field.
