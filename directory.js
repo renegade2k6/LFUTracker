@@ -31,11 +31,15 @@ const Directory = (() => {
       return {...r, peak: seen.length ? Math.max(...seen) : null, updated: utc(r.captured)};
     });
   }
-  const has = (r, k, q) => String(r[k] ?? '').toLocaleLowerCase().includes(q);
+  /* Names use blank-looking characters (Hangul filler U+3164, Unicode spaces, zero-width and control chars)
+     to fake spaces the game forbids, so search ignores them on both sides: "물망초" finds "물ㅤ망ㅤ초". */
+  const blank = /[\s\p{Cc}\p{Cf}\u115F\u1160\u3164\uFFA0\u2800]/gu;
+  const fold = v => String(v ?? '').replace(blank, '').toLocaleLowerCase();
+  const has = (r, k, q) => fold(r[k]).includes(q);
   /* `query` matches any text field; `fields` ({name, alliance, abbr}) must each match their own column. */
   function sorted(rows, key, asc, query = '', fields = {}) {
-    const q = query.trim().toLocaleLowerCase();
-    const only = Object.entries(fields).map(([k, v]) => [k, String(v ?? '').trim().toLocaleLowerCase()]).filter(([, v]) => v);
+    const q = fold(query);
+    const only = Object.entries(fields).map(([k, v]) => [k, fold(v)]).filter(([, v]) => v);
     return rows.filter(r => (!q || ['name', 'alliance', 'abbr', 'server'].some(k => has(r, k, q))) && only.every(([k, v]) => has(r, k, v))).sort((a,b) => {
       if (a[key] == null) return b[key] == null ? 0 : 1;
       if (b[key] == null) return -1;
