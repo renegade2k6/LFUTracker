@@ -545,7 +545,7 @@ function renderFullDirectory(kind) {
   directoryState = {kind, key: 'power', asc: false, query: '', fields: {}, rows: Directory.records(STATE.alliances, kind, STATE.peaks), visible: [], page: 0};
   document.getElementById('view').innerHTML = `<section class="database-heading"><p class="eyebrow">INTELLIGENCE / DATABASE</p><h1>ALL <span>${kind.toUpperCase()}</span><span class="database-dot">.</span></h1><p>${kind === 'players' ? 'Find a player. Compare power. Explore their alliance and server.' : 'Explore alliances, compare their power, and see how many members they have.'}</p></section>
     <div class="database-filters" role="search" aria-label="Filter ${kind}">${directoryFilters[kind].map(([key, label, hint]) => `<label class="database-filter"><span>${label}</span><input class="filter" type="search" placeholder="${hint}" oninput="filterDirectory('${key}', this.value)"></label>`).join('')}<button type="button" class="clear-filters" id="clearFilters" onclick="clearDirectoryFilters()" hidden>Clear filters</button></div>
-    <div class="database-toolbar"><span id="databaseCount" role="status"></span><span class="database-hint">Click a column header to sort · Filled boxes must all match</span><button type="button" class="export-button" id="exportButton" onclick="exportDirectory()"><svg class="icon-sm" data-lucide="download"></svg> <span id="exportLabel">Export CSV</span></button></div>
+    <div class="database-toolbar"><span id="databaseCount" role="status"></span><span class="database-hint">Click a column header to sort · Filled boxes must all match</span><button type="button" class="export-button" id="exportButton" onclick="exportDirectory()"><svg class="icon-sm" data-lucide="download"></svg> <span id="exportLabel" aria-live="polite">Export CSV</span></button></div>
     <p class="database-mobile-hint">Swipe the table sideways to see all columns.</p>
     <div class="database-scroll" tabindex="0" aria-label="Sortable ${kind} list"><table class="database-table"><thead><tr>${Directory.columns[kind].map(([key,label]) => `<th scope="col" data-key="${key}" aria-sort="none"><button onclick="sortDirectory('${key}')">${label}<span aria-hidden="true">↕</span></button></th>`).join('')}</tr></thead><tbody id="databaseRows"></tbody></table></div>
     <div class="database-pagination"><span id="databasePage" role="status"></span><div><button type="button" id="previousDatabasePage" onclick="changeDirectoryPage(-1)">Previous</button><button type="button" id="nextDatabasePage" onclick="changeDirectoryPage(1)">Next</button></div></div>
@@ -569,13 +569,22 @@ function sortDirectory(key) {
   directoryState.key = key;
   renderDirectoryRows();
 }
+let exportFeedbackTimer;
+function resetExportButton() {
+  const d = directoryState;
+  const button = document.getElementById('exportButton');
+  if (!button) return;
+  button.classList.remove('download-started', 'download-error');
+  button.disabled = !d.visible.length;
+  document.getElementById('exportLabel').textContent = `Export ${num(d.visible.length)} ${d.visible.length === 1 ? d.kind.slice(0, -1) : d.kind} (CSV)`;
+}
 function renderDirectoryRows() {
   const d = directoryState;
   d.visible = Directory.sorted(d.rows, d.key, d.asc, d.query, d.fields);
   d.page = 0;
   document.getElementById('databaseCount').textContent = `${num(d.visible.length)} / ${num(d.rows.length)} ${d.kind}`;
-  document.getElementById('exportLabel').textContent = `Export ${num(d.visible.length)} ${d.visible.length === 1 ? d.kind.slice(0, -1) : d.kind} (CSV)`;
-  document.getElementById('exportButton').disabled = !d.visible.length;
+  clearTimeout(exportFeedbackTimer);
+  resetExportButton();
   document.getElementById('clearFilters').hidden = !d.query.trim() && !Object.values(d.fields).some(v => String(v).trim());
   renderDirectoryPage();
   document.querySelector('.database-scroll').scrollTop = 0;
@@ -603,11 +612,28 @@ function changeDirectoryPage(step) {
 }
 function exportDirectory() {
   const d = directoryState;
-  const url = URL.createObjectURL(new Blob([Directory.csv(d.visible, d.kind)], {type: 'text/csv;charset=utf-8;'}));
-  const a = document.createElement('a'); a.href = url; a.download = `${d.kind}-${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a); a.click(); a.remove();
-  // Let the browser finish opening the download before releasing the blob URL.
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  const button = document.getElementById('exportButton');
+  if (!button || button.disabled) return;
+  clearTimeout(exportFeedbackTimer);
+  button.classList.remove('download-started', 'download-error');
+  let url;
+  try {
+    url = URL.createObjectURL(new Blob([Directory.csv(d.visible, d.kind)], {type: 'text/csv;charset=utf-8;'}));
+    const a = document.createElement('a'); a.href = url; a.download = `${d.kind}-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    // Let the browser finish opening the download before releasing the blob URL.
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    button.classList.add('download-started');
+    document.getElementById('exportLabel').textContent = 'Download started ✓';
+  } catch (err) {
+    if (url) URL.revokeObjectURL(url);
+    button.classList.add('download-error');
+    document.getElementById('exportLabel').textContent = 'Could not start download';
+    console.error('CSV download failed:', err);
+  }
+  exportFeedbackTimer = setTimeout(() => {
+    if (button.isConnected && button === document.getElementById('exportButton')) resetExportButton();
+  }, 3500);
 }
 
 function render() {

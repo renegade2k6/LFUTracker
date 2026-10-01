@@ -1541,8 +1541,14 @@ tr:last-child td {
 }
 
 .export-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 250px;
+  min-height: 44px;
   margin-left: auto;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: var(--radius);
   padding: 10px 20px;
   background: linear-gradient(135deg, #ff8c2b, #e05e00);
@@ -1550,13 +1556,40 @@ tr:last-child td {
   font: 700 13px var(--font);
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(255, 122, 24, 0.3);
-  transition: all 0.2s var(--ease-spring);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
-.export-button:hover {
-  background: linear-gradient(135deg, #ffa048, #ff6c0a);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 22px rgba(255, 122, 24, 0.45);
+.export-button:hover:not(:disabled),
+.export-button:focus-visible {
+  background: linear-gradient(135deg, #ffd09a, #ff942e);
+  border-color: #ffe0bd;
+  transform: translateY(-3px) scale(1.035);
+  box-shadow: 0 0 0 3px rgba(255, 122, 24, 0.22), 0 9px 28px rgba(255, 122, 24, 0.55);
+}
+
+.export-button:active:not(:disabled) {
+  background: #d95800;
+  transform: translateY(1px) scale(0.97);
+  box-shadow: 0 1px 5px rgba(255, 122, 24, 0.25);
+  transition-duration: 0s;
+}
+
+.export-button.download-started,
+.export-button.download-started:hover {
+  background: linear-gradient(135deg, #6ee7b7, #10b981);
+  border-color: #a7f3d0;
+  color: #07120e;
+  transform: none;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2), 0 5px 18px rgba(16, 185, 129, 0.32);
+}
+
+.export-button.download-error,
+.export-button.download-error:hover {
+  background: linear-gradient(135deg, #fda4af, #f43f5e);
+  border-color: #fecdd3;
+  color: #25080c;
+  transform: none;
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2);
 }
 
 .database-scroll {
