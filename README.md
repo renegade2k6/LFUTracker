@@ -48,8 +48,10 @@ alliance tag; All Alliances: alliance name, alliance tag). Every filled box must
 
 ## CSV exports
 
-The export button shows how many rows it will write (e.g. `Export 12 players (CSV)`) and
-exports the filtered rows in the displayed order. Columns are the table columns plus
-`Last Updated (UTC)`. Player power is written as `current (max seen)`, e.g.
+The tables show 100 rows per page to keep large directories responsive. The export
+button shows how many rows it will write (e.g. `Export 12 players (CSV)`) and exports
+all filtered rows in the current sort order, including rows on other pages. Columns
+are the table columns plus `Last Updated (UTC)`. Player power is written as
+`current (max seen)`, e.g.
 `461719324 (480112905)`, matching the table; max seen is the highest power in any verified
 roster capture or season-leaderboard capture.

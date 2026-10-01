@@ -60,6 +60,7 @@
 <script>
 let STATE = { alliances: [], history: {}, mergeReport: null, peaks: new Map() };
 let playerTracking = {records: {}, saved: true, conflicts: new Set()};
+let trackedAlliances = null;
 
 function playerChangeHtml(member, capturedAtUtc) {
   const change = PlayerPower.movement(playerTracking, member, capturedAtUtc);
@@ -534,17 +535,21 @@ function renderDetail(allianceId) {
   requestAnimationFrame(() => drawTrendChart(document.getElementById("trendChart"), points));
 }
 
-let directoryState = {kind: 'alliances', key: 'power', asc: false, query: '', fields: {}, rows: [], visible: []};
+const DIRECTORY_PAGE_SIZE = 100;
+let directoryState = {kind: 'alliances', key: 'power', asc: false, query: '', fields: {}, rows: [], visible: [], page: 0};
 const directoryFilters = {
   players: [['name', 'Player Name', 'Any part of a name'], ['alliance', 'Alliance Name', 'Any part of a name'], ['abbr', 'Alliance Tag', 'e.g. PX1']],
   alliances: [['name', 'Alliance Name', 'Any part of a name'], ['abbr', 'Alliance Tag', 'e.g. PX1']]
 };
 function renderFullDirectory(kind) {
-  directoryState = {kind, key: 'power', asc: false, query: '', fields: {}, rows: Directory.records(STATE.alliances, kind, STATE.peaks), visible: []};
+  directoryState = {kind, key: 'power', asc: false, query: '', fields: {}, rows: Directory.records(STATE.alliances, kind, STATE.peaks), visible: [], page: 0};
   document.getElementById('view').innerHTML = `<section class="database-heading"><p class="eyebrow">INTELLIGENCE / DATABASE</p><h1>ALL <span>${kind.toUpperCase()}</span><span class="database-dot">.</span></h1><p>${kind === 'players' ? 'Find a player. Compare power. Explore their alliance and server.' : 'Explore alliances, compare their power, and see how many members they have.'}</p></section>
     <div class="database-filters" role="search" aria-label="Filter ${kind}">${directoryFilters[kind].map(([key, label, hint]) => `<label class="database-filter"><span>${label}</span><input class="filter" type="search" placeholder="${hint}" oninput="filterDirectory('${key}', this.value)"></label>`).join('')}<button type="button" class="clear-filters" id="clearFilters" onclick="clearDirectoryFilters()" hidden>Clear filters</button></div>
-    <div class="database-toolbar"><span id="databaseCount" role="status"></span><span class="database-hint">Click a column header to sort · Filled boxes must all match</span><button class="export-button" id="exportButton" onclick="exportDirectory()"><svg class="icon-sm" data-lucide="download"></svg> <span id="exportLabel">Export CSV</span></button></div>
-    <div class="database-scroll" tabindex="0" aria-label="Sortable ${kind} list"><table class="database-table"><thead><tr>${Directory.columns[kind].map(([key,label]) => `<th scope="col" data-key="${key}" aria-sort="none"><button onclick="sortDirectory('${key}')">${label}<span aria-hidden="true">↕</span></button></th>`).join('')}</tr></thead><tbody id="databaseRows"></tbody></table></div><p class="database-footnote">Export includes all matching rows in the displayed order, with full numeric power values.${kind === 'players' ? ' Brackets show the highest power seen for that player.' : ''}</p>`;
+    <div class="database-toolbar"><span id="databaseCount" role="status"></span><span class="database-hint">Click a column header to sort · Filled boxes must all match</span><button type="button" class="export-button" id="exportButton" onclick="exportDirectory()"><svg class="icon-sm" data-lucide="download"></svg> <span id="exportLabel">Export CSV</span></button></div>
+    <p class="database-mobile-hint">Swipe the table sideways to see all columns.</p>
+    <div class="database-scroll" tabindex="0" aria-label="Sortable ${kind} list"><table class="database-table"><thead><tr>${Directory.columns[kind].map(([key,label]) => `<th scope="col" data-key="${key}" aria-sort="none"><button onclick="sortDirectory('${key}')">${label}<span aria-hidden="true">↕</span></button></th>`).join('')}</tr></thead><tbody id="databaseRows"></tbody></table></div>
+    <div class="database-pagination"><span id="databasePage" role="status"></span><div><button type="button" id="previousDatabasePage" onclick="changeDirectoryPage(-1)">Previous</button><button type="button" id="nextDatabasePage" onclick="changeDirectoryPage(1)">Next</button></div></div>
+    <p class="database-footnote">Export includes all matching rows in the current sort order, including other pages, with full numeric power values.${kind === 'players' ? ' Brackets show the highest power seen for that player.' : ''}</p>`;
   renderDirectoryRows(); icons();
 }
 function filterDirectory(key, value) {
@@ -567,28 +572,51 @@ function sortDirectory(key) {
 function renderDirectoryRows() {
   const d = directoryState;
   d.visible = Directory.sorted(d.rows, d.key, d.asc, d.query, d.fields);
+  d.page = 0;
   document.getElementById('databaseCount').textContent = `${num(d.visible.length)} / ${num(d.rows.length)} ${d.kind}`;
   document.getElementById('exportLabel').textContent = `Export ${num(d.visible.length)} ${d.visible.length === 1 ? d.kind.slice(0, -1) : d.kind} (CSV)`;
   document.getElementById('exportButton').disabled = !d.visible.length;
   document.getElementById('clearFilters').hidden = !d.query.trim() && !Object.values(d.fields).some(v => String(v).trim());
-  document.getElementById('databaseRows').innerHTML = d.visible.length ? d.visible.map(r => `<tr>${Directory.columns[d.kind].map(([key]) => `<td class="${['power','members','server'].includes(key) ? 'numeric' : ''}">${r[key] == null ? '—' : key === 'name' && d.kind === 'alliances' || key === 'alliance' || key === 'abbr' && d.kind === 'players' ? `<a href="#a/${encodeURIComponent(r.id)}">${esc(r[key])}</a>` : ['power','members'].includes(key) ? num(r[key]) + (key === 'power' && r.peak != null ? ` <span class="power-peak" title="Max seen power">(${num(r.peak)})</span>` : '') : esc(r[key])}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${Directory.columns[d.kind].length}" class="empty">No matches. Try another name, tag or server.</td></tr>`;
+  renderDirectoryPage();
+  document.querySelector('.database-scroll').scrollTop = 0;
   document.querySelectorAll('.database-table th').forEach(th => {
     const active = th.dataset.key === d.key;
     th.setAttribute('aria-sort', active ? d.asc ? 'ascending' : 'descending' : 'none');
     th.querySelector('span').textContent = active ? d.asc ? '↑' : '↓' : '↕';
   });
 }
+function renderDirectoryPage() {
+  const d = directoryState;
+  const start = d.page * DIRECTORY_PAGE_SIZE;
+  const pageRows = d.visible.slice(start, start + DIRECTORY_PAGE_SIZE);
+  document.getElementById('databaseRows').innerHTML = pageRows.length ? pageRows.map(r => `<tr>${Directory.columns[d.kind].map(([key]) => `<td class="${['power','members','server'].includes(key) ? 'numeric' : ''}">${r[key] == null ? '—' : key === 'name' && d.kind === 'alliances' || key === 'alliance' || key === 'abbr' && d.kind === 'players' ? `<a href="#a/${encodeURIComponent(r.id)}">${esc(r[key])}</a>` : ['power','members'].includes(key) ? num(r[key]) + (key === 'power' && r.peak != null ? ` <span class="power-peak" title="Max seen power">(${num(r.peak)})</span>` : '') : esc(r[key])}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${Directory.columns[d.kind].length}" class="empty">No matches. Try another name, tag or server.</td></tr>`;
+  document.getElementById('databasePage').textContent = d.visible.length ? `Showing ${num(start + 1)}–${num(start + pageRows.length)} of ${num(d.visible.length)}` : 'No matching rows';
+  document.getElementById('previousDatabasePage').disabled = d.page === 0;
+  document.getElementById('nextDatabasePage').disabled = start + pageRows.length >= d.visible.length;
+}
+function changeDirectoryPage(step) {
+  const d = directoryState;
+  const lastPage = Math.max(0, Math.ceil(d.visible.length / DIRECTORY_PAGE_SIZE) - 1);
+  d.page = Math.max(0, Math.min(lastPage, d.page + step));
+  renderDirectoryPage();
+  document.querySelector('.database-scroll').scrollTop = 0;
+}
 function exportDirectory() {
   const d = directoryState;
   const url = URL.createObjectURL(new Blob([Directory.csv(d.visible, d.kind)], {type: 'text/csv;charset=utf-8;'}));
   const a = document.createElement('a'); a.href = url; a.download = `${d.kind}-${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  document.body.appendChild(a); a.click(); a.remove();
+  // Let the browser finish opening the download before releasing the blob URL.
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 function render() {
-  let storage;
-  try { storage = window.localStorage; } catch { storage = null; }
-  playerTracking = PlayerPower.update(STATE.alliances, storage);
+  if (trackedAlliances !== STATE.alliances) {
+    let storage;
+    try { storage = window.localStorage; } catch { storage = null; }
+    playerTracking = PlayerPower.update(STATE.alliances, storage);
+    trackedAlliances = STATE.alliances;
+  }
   const s = document.getElementById("searchInput");
   if (s) s.value = "";
   const route = currentRoute();
@@ -597,6 +625,12 @@ function render() {
     const active = link.dataset.nav === (route.view === 'detail' ? 'alliances' : section || 'overview');
     if (active) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current');
   });
+  const activeNav = document.querySelector('[data-nav][aria-current="page"]');
+  const nav = activeNav?.closest('nav');
+  if (nav && nav.scrollWidth > nav.clientWidth) {
+    const item = activeNav.getBoundingClientRect(), viewport = nav.getBoundingClientRect();
+    nav.scrollLeft += item.left - viewport.left - (viewport.width - item.width) / 2;
+  }
   document.getElementById('pageLabel').textContent = route.view === 'detail' ? 'Alliance profile' : section === 'alliances' ? 'Alliance directory' : section === 'leaders' ? 'Leaderboards' : 'Overview';
   if (route.view === "detail") renderDetail(route.id);
   else if (section === "all-alliances" || section === "all-players") {
@@ -716,4 +750,3 @@ window.addEventListener('keydown', e => {
 </script>
 </body>
 </html>
-
