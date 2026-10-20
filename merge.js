@@ -104,6 +104,20 @@ const DataMerge = (() => {
         members.set(o.uid, {a: target, m});
       } else report.skipped++;
     }
+    // A player listed in several alliances belongs to the one whose sighting is newest; the
+    // older listings are marked as moved (covers roster-vs-roster, e.g. after changing alliance).
+    const listings = new Map();
+    for (const a of out) for (const m of a.members) {
+      if (m.uid == null || m.movedToAllianceId) continue;
+      const list = listings.get(String(m.uid)) || [];
+      list.push({a, m, t: memberTime(a, m)});
+      listings.set(String(m.uid), list);
+    }
+    for (const list of listings.values()) {
+      if (list.length < 2) continue;
+      const newest = list.reduce((best, x) => (x.t > best.t ? x : best));
+      for (const x of list) if (x !== newest) { x.m.movedToAllianceId = newest.a.allianceId; report.movedPlayers++; }
+    }
     // Alliances with no known members (e.g. seen only on the alliance leaderboard) are not listed.
     const listed = out.filter(a => a.members.some(m => !m.movedToAllianceId));
     report.removedEmpty = out.length - listed.length;
