@@ -21,6 +21,7 @@ const Directory = (() => {
       updated: utc(Date.parse(a.updatedAtUtc || a.capturedAtUtc))}));
     const players = new Map();
     alliances.forEach(a => (a.members || []).forEach((m, i) => {
+      if (m.movedToAllianceId) return;
       const key = m.uid ? String(m.uid) : `${a.allianceId}/${i}`;
       const row = {name: m.name || 'Unknown', alliance: a.name || a.abbr || 'Unknown', abbr: a.abbr || null, power: m.power ?? null,
         server: m.originServerId ?? a.originServerId ?? null, id: a.allianceId, captured: Date.parse(m.capturedAtUtc || a.capturedAtUtc) || 0};

@@ -310,7 +310,7 @@ function onSearch(q) {
   const matches = ranking.sorted.filter(a =>
     (a.name || "").toLowerCase().includes(q) ||
     (a.abbr || "").toLowerCase().includes(q) ||
-    (a.members || []).some(m => (m.name || "").toLowerCase().includes(q))
+    activeMembers(a).some(m => (m.name || "").toLowerCase().includes(q))
   );
   view.innerHTML = `<h2 class="section-title"><svg class="icon-sm" data-lucide="search"></svg>Results for "${esc(q)}"</h2>` +
     (matches.length
@@ -449,7 +449,7 @@ function updateDirectory() {
   const sort = document.getElementById('directorySort').value;
   const list = ranking.sorted.filter(a => !server || String(a.originServerId) === server);
   if (sort === 'name') list.sort((a,b) => String(a.name).localeCompare(String(b.name)));
-  if (sort === 'members') list.sort((a,b) => (b.members || []).length - (a.members || []).length);
+  if (sort === 'members') list.sort((a,b) => activeMembers(b).length - activeMembers(a).length);
   document.getElementById('directoryGrid').innerHTML = list.map(a => renderCardHtml(a, ranking)).join('') || '<div class="empty">No alliances on this server.</div>';
   document.getElementById('directoryCount').textContent = `${list.length} alliance${list.length === 1 ? '' : 's'}`;
   drawDirectorySparks(list);
@@ -473,7 +473,7 @@ function renderDetail(allianceId) {
   const points = STATE.history[allianceId] || [];
   const ranking = rankingSummary();
 
-  const membersSorted = (a.members || []).slice().sort((x, y) => (Number(y.power) || 0) - (Number(x.power) || 0));
+  const membersSorted = activeMembers(a).slice().sort((x, y) => (Number(y.power) || 0) - (Number(x.power) || 0));
   const topMemberPower = Math.max(...membersSorted.map(m => Number(m.power) || 0), 1);
   const rows = membersSorted.map((m, i) => {
     const pct = Math.min(100, ((Number(m.power) || 0) / topMemberPower) * 100);
