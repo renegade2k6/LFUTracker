@@ -16,8 +16,12 @@ const Directory = (() => {
     Object.entries(leaderboard?.players?.history || {}).forEach(([uid, points]) => (points || []).forEach(([, v]) => see(uid, v)));
     return out;
   }
+  /* One member count everywhere: a complete, verified roster minus anyone seen in another alliance since
+     (the same number the alliance page shows); otherwise the game's own summary count. */
+  const memberCount = a => a.rosterComplete === true && Array.isArray(a.members)
+    ? a.members.filter(m => !m.movedToAllianceId).length : a.curMember ?? null;
   function records(alliances, kind, peakMap = new Map()) {
-    if (kind === 'alliances') return alliances.map(a => ({name: a.name || a.abbr || 'Unknown', abbr: a.abbr || null, server: a.originServerId ?? null, power: a.fightPower ?? null, members: a.curMember ?? null, id: a.allianceId,
+    if (kind === 'alliances') return alliances.map(a => ({name: a.name || a.abbr || 'Unknown', abbr: a.abbr || null, server: a.originServerId ?? null, power: a.fightPower ?? null, members: memberCount(a), id: a.allianceId,
       updated: utc(Date.parse(a.updatedAtUtc || a.capturedAtUtc))}));
     const players = new Map();
     alliances.forEach(a => (a.members || []).forEach((m, i) => {
