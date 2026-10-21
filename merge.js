@@ -13,6 +13,9 @@ const DataMerge = (() => {
   const nameKey = (abbr, name) => `${String(abbr ?? '').trim()}|${String(name ?? '').trim()}`;
   const allianceTime = a => time(a.updatedAtUtc) ?? time(a.capturedAtUtc) ?? -Infinity;
   const memberTime = (a, m) => time(m.capturedAtUtc) ?? time(a.capturedAtUtc) ?? -Infinity;
+  // When a complete, ownership-verified Members-list capture was taken (null if the alliance has none).
+  const verifiedRosterTime = a => String(a.captureSource ?? '').toLowerCase() === 'al.rank' && a.ownershipVerified === true && a.rosterComplete === true
+    ? time(a.capturedAtUtc) : null;
 
   /* ---------- adapters: one per source ---------- */
   function fromSeasonLeaderboard(lb) {
@@ -95,6 +98,9 @@ const DataMerge = (() => {
           Object.assign(found.m, {...fields, name: o.name ?? found.m.name, originServerId: o.originServerId ?? found.m.originServerId});
           report.updatedPlayers++;
         }
+      } else if (target && o.at <= (verifiedRosterTime(target) ?? -Infinity)) {
+        // The target's complete roster is newer than this sighting and doesn't list the player: they have left.
+        report.skipped++;
       } else if (target && (!found || o.at > memberTime(found.a, found.m))) {
         // New to the site, or seen in a different alliance more recently than their last roster.
         const m = {uid: o.uid, originServerId: o.originServerId, ...fields, source: o.source,
