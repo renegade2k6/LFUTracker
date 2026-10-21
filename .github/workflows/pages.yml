@@ -24,7 +24,7 @@ jobs:
           mkdir -p _site/data
           cp index.html theme.css directory.js rankings.js player-power.js merge.js vault.js _site/
           cp logo.png favicon-32.png apple-touch-icon.png hero-radar.png _site/
-          cp data/site.enc.json _site/data/
+          cp data/site.enc.json data/sample.json _site/data/
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v4
         with:

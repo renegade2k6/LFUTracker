@@ -1955,3 +1955,26 @@ tr:last-child td {
 .login-card button:disabled { opacity: 0.6; cursor: progress; }
 .login-error { min-height: 1.2em; color: var(--danger) !important; font-size: 0.9rem; }
 .lock-button { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+
+/* Locked (public sample) mode: only Overview is reachable, search is hidden. */
+body.locked nav a:not([data-nav="overview"]), body.locked .search { display: none; }
+.login-button { display: inline-flex; align-items: center; gap: 6px; background: var(--hazard); color: #111; border: 0; border-radius: 6px; padding: 6px 12px; font: inherit; font-weight: 600; cursor: pointer; }
+.login-button:hover { filter: brightness(1.1); }
+.sample-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; margin-bottom: 48px; }
+.sample-row { min-height: 0; padding: 10px 20px; }
+.sample-row .board-name { font-size: 14px; }
+.power-bar { height: 3px; margin-top: 7px; border-radius: 2px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
+.power-bar span { display: block; height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--hazard), var(--hazard-text)); }
+.board-lock { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px 20px; border: 0; border-top: 1px solid var(--border-subtle);
+  background: linear-gradient(180deg, rgba(255, 122, 24, 0.02), var(--hazard-dim)); color: var(--hazard-text); font: 600 13px var(--mono); letter-spacing: 0.04em; cursor: pointer; transition: background 0.18s ease; }
+.board-lock:hover { background: rgba(255, 122, 24, 0.22); }
+.sample-left { display: grid; gap: 24px; }
+.perks { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.perks .eyebrow { grid-column: 1 / -1; margin: 0; }
+.perk { display: flex; gap: 12px; padding: 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.perk > svg { flex-shrink: 0; width: 22px; height: 22px; color: var(--hazard); }
+.perk strong { display: block; color: #fff; font: 700 15px var(--display); letter-spacing: 0.04em; text-transform: uppercase; }
+.perk span { display: block; margin-top: 4px; color: var(--text-dim); font-size: 12.5px; line-height: 1.5; }
+@media (max-width: 900px) { .sample-cols { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .perks { grid-template-columns: 1fr; } }
+.primary-action { cursor: pointer; }

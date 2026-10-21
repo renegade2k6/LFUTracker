@@ -18,3 +18,4 @@
 /data/*
 # Only the encrypted bundle is published; plain data stays local (scripts/lfdata.py).
 !/data/site.enc.json
+!/data/sample.json

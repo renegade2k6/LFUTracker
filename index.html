@@ -637,6 +637,7 @@ function exportDirectory() {
 }
 
 function render() {
+  if (SAMPLE_MODE) return renderSample();
   if (trackedAlliances !== STATE.alliances) {
     let storage;
     try { storage = window.localStorage; } catch { storage = null; }
@@ -682,6 +683,7 @@ function askPassword(bundle) {
         <label class="login-remember"><input id="rememberDevice" type="checkbox"> Remember on this device</label>
         <button type="submit" class="primary-action">Unlock</button>
         <p class="login-error" id="loginError" role="alert"></p>
+        ${SAMPLE_MODE ? '<button type="button" class="lock-button" onclick="render()">Back to preview</button>' : ''}
       </form>`;
     icons();
     const input = document.getElementById("sitePassword");
@@ -706,21 +708,52 @@ function askPassword(bundle) {
 function lockSite() { SiteVault.forget(); location.hash = ""; location.reload(); }
 window.lockSite = lockSite;
 
-async function main() {
-  const errorEl = document.getElementById("error");
-  const topMeta = document.getElementById("topMeta");
+// Locked visitors see only a small public teaser (data/sample.json); everything else needs the password.
+let SAMPLE_MODE = false, SAMPLE = null, BUNDLE = null;
+function renderSample() {
+  document.getElementById('pageLabel').textContent = 'Overview';
+  const rankClass = i => i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+  const maxA = Math.max(...SAMPLE.alliances.map(a => a.power), 1), maxP = Math.max(...SAMPLE.players.map(p => p.power), 1);
+  const row = (i, name, sub, power, max) => `
+    <div class="board-row sample-row">
+      <span class="board-rank ${rankClass(i)}">${i + 1}</span>
+      <div><div class="board-name">${esc(name)}</div>${sub ? `<div class="board-sub">${esc(sub)}</div>` : ''}
+        <div class="power-bar" aria-hidden="true"><span style="width:${Math.max(4, power / max * 100).toFixed(1)}%"></span></div></div>
+      <span class="board-value">${compactNum(power)}</span>
+    </div>`;
+  const lockRow = what => `<button type="button" class="board-lock" onclick="showLogin()"><svg class="icon-sm" data-lucide="lock"></svg>${what} <span aria-hidden="true">→</span></button>`;
+  const stamp = SAMPLE.meta ? new Date(SAMPLE.meta.generatedAtUtc).toISOString().replace('T', ' ').slice(0, 16) + ' UTC' : '';
+  const perks = [['flag', 'Every alliance', 'Full directory with member counts, levels and servers'],
+    ['users', 'Every player', 'Search and filter all survivors, with highest power seen'],
+    ['trending-up', 'Power history', 'Trend charts and rank movement over time'],
+    ['download', 'CSV export', 'Take the sorted, filtered data with you']];
+  document.getElementById('view').innerHTML = `
+    <div class="overview-heading">
+      <div>
+        <p class="eyebrow"><span class="status-dot"></span> LAST FORTRESS / COMMUNITY INTELLIGENCE</p>
+        <h2>The strongest alliances.<br><span>The full picture.</span></h2>
+        <p class="intro">Here is a taste of who is on top. Log in to see every alliance and player, how they are moving, and their power over time.</p>
+        <div class="hero-actions"><button type="button" class="primary-action" onclick="showLogin()">Log in for the full data <span aria-hidden="true">→</span></button></div>
+      </div>
+      <div class="hero-radar"><div class="hero-scope" aria-hidden="true"></div><p class="scope-label">ALLIANCE INTELLIGENCE</p><p class="scope-caption">PREVIEW / TOP POWER</p></div>
+    </div>
+    <div class="section-heading"><div><p class="eyebrow">THE FRONT RUNNERS</p><h2 class="section-title">Leading the field</h2></div>
+      <span class="section-caption"><svg class="icon-sm" data-lucide="clock-alert"></svg> Snapshot, not live${stamp ? ` · ${stamp} (${esc(relTime(SAMPLE.meta.generatedAtUtc))})` : ''}</span></div>
+    <div class="sample-cols">
+      <div class="sample-left"><div class="board"><div class="board-title"><svg class="icon-sm" data-lucide="trophy"></svg>Top ${SAMPLE.alliances.length} alliances</div>
+        ${SAMPLE.alliances.map((a, i) => row(i, a.name, '', a.power, maxA)).join('')}
+        ${lockRow('Log in to see every alliance')}</div>
+        <div class="perks"><p class="eyebrow">BEHIND THE LOGIN</p>${perks.map(([icon, title, text]) => `<div class="perk"><svg data-lucide="${icon}"></svg><div><strong>${title}</strong><span>${text}</span></div></div>`).join('')}</div></div>
+      <div class="board"><div class="board-title"><svg class="icon-sm" data-lucide="swords"></svg>Top ${SAMPLE.players.length} players</div>
+        ${SAMPLE.players.map((p, i) => row(i, p.name, p.alliance, p.power, maxP)).join('')}
+        ${lockRow('Log in to see every player')}</div>
+    </div>`;
+  icons();
+}
 
-  const bundle = await loadJson("data/site.enc.json", null);
-  if (bundle.__failed) {
-    errorEl.textContent = `Alliance data is unavailable. Please refresh the page or try again later.`;
-    errorEl.classList.remove("hidden");
-    document.getElementById("view").innerHTML = "";
-    return;
-  }
-  let unlocked = null;
-  const known = SiteVault.saved();
-  if (known) { try { unlocked = await SiteVault.open(bundle, known); } catch { SiteVault.forget(); } }
-  if (!unlocked) unlocked = await askPassword(bundle);
+function startFull(unlocked) {
+  SAMPLE_MODE = false;
+  document.body.classList.remove('locked');
   const alliances = unlocked.alliances || [], history = unlocked.history || {}, meta = unlocked.meta || null, leaderboard = unlocked.leaderboard || null;
 
   // Newest observation wins, whatever in-game source it came from (see merge.js).
@@ -730,7 +763,36 @@ async function main() {
   STATE.history = merged.history;
   STATE.mergeReport = merged.report;
   STATE.peaks = Directory.peaks(unlocked.playerPeaks, leaderboard);
-  topMeta.innerHTML = `${meta ? `Updated ${esc(relTime(meta.generatedAtUtc))} · ` : ""}<button type="button" class="lock-button" onclick="lockSite()">Lock</button>`;
+  document.getElementById("topMeta").innerHTML = `${meta ? `Updated ${esc(relTime(meta.generatedAtUtc))} · ` : ""}<button type="button" class="lock-button" onclick="lockSite()">Lock</button>`;
+  location.hash = "";
+  render();
+}
+
+async function showLogin() {
+  startFull(await askPassword(BUNDLE));
+}
+window.showLogin = showLogin;
+
+async function main() {
+  const errorEl = document.getElementById("error");
+  const topMeta = document.getElementById("topMeta");
+
+  BUNDLE = await loadJson("data/site.enc.json", null);
+  if (BUNDLE.__failed) {
+    errorEl.textContent = `Alliance data is unavailable. Please refresh the page or try again later.`;
+    errorEl.classList.remove("hidden");
+    document.getElementById("view").innerHTML = "";
+    return;
+  }
+  const known = SiteVault.saved();
+  if (known) {
+    try { return startFull(await SiteVault.open(BUNDLE, known)); } catch { SiteVault.forget(); }
+  }
+  SAMPLE = await loadJson("data/sample.json", null);
+  if (SAMPLE.__failed) return showLogin();
+  SAMPLE_MODE = true;
+  document.body.classList.add('locked');
+  topMeta.innerHTML = `${SAMPLE.meta ? `Updated ${esc(relTime(SAMPLE.meta.generatedAtUtc))} · ` : ""}<button type="button" class="login-button" onclick="showLogin()"><svg class="icon-sm" data-lucide="log-in"></svg> Login</button>`;
   render();
 }
 
