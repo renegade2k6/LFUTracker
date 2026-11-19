@@ -14,7 +14,7 @@ const Server = (() => {
   const nameOf = (names, kind, id) => (names && names[kind] && names[kind][id]) || null;
 
   // Explore stores a stage id: 100500 is shown in game as 50-10 (chapter = id / 2000, stage = remainder / 50).
-  const fmtValue = (board, v) => v == null ? '—' : board && board.f === 'stage' ? `${Math.floor(v / 2000)}-${(v % 2000) / 50}` : num(v);
+  const fmtValue = (board, v) => !Number.isFinite(Number(v)) || v == null ? '—' : board && board.f === 'stage' ? `${Math.floor(v / 2000)}-${(v % 2000) / 50}` : num(v);
 
   // The table names ultimate weapons "Hero | Weapon". -> [weapon, hero]
   function exName(names, id) {
@@ -165,7 +165,7 @@ const Server = (() => {
     document.getElementById('svcount').textContent = `${rows.length.toLocaleString('en-US')} of ${b.rows.length.toLocaleString('en-US')} players · ${b.l} · captured ${dateStr(b.ts)}`;
     document.getElementById('svtable').innerHTML = `<table class="pf sv-t"><thead><tr><th class="r">#</th><th>Player</th><th class="al">Alliance</th><th class="n">${esc(b.l)}</th>${b.x ? '<th>Build</th>' : ''}</tr></thead><tbody>${
       rows.map(r => `<tr class="${r[0] <= 3 ? 'top' + r[0] : ''}"><td class="r">${esc(r[0])}</td><td><a href="#p/${encodeURIComponent(r[1])}">${esc(r[2])}</a></td>
-        <td class="al">${r[3] ? `<span class="pf-badge">${esc(r[3])}</span>` : ''}</td><td class="n v">${fmtValue(b, r[4])}</td>
+        <td class="al">${r[3] ? `<span class="pf-badge">${esc(r[3])}</span>` : ''}</td><td class="n v">${esc(fmtValue(b, r[4]))}</td>
         ${b.x ? `<td class="b">${buildHtml(b.x, r[5], data.names)}</td>` : ''}</tr>`).join('')
     }</tbody></table>`;
   }
