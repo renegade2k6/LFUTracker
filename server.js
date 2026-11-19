@@ -31,7 +31,7 @@ const Server = (() => {
   function filterRows(board, q) {
     const needle = (q || '').trim().toLowerCase();
     if (!needle) return board.rows;
-    return board.rows.filter(r => `${r[2]} ${r[3]} ${r[1]}`.toLowerCase().includes(needle));
+    return board.rows.filter(r => `${r[2]} ${r[3]} ${r[1]} #${r[6] ?? ''}`.toLowerCase().includes(needle));
   }
 
   // Detail text for a row: suit pieces / war machine build. Names come from the table dump when it was available.
@@ -145,13 +145,13 @@ const Server = (() => {
       const [weapon, hero] = exName(names, r[5] && r[5].i);
       return `<div class="sv-r ex${rank >= 1 && rank <= 3 ? ' top' + rank : ''}">
       <span class="sv-rk${medal}">${esc(rank)}</span>
-      <a class="sv-nm" href="#p/${encodeURIComponent(r[1])}">${r[3] ? `<span class="sv-tag">[${esc(r[3])}]</span>` : ''}${esc(r[2])}${server != null ? ` <small>#${esc(server)}</small>` : ''}</a>
+      <a class="sv-nm" href="#p/${encodeURIComponent(r[1])}">${r[3] ? `<span class="sv-tag">[${esc(r[3])}]</span>` : ''}${esc(r[2])}${(r[6] ?? server) != null ? ` <small>#${esc(r[6] ?? server)}</small>` : ''}</a>
       <div class="sv-bd"><div class="sv-pics">${main}</div><div class="sv-lbl"><span class="sv-set">${esc(weapon)}</span>${hero ? `<small>${esc(hero)}</small>` : ''}</div></div>
       <div class="sv-rt"><b>${esc(fmtValue(board, r[4]))}</b></div></div>`;
     }
     return `<div class="sv-r${rank >= 1 && rank <= 3 ? ' top' + rank : ''}">
       <span class="sv-rk${medal}">${esc(rank)}</span>
-      <a class="sv-nm" href="#p/${encodeURIComponent(r[1])}">${r[3] ? `<span class="sv-tag">[${esc(r[3])}]</span>` : ''}${esc(r[2])}${server != null ? ` <small>#${esc(server)}</small>` : ''}</a>
+      <a class="sv-nm" href="#p/${encodeURIComponent(r[1])}">${r[3] ? `<span class="sv-tag">[${esc(r[3])}]</span>` : ''}${esc(r[2])}${(r[6] ?? server) != null ? ` <small>#${esc(r[6] ?? server)}</small>` : ''}</a>
       <div class="sv-bd">${main ? `<div class="sv-pics">${main}${detailText(board.x, r[5]) ? `<span class="sv-txt">${esc(detailText(board.x, r[5]))}</span>` : ''}</div>` : ''}${mods}</div>
       <div class="sv-rt">${label ? `<span class="sv-set">${esc(label)}</span>` : ''}<b>${esc(fmtValue(board, r[4]))}</b></div></div>`;
   }
@@ -267,13 +267,13 @@ const Server = (() => {
     const tabs = boards.map(x => `<option value="${esc(x.k)}"${x.k === b.k ? ' selected' : ''}>${esc(x.l)}</option>`).join('');
     const menu = boards.map(x => `<button type="button" class="sv-mi" data-board="${esc(x.k)}" aria-pressed="${x.k === b.k}">${esc(x.l)}</button>`).join('');
     view().innerHTML = `<div class="sv">
-      <div class="pf-hero"><p class="eyebrow">SERVER ${esc(m.server)}</p><h1>Server <span>${esc(m.server)}</span></h1>
-        <p>How the players on our home server compare, board by board.</p></div>
-      <div class="sv-note" role="note"><svg class="icon-sm" data-lucide="info" aria-hidden="true"></svg><div><b>Server ${esc(m.server)} data is from the in-game leaderboards.</b>
-        <span> It only covers players who are on Server ${esc(m.server)} at the time of the snapshot. Players who are currently away in their dimension maps are not on the server, so they do not appear on these leaderboards, and visitors from other servers are left out. It also only covers players who appeared on a board when we captured it, so it is not a full roster. Ranks are within this server only, and each board was captured at its own time (shown above the list).</span></div></div>
+      <div class="pf-hero"><p class="eyebrow">YOUR SERVER ${esc(m.server)}</p><h1>Homeworld <span>${esc(m.homeworld ?? '')}</span></h1>
+        <p>How the players in our homeworld compare, board by board.</p></div>
+      <div class="sv-note" role="note"><svg class="icon-sm" data-lucide="info" aria-hidden="true"></svg><div><b>Homeworld data is from the in-game leaderboards.</b>
+        <span> These boards list the players in Homeworld ${esc(m.homeworld ?? '')}, which is made up of ${m.servers && m.servers.length ? `servers ${esc(m.servers.join(', '))}` : 'several servers'}: the # after each name is that player's server (yours is #${esc(m.server)}). Only players who were in the homeworld at the time of the snapshot are listed, so players who are currently away in their dimension maps do not appear. It also only covers players who appeared on a board when we captured it, so it is not a full roster. Ranks are positions on that board, and each board was captured at its own time (shown above the list).</span></div></div>
       <div class="sv-selwrap"><select id="svsel" aria-label="Board">${tabs}</select></div>
       <div class="sv-tools"><div class="pf-count" id="svcount"></div>
-        <input type="search" id="svq" placeholder="Search name, tag or uid" aria-label="Search this board" value="${esc(state.q)}"></div>
+        <input type="search" id="svq" placeholder="Search name, tag, server or uid" aria-label="Search this board" value="${esc(state.q)}"></div>
       <div class="sv-wrap"><nav class="sv-menu" id="svpills" aria-label="Leaderboards">${menu}</nav>
         <div class="sv-main"><div class="sv-lb" id="svtable"></div></div></div></div>`;
     document.getElementById('svpills').addEventListener('click', e => {
@@ -317,7 +317,7 @@ const Server = (() => {
     ensureStyle();
     document.querySelectorAll('[data-nav]').forEach(l => l.dataset.nav === 'server' ? l.setAttribute('aria-current', 'page') : l.removeAttribute('aria-current'));
     const label = document.getElementById('pageLabel');
-    if (label) label.textContent = 'Server';
+    if (label) label.textContent = data && data.meta && data.meta.homeworld ? `Homeworld ${data.meta.homeworld}` : 'Homeworld';
     if (locked()) { view().innerHTML = card('Server', '<p>Server leaderboards are part of the protected data. Log in to view them.</p><button type="button" class="primary-action" onclick="showLogin()">Log in</button>'); return; }
     const hash = location.hash;
     if (!data) view().innerHTML = '<div class="empty" role="status">Loading server boards…</div>';
