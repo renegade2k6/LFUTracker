@@ -64,7 +64,6 @@ const Server = (() => {
   function setText(kind, extra, names) {
     if (!extra) return '';
     if (kind === 'suit') return `[${nameOf(names, 'suit', extra.s) || (extra.s != null ? `Suit ${extra.s}` : 'Suit')}]`;
-    if (kind === 'ex') return nameOf(names, 'ex', extra.i) || (extra.i != null ? `Ultimate weapon ${extra.i}` : 'Ultimate weapon');
     if (kind === 'wm') return nameOf(names, 'wm', extra.d) || (extra.d != null ? `Machine ${extra.d}` : 'Machine');
     if (kind === 'hero') return nameOf(names, 'hero', extra.h) || (extra.h != null ? `Hero ${extra.h}` : 'Hero');
     return '';
@@ -142,7 +141,15 @@ const Server = (() => {
   function rowHtml(board, r, names, server) {
     const rank = r[0], [main, mods] = tiles(board.x, r[5], names), label = setText(board.x, r[5], names);
     const medal = rank >= 1 && rank <= 3 ? ` r${rank}` : '';
-    return `<div class="sv-r${rank <= 3 ? ' top' + rank : ''}">
+    if (board.x === 'ex') {          // fixed columns: weapon tile, hero portrait, then weapon name over hero name, then the value
+      const [weapon, hero] = exName(names, r[5] && r[5].i);
+      return `<div class="sv-r ex${rank >= 1 && rank <= 3 ? ' top' + rank : ''}">
+      <span class="sv-rk${medal}">${esc(rank)}</span>
+      <a class="sv-nm" href="#p/${encodeURIComponent(r[1])}">${r[3] ? `<span class="sv-tag">[${esc(r[3])}]</span>` : ''}${esc(r[2])}${server != null ? ` <small>#${esc(server)}</small>` : ''}</a>
+      <div class="sv-bd"><div class="sv-pics">${main}</div><div class="sv-lbl"><span class="sv-set">${esc(weapon)}</span>${hero ? `<small>${esc(hero)}</small>` : ''}</div></div>
+      <div class="sv-rt"><b>${esc(fmtValue(board, r[4]))}</b></div></div>`;
+    }
+    return `<div class="sv-r${rank >= 1 && rank <= 3 ? ' top' + rank : ''}">
       <span class="sv-rk${medal}">${esc(rank)}</span>
       <a class="sv-nm" href="#p/${encodeURIComponent(r[1])}">${r[3] ? `<span class="sv-tag">[${esc(r[3])}]</span>` : ''}${esc(r[2])}${server != null ? ` <small>#${esc(server)}</small>` : ''}</a>
       <div class="sv-bd">${main ? `<div class="sv-pics">${main}${detailText(board.x, r[5]) ? `<span class="sv-txt">${esc(detailText(board.x, r[5]))}</span>` : ''}</div>` : ''}${mods}</div>
@@ -154,7 +161,7 @@ const Server = (() => {
   .sv-note{display:flex;gap:.7rem;align-items:flex-start;background:var(--hazard-dim);border:1px solid var(--border-glow);border-radius:var(--radius);
     padding:.75rem 1rem;margin:1rem 0;color:var(--text);font-size:.88rem;line-height:1.5}
   .sv-note b{color:var(--hazard-text)} .sv-note span{color:var(--text-dim)}
-  .sv-wrap{display:grid;grid-template-columns:13rem minmax(0,1fr);gap:1rem;align-items:start;margin-top:1rem}
+  .sv-wrap{display:grid;grid-template-columns:13rem minmax(0,1fr);gap:1rem;align-items:start}
   .sv-menu{display:flex;flex-direction:column;gap:.35rem;position:sticky;top:1rem}
   .sv-mi{text-align:left;background:linear-gradient(90deg,#1d1d21,#26262b);color:#b9b2a2;border:1px solid #34343b;border-left:3px solid #6b5a33;border-radius:6px;padding:.7rem .85rem;font:600 .9rem var(--display);letter-spacing:.02em;cursor:pointer;transition:.12s}
   .sv-mi:hover{color:#fff;border-color:#55555f;border-left-color:#c9a84f}
@@ -179,6 +186,14 @@ const Server = (() => {
   .sv-nm{color:#f1f1f4;font-weight:600;overflow-wrap:anywhere;text-decoration:none}.sv-nm:hover{color:var(--hazard-text)}
   .sv-nm small{color:#9c9cab;font-weight:500;margin-left:.2rem}.sv-tag{color:#e5e5ea;margin-right:.05rem}
   .sv-bd{display:flex;flex-direction:column;gap:.35rem;align-items:flex-start}
+  /* Top Ultimate Weapon: every row uses the same columns so the weapon, hero and names line up down the list */
+  .sv-lh.ex,.sv-r.ex{grid-template-columns:3.4rem minmax(10rem,1fr) 24rem 6.5rem}
+  .sv-lh.ex span:nth-child(3){display:none}
+  .sv-lh.ex .rt{grid-column:3 / 5;white-space:nowrap}
+  .sv-r.ex .sv-bd{flex-direction:row;align-items:center;gap:.8rem}
+  .sv-r.ex .sv-pics{flex:0 0 8.7rem}
+  .sv-lbl{display:flex;flex-direction:column;gap:.1rem;text-align:left;min-width:0;line-height:1.25}
+  .sv-lbl .sv-set{color:#f1f1f6;font-size:.98rem;font-weight:600}.sv-lbl small{color:#a9a9b8;font-size:.82rem}
   .sv-pics{display:flex;align-items:center;gap:.35rem}
   .sv-rt{display:flex;flex-direction:column;align-items:flex-end;text-align:right;line-height:1.25}
   .sv-rt b{font:700 1.02rem var(--display);color:#fff;letter-spacing:.02em}.sv-rt .sv-set{color:#f1f1f6;font-size:.98rem;font-weight:600}
@@ -214,6 +229,8 @@ const Server = (() => {
     .sv-rk{grid-column:1;grid-row:1 / span 2}
     .sv-nm{grid-column:2;grid-row:1}
     .sv-rt{grid-column:3;grid-row:1 / span 2}
+    .sv-lh.ex,.sv-r.ex{grid-template-columns:2.4rem 1fr auto}
+    .sv-r.ex .sv-rt{grid-column:3;grid-row:1 / span 2}
     .sv-bd{grid-column:1 / -1;grid-row:3;padding-top:.35rem}
     .sv-bd:empty{display:none}
   }`;
@@ -255,10 +272,10 @@ const Server = (() => {
       <div class="sv-note" role="note"><svg class="icon-sm" data-lucide="info" aria-hidden="true"></svg><div><b>Server ${esc(m.server)} data is from the in-game leaderboards.</b>
         <span> It only covers players who appeared on a board when we captured it, so it is not a full roster. Ranks are within this server only, and each board was captured at its own time (shown above the list).</span></div></div>
       <div class="sv-selwrap"><select id="svsel" aria-label="Board">${tabs}</select></div>
+      <div class="sv-tools"><div class="pf-count" id="svcount"></div>
+        <input type="search" id="svq" placeholder="Search name, tag or uid" aria-label="Search this board" value="${esc(state.q)}"></div>
       <div class="sv-wrap"><nav class="sv-menu" id="svpills" aria-label="Leaderboards">${menu}</nav>
-        <div class="sv-main"><div class="sv-tools"><div class="pf-count" id="svcount"></div>
-          <input type="search" id="svq" placeholder="Search name, tag or uid" aria-label="Search this board" value="${esc(state.q)}"></div>
-        <div class="sv-lb" id="svtable"></div></div></div></div>`;
+        <div class="sv-main"><div class="sv-lb" id="svtable"></div></div></div></div>`;
     document.getElementById('svpills').addEventListener('click', e => {
       const btn = e.target.closest('[data-board]');
       if (btn) set('board', btn.dataset.board);
@@ -273,7 +290,7 @@ const Server = (() => {
     if (!b) return;
     const rows = filterRows(b, state.q);
     document.getElementById('svcount').textContent = `${rows.length.toLocaleString('en-US')} of ${b.rows.length.toLocaleString('en-US')} players · ${b.l} · captured ${dateStr(b.ts)}`;
-    document.getElementById('svtable').innerHTML = `<div class="sv-lh"><span>Ranking</span><span>Name</span><span></span><span class="rt">${esc(b.c || b.l)}</span></div>${
+    document.getElementById('svtable').innerHTML = `<div class="sv-lh${b.x === 'ex' ? ' ex' : ''}"><span>Ranking</span><span>Name</span><span></span><span class="rt">${esc(b.c || b.l)}</span></div>${
       rows.map(r => rowHtml(b, r, data.names, data.meta.server)).join('')}`;
   }
 
