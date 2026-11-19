@@ -31,7 +31,7 @@ const Server = (() => {
   function filterRows(board, q) {
     const needle = (q || '').trim().toLowerCase();
     if (!needle) return board.rows;
-    return board.rows.filter(r => `${r[2]} ${r[3]} ${r[1]} #${r[6] ?? ''}`.toLowerCase().includes(needle));
+    return board.rows.filter(r => `${r[2]} ${r[3]} ${r[1]}${r[6] != null ? ` #${r[6]}` : ''}`.toLowerCase().includes(needle));
   }
 
   // Detail text for a row: suit pieces / war machine build. Names come from the table dump when it was available.
@@ -270,7 +270,7 @@ const Server = (() => {
       <div class="pf-hero"><p class="eyebrow">YOUR SERVER ${esc(m.server)}</p><h1>Homeworld <span>${esc(m.homeworld ?? '')}</span></h1>
         <p>How the players in our homeworld compare, board by board.</p></div>
       <div class="sv-note" role="note"><svg class="icon-sm" data-lucide="info" aria-hidden="true"></svg><div><b>Homeworld data is from the in-game leaderboards.</b>
-        <span> These boards list the players in Homeworld ${esc(m.homeworld ?? '')}, which is made up of ${m.servers && m.servers.length ? `servers ${esc(m.servers.join(', '))}` : 'several servers'}: the # after each name is that player's server (yours is #${esc(m.server)}). Only players who were in the homeworld at the time of the snapshot are listed, so players who are currently away in their dimension maps do not appear. It also only covers players who appeared on a board when we captured it, so it is not a full roster. Ranks are positions on that board, and each board was captured at its own time (shown above the list).</span></div></div>
+        <span> Only players who were in the homeworld at the time of the snapshot are listed, so players who are currently away in their dimension maps do not appear. It also only covers players who appeared on a board when we captured it, so it is not a full roster. Ranks are positions on that board, and each board was captured at its own time (shown above the list).</span></div></div>
       <div class="sv-selwrap"><select id="svsel" aria-label="Board">${tabs}</select></div>
       <div class="sv-tools"><div class="pf-count" id="svcount"></div>
         <input type="search" id="svq" placeholder="Search name, tag, server or uid" aria-label="Search this board" value="${esc(state.q)}"></div>
