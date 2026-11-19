@@ -313,7 +313,7 @@ const Profiles = (() => {
     window.scrollTo(0, 0);
   }
 
-  const api = {owns, render, set, page, state, formatValue, applyFilters, normalize, spark, describe, delta, stars,
+  const api = {owns, render, set, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
     helpers: {num, compact, dateStr, ago, humanize}};
   return api;
 })();

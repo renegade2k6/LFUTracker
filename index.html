@@ -32,6 +32,7 @@
         <a href="#all-alliances" data-nav="all-alliances"><svg class="icon" data-lucide="shield"></svg>All Alliances</a>
         <a href="#all-players" data-nav="all-players"><svg class="icon" data-lucide="users"></svg>All Players</a>
         <a href="#profiles" data-nav="profiles"><svg class="icon" data-lucide="contact"></svg>Profiles (Beta)</a>
+        <a href="#server" data-nav="server"><svg class="icon" data-lucide="server"></svg>Server 280</a>
       </nav>
     </aside>
     <header class="topbar">
@@ -59,6 +60,7 @@
 <script src="merge.js"></script>
 <script src="vault.js"></script>
 <script src="profiles.js"></script>
+<script src="server.js"></script>
 <script>
 let STATE = { alliances: [], history: {}, mergeReport: null, peaks: new Map() };
 let playerTracking = {records: {}, saved: true, conflicts: new Set()};
@@ -640,6 +642,7 @@ function exportDirectory() {
 
 function render() {
   if (typeof Profiles !== "undefined" && Profiles.owns(location.hash)) return Profiles.render();
+  if (typeof Server !== "undefined" && Server.owns(location.hash)) return Server.render();
   if (SAMPLE_MODE) return renderSample();
   if (trackedAlliances !== STATE.alliances) {
     let storage;
@@ -767,7 +770,7 @@ function startFull(unlocked) {
   STATE.mergeReport = merged.report;
   STATE.peaks = Directory.peaks(unlocked.playerPeaks, leaderboard);
   document.getElementById("topMeta").innerHTML = `${meta ? `Updated ${esc(relTime(meta.generatedAtUtc))} · ` : ""}<button type="button" class="lock-button" onclick="lockSite()">Lock</button>`;
-  if (!(typeof Profiles !== "undefined" && Profiles.owns(location.hash))) location.hash = "";  // keep shared Profiles links
+  if (!((typeof Profiles !== "undefined" && Profiles.owns(location.hash)) || (typeof Server !== "undefined" && Server.owns(location.hash)))) location.hash = "";  // keep shared Profiles/Server links
   render();
 }
 

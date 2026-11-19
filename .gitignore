@@ -10,6 +10,7 @@
 !/merge.js
 !/vault.js
 !/profiles.js
+!/server.js
 !/README.md
 !/favicon-32.png
 !/apple-touch-icon.png
@@ -23,3 +24,5 @@
 # Profiles (Beta): encrypted bundles only (scripts/profiles.py).
 !/data/profiles.enc.json
 !/data/profiles-detail.enc.json
+# Server tab: encrypted bundle only (scripts/profiles.py).
+!/data/server.enc.json
