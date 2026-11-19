@@ -200,6 +200,7 @@ const Profiles = (() => {
         ${al ? `<label class="pf-check"><span class="pf-badge">${esc(al.b || al.n)} ✕</span><button type="button" class="pf-badge mute" onclick="Profiles.set('alliance',-1)">clear alliance</button></label>` : ''}
       </div>
       <div class="pf-count" id="pfcount" role="status"></div>
+      <p class="pf-note">Server: a <b>~</b> after the number means it is the server of the player's alliance, because the player's own server was not captured (the Server filter includes these). Without a ~ the server comes from a leaderboard row or the player's profile popup.</p>
       <div class="pf-scroll"><table class="pf" aria-label="Player profiles"><thead><tr>
         <th></th>${[['name', 'Player'], ['alliance', 'Alliance'], ['', 'Server'], ['pw', 'Power'], ['lv', 'HQ'], ['kl', 'Kills'], ['ls', 'Last seen']].map(([k, l]) => `<th${k ? ` onclick="Profiles.set('sort','${k}')"` : ''} class="${k === state.sort ? 'sorted' : ''}${['pw', 'lv', 'kl'].includes(k) ? ' n' : ''}">${l}${k === state.sort ? (state.dir < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('')}
       </tr></thead><tbody id="pfrows"></tbody></table></div>
@@ -219,7 +220,7 @@ const Profiles = (() => {
       return `<tr><td>${p.st ? `<span class="pf-star" title="Advanced profile">${stars(p.st)}</span>` : ''}</td>
         <td><a href="#p/${esc(p.u)}">${esc(p.n)}</a></td>
         <td>${p.b ? esc(p.b) : '<span class="pf-badge mute">none</span>'}${a ? '' : p.b ? ' <span class="pf-badge mute" title="Not in the newest roster we captured for this alliance">left?</span>' : ''}</td>
-        <td${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>${p.sv != null ? esc(p.sv) : '—'}${p.sx ? '<small style="color:var(--text-faint)"> ~</small>' : ''}</td><td class="n">${p.pw != null ? num(p.pw) : '—'}</td><td class="n">${p.lv != null ? p.lv : '—'}</td>
+        <td${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>${p.sv != null ? esc(p.sv) : '—'}${p.sx ? '<small style="color:var(--text-faint)" aria-label="alliance server, inferred"> ~</small>' : ''}</td><td class="n">${p.pw != null ? num(p.pw) : '—'}</td><td class="n">${p.lv != null ? p.lv : '—'}</td>
         <td class="n">${p.kl != null ? num(p.kl) : '—'}</td><td title="${esc(dateStr(p.ls))}">${esc(ago(p.ls))}</td></tr>`;
     }).join('') : `<tr><td colspan="8" class="empty">No matches. Try another name, tag or server.</td></tr>`;
     document.getElementById('pfpage').textContent = `Page ${state.page + 1} / ${pages}`;
@@ -255,7 +256,7 @@ const Profiles = (() => {
       <div class="pf-card"><div class="pf-head"><div><p class="eyebrow">PLAYER PROFILE</p><h1>${esc(p.n)} ${p.st ? `<span class="pf-star" title="Advanced profile">${stars(p.st)}</span>` : ''}</h1>
         <div class="pf-meta">${p.b ? `<span class="pf-badge">${esc(p.b)}</span>` : '<span class="pf-badge mute">no alliance</span>'}<span>${esc(p.an)}</span>
         ${a ? `<a href="#profiles" onclick="Profiles.set('alliance',${p.ai});return true">${num(a.m)} members →</a> ${trackerLink}` : p.b ? '<span class="pf-badge mute" title="Missing from the newest roster we captured for this alliance (left, kicked or just not captured yet)">not in latest roster</span>' : ''}
-        ${p.sv != null ? `<span${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>Server ${esc(p.sv)}${p.sx ? ' ~' : ''}</span>` : ''}${p.on != null ? `<span class="pf-badge ${p.on ? 'good' : 'mute'}">${p.on ? 'online at capture' : 'offline at capture'}</span>` : ''}</div></div>
+        ${p.sv != null ? `<span${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>Server ${esc(p.sv)}${p.sx ? ' ~ <small>(alliance server)</small>' : ''}</span>` : ''}${p.on != null ? `<span class="pf-badge ${p.on ? 'good' : 'mute'}">${p.on ? 'online at capture' : 'offline at capture'}</span>` : ''}</div></div>
         <div class="pf-meta"><span>uid ${esc(p.u)}</span><span title="${esc(dateStr(p.ls))}">last seen ${esc(ago(p.ls))}</span></div></div></div>
       <div class="pf-tiles">${stat(p.pc ? 'Power' : 'Alliance power', p.pw != null ? num(p.pw) : '—', hd != null ? `<span class="${hd >= 0 ? 'pf-up' : 'pf-down'}">${hd >= 0 ? '+' : ''}${compact(hd)} since ${esc(dateStr(p.ph[0][0]))}</span>` : '')}
         ${p.aw != null ? stat('Alliance power', num(p.aw), '<span>as in the alliance member list</span>') : ''}${stat('HQ level', p.lv != null ? p.lv : '—')}${stat('Kills', p.kl != null ? num(p.kl) : '—')}${stat('Joined alliance', p.jt ? esc(dateStr(p.jt)) : '—')}
