@@ -1978,3 +1978,12 @@ body.locked nav a:not([data-nav="overview"]), body.locked .search { display: non
 @media (max-width: 900px) { .sample-cols { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .perks { grid-template-columns: 1fr; } }
 .primary-action { cursor: pointer; }
+
+/* Phones: the member roster is a fixed-layout table, so give the narrow columns fixed widths and leave the rest to the name. */
+@media (max-width: 540px) {
+  .roster-table th.rank-cell,
+  .roster-table td.rank-cell { width: 3.2rem; white-space: nowrap; }
+  .roster-table th.num,
+  .roster-table td.num { width: 8.6rem; }
+  .roster-table .roster-power-num { font-size: 0.8rem; letter-spacing: 0; white-space: nowrap; }
+}

@@ -126,7 +126,8 @@ const Profiles = (() => {
   .pf-bar .grow{flex:1;min-width:14rem}.pf-check{flex-direction:row!important;align-items:center;gap:.4rem!important;padding-bottom:.5rem}
   .pf-count{color:var(--text-dim);font-size:.85rem;margin:.4rem 0}
   .pf-scroll{overflow-x:auto;border:1px solid var(--border-subtle);border-radius:var(--radius)}
-  table.pf{width:100%;border-collapse:collapse;font-size:.88rem}
+  table.pf{width:100%;border-collapse:collapse;font-size:.88rem;table-layout:auto}
+  @media (max-width:720px){table.pf:not(.sv-t){min-width:700px}}
   table.pf th{position:sticky;top:0;background:var(--bg-card-elev);text-align:left;font:600 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);padding:.6rem .7rem;white-space:nowrap;cursor:pointer}
   table.pf th.sorted{color:var(--hazard-text)} table.pf td{padding:.5rem .7rem;border-top:1px solid var(--border-subtle);white-space:nowrap}
   table.pf tr:hover td{background:var(--bg-card-hover)} .pf .n{text-align:right;font-variant-numeric:tabular-nums}

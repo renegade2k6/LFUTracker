@@ -54,7 +54,7 @@ const Server = (() => {
       const wm = nameOf(names, 'wm', extra.d) || (extra.d != null ? `Machine ${extra.d}` : 'Machine');
       const bits = [`Lv${extra.l ?? '?'}`, `${extra.st ?? '?'}★`];
       if (extra.sp && extra.sp.length) bits.push(`${extra.sp.length} surpass`);
-      if (extra.m && extra.m.length) bits.push(`${extra.m.length} modules`);
+      if (extra.m && extra.m.length && !(names && names.mod)) bits.push(`${extra.m.length} modules`);
       return `${wm} · ${bits.join(' · ')}`;
     }
     return '';
@@ -64,6 +64,24 @@ const Server = (() => {
   // A missing icon just hides itself; the text is always there.
   const icon = (dir, id, label) => id == null ? '' :
     `<img class="sv-ico" src="img/${dir}/${encodeURIComponent(id)}.webp" width="32" height="32" loading="lazy" alt="" title="${esc(label)}" onerror="this.style.display='none'">`;
+  // Hero portrait for an ultimate weapon (names.exh maps weapon id -> hero id).
+  const exHero = (id, names) => {
+    const h = names && names.exh && names.exh[id];
+    return h ? icon('h', h, nameOf(names, 'hero', h) || `Hero ${h}`) : '';
+  };
+
+  // Module chips: icon with its level on top. [level, quality, icon, type] comes from the table dump (names.mod).
+  function moduleChips(ids, names) {
+    if (!ids || !ids.length) return '';
+    return `<div class="sv-mods">${ids.map(id => {
+      const m = names && names.mod && names.mod[id];
+      if (!m) return `<span class="sv-mod" title="Module ${esc(id)}"><b>?</b></span>`;
+      const label = `${m[3] || 'Module'} Lv${m[0]}`;
+      const q = Number.isInteger(m[1]) ? m[1] : 0;
+      return `<span class="sv-mod q${q}" title="${esc(label)}">${m[2] ? `<img src="img/m/${encodeURIComponent(m[2])}.webp" width="26" height="26" loading="lazy" alt="" onerror="this.style.display='none'">` : ''}<b>${esc(m[0])}</b></span>`;
+    }).join('')}</div>`;
+  }
+
   function buildHtml(kind, extra, names) {
     if (!extra) return '';
     if (kind === 'suit') {
@@ -75,10 +93,10 @@ const Server = (() => {
       return `<div class="sv-build">${pieces}<span class="sv-txt">${esc(suit)} · ${esc(extra.n ?? (extra.e || []).length)}/4</span></div>`;
     }
     if (kind === 'hero') return `<div class="sv-build">${icon('h', extra.h, nameOf(names, 'hero', extra.h) || `Hero ${extra.h}`)}<span class="sv-txt">${esc(extraText(kind, extra, names))}</span></div>`;
-    if (kind === 'ex') return `<div class="sv-build">${icon('x', extra.i, exName(names, extra.i).filter(Boolean).join(' · '))}<span class="sv-txt">${esc(extraText(kind, extra, names))}</span></div>`;
+    if (kind === 'ex') return `<div class="sv-build">${icon('x', extra.i, exName(names, extra.i).filter(Boolean).join(' · '))}${exHero(extra.i, names)}<span class="sv-txt">${esc(extraText(kind, extra, names))}</span></div>`;
     if (kind === 'wm') {
       const wm = nameOf(names, 'wm', extra.d) || (extra.d != null ? `Machine ${extra.d}` : 'Machine');
-      return `<div class="sv-build">${icon('w', extra.d, wm)}<span class="sv-txt">${esc(extraText(kind, extra, names))}</span></div>`;
+      return `<div class="sv-build">${icon('w', extra.d, wm)}<span class="sv-txt">${esc(extraText(kind, extra, names))}</span></div>${moduleChips(extra.m, names)}`;
     }
     return '';
   }
@@ -105,9 +123,28 @@ const Server = (() => {
   table.sv-t td.b{white-space:normal;padding-top:.35rem;padding-bottom:.35rem}
   .sv-build{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem}
   .sv-piece{display:inline-flex;flex-direction:column;align-items:center;gap:1px}.sv-piece small{font-size:.62rem;color:var(--text-faint);line-height:1}
+  .sv-mods{display:flex;gap:.25rem;margin-top:.3rem}
+  .sv-mod{position:relative;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;background:var(--bg-card-elev);border:1px solid var(--border)}
+  .sv-mod img{object-fit:contain}.sv-mod b{position:absolute;right:-3px;bottom:-4px;font:700 .62rem var(--mono);line-height:1;padding:1px 3px;border-radius:4px;background:#000c;color:var(--text)}
+  .sv-mod.q1{border-color:#9aa3b2}.sv-mod.q2{border-color:#4cc36a}.sv-mod.q3{border-color:#4a9cff}.sv-mod.q4{border-color:#a96bff}.sv-mod.q5{border-color:#ffb02e}.sv-mod.q6{border-color:#ff5a4d}
   .sv-ico{object-fit:contain;border-radius:5px;background:var(--bg-card-elev);border:1px solid var(--border-subtle)}
   .sv-txt{color:var(--text-dim);font-size:.8rem;margin-left:.45rem;line-height:1.3}
-  @media (max-width:720px){table.sv-t td.al,table.sv-t th.al{display:none}.sv-txt{display:block;margin-left:0}}`;
+  .sv-selwrap{display:none;margin:1rem 0 .4rem}
+  .sv-selwrap select{width:100%;background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.65rem .8rem;font:inherit}
+  @media (max-width:720px){
+    .sv-pills{display:none}.sv-selwrap{display:block}
+    .sv-tools input[type=search]{width:100%}
+    table.sv-t,table.sv-t tbody{display:block}
+    table.sv-t thead{display:none}
+    table.sv-t tr{display:grid;grid-template-columns:2.2rem 1fr auto;column-gap:.6rem;align-items:center;padding:.6rem .75rem;border-top:1px solid var(--border-subtle)}
+    table.sv-t td{border:0;padding:.1rem 0;white-space:normal;min-width:0}
+    table.sv-t td.r{grid-column:1;grid-row:1 / span 2;width:auto;padding-right:0;text-align:left}
+    table.sv-t td.p{grid-column:2;grid-row:1;overflow-wrap:anywhere}
+    table.sv-t td.al{display:block;grid-column:2;grid-row:2;width:auto}
+    table.sv-t td.v{grid-column:3;grid-row:1 / span 2;text-align:right}
+    table.sv-t td.b{grid-column:1 / -1;grid-row:3;padding:.4rem 0 0 0}
+    .sv-txt{margin-left:.3rem}
+  }`;
   function ensureStyle() {
     if (document.getElementById('sv-style')) return;
     const el = document.createElement('style');
@@ -139,6 +176,8 @@ const Server = (() => {
     state.board = b.k;
     const m = data.meta;
     const groups = [...new Set(boards.map(x => x.g))];
+    const tabs = groups.map(g => `<optgroup label="${esc(g)}">${boards.filter(x => x.g === g).map(x =>
+      `<option value="${esc(x.k)}"${x.k === b.k ? ' selected' : ''}>${esc(x.l)}</option>`).join('')}</optgroup>`).join('');
     const pills = groups.map(g => `<div class="sv-grp"><small>${esc(g)}</small><div>${boards.filter(x => x.g === g).map(x =>
       `<button type="button" class="sv-pill" data-board="${esc(x.k)}" aria-pressed="${x.k === b.k}">${esc(x.l)}</button>`).join('')}</div></div>`).join('');
     view().innerHTML = `<div class="sv">
@@ -146,6 +185,7 @@ const Server = (() => {
         <p>How the players on our home server compare, board by board.</p></div>
       <div class="sv-note" role="note"><svg class="icon-sm" data-lucide="info" aria-hidden="true"></svg><div><b>Server ${esc(m.server)} data is from the in-game leaderboards.</b>
         <span> It only covers players who appeared on a board when we captured it, so it is not a full roster. Ranks are within this server only, and each board was captured at its own time (shown above the table).</span></div></div>
+      <div class="sv-selwrap"><select id="svsel" aria-label="Board">${tabs}</select></div>
       <div class="sv-pills" id="svpills">${pills}</div>
       <div class="sv-tools"><div class="pf-count" id="svcount"></div>
         <input type="search" id="svq" placeholder="Search name, tag or uid" aria-label="Search this board" value="${esc(state.q)}"></div>
@@ -154,6 +194,7 @@ const Server = (() => {
       const btn = e.target.closest('[data-board]');
       if (btn) set('board', btn.dataset.board);
     });
+    document.getElementById('svsel').addEventListener('change', e => set('board', e.target.value));
     document.getElementById('svq').addEventListener('input', e => set('q', e.target.value));
     drawRows();
   }
@@ -164,7 +205,7 @@ const Server = (() => {
     const rows = filterRows(b, state.q);
     document.getElementById('svcount').textContent = `${rows.length.toLocaleString('en-US')} of ${b.rows.length.toLocaleString('en-US')} players · ${b.l} · captured ${dateStr(b.ts)}`;
     document.getElementById('svtable').innerHTML = `<table class="pf sv-t"><thead><tr><th class="r">#</th><th>Player</th><th class="al">Alliance</th><th class="n">${esc(b.l)}</th>${b.x ? '<th>Build</th>' : ''}</tr></thead><tbody>${
-      rows.map(r => `<tr class="${r[0] <= 3 ? 'top' + r[0] : ''}"><td class="r">${esc(r[0])}</td><td><a href="#p/${encodeURIComponent(r[1])}">${esc(r[2])}</a></td>
+      rows.map(r => `<tr class="${r[0] <= 3 ? 'top' + r[0] : ''}"><td class="r">${esc(r[0])}</td><td class="p"><a href="#p/${encodeURIComponent(r[1])}">${esc(r[2])}</a></td>
         <td class="al">${r[3] ? `<span class="pf-badge">${esc(r[3])}</span>` : ''}</td><td class="n v">${esc(fmtValue(b, r[4]))}</td>
         ${b.x ? `<td class="b">${buildHtml(b.x, r[5], data.names)}</td>` : ''}</tr>`).join('')
     }</tbody></table>`;
