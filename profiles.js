@@ -246,13 +246,14 @@ const Profiles = (() => {
     const a = allianceOf(p);
     const trackerLink = a && typeof STATE !== 'undefined' && STATE.alliances.some(x => x.allianceId === a.id) ? `<a href="#a/${encodeURIComponent(a.id)}">tracker page →</a>` : '';
     const tabs = (p.tb || []).map(t => ({i: t[0], r: t[1], v: t[2], ts: t[3]}));
+    const hd = !p.pc || p.pcs ? delta(p.ph) : null;     // a CP tile never gets a delta computed from roster history
     view().innerHTML = `<a class="back-btn" href="#profiles">&larr; All profiles</a>
       <div class="pf-card"><div class="pf-head"><div><p class="eyebrow">PLAYER PROFILE</p><h1>${esc(p.n)} ${p.st ? `<span class="pf-star" title="Advanced profile">${stars(p.st)}</span>` : ''}</h1>
         <div class="pf-meta">${p.b ? `<span class="pf-badge">${esc(p.b)}</span>` : '<span class="pf-badge mute">no alliance</span>'}<span>${esc(p.an)}</span>
         ${a ? `<a href="#profiles" onclick="Profiles.set('alliance',${p.ai});return true">${num(a.m)} members →</a> ${trackerLink}` : p.b ? '<span class="pf-badge mute" title="Missing from the newest roster we captured for this alliance (left, kicked or just not captured yet)">not in latest roster</span>' : ''}
         ${p.sv != null ? `<span>Server ${esc(p.sv)}</span>` : ''}${p.on != null ? `<span class="pf-badge ${p.on ? 'good' : 'mute'}">${p.on ? 'online at capture' : 'offline at capture'}</span>` : ''}</div></div>
         <div class="pf-meta"><span>uid ${esc(p.u)}</span><span title="${esc(dateStr(p.ls))}">last seen ${esc(ago(p.ls))}</span></div></div></div>
-      <div class="pf-tiles">${stat(p.pc ? 'Power' : 'Alliance power', p.pw != null ? num(p.pw) : '—', delta(p.ph) != null ? `<span class="${delta(p.ph) >= 0 ? 'pf-up' : 'pf-down'}">${delta(p.ph) >= 0 ? '+' : ''}${compact(delta(p.ph))} since ${esc(dateStr(p.ph[0][0]))}</span>` : '')}
+      <div class="pf-tiles">${stat(p.pc ? 'Power' : 'Alliance power', p.pw != null ? num(p.pw) : '—', hd != null ? `<span class="${hd >= 0 ? 'pf-up' : 'pf-down'}">${hd >= 0 ? '+' : ''}${compact(hd)} since ${esc(dateStr(p.ph[0][0]))}</span>` : '')}
         ${p.aw != null ? stat('Alliance power', num(p.aw), '<span>as in the alliance member list</span>') : ''}${stat('HQ level', p.lv != null ? p.lv : '—')}${stat('Kills', p.kl != null ? num(p.kl) : '—')}${stat('Joined alliance', p.jt ? esc(dateStr(p.jt)) : '—')}
 </div>
       <div class="pf-grid2">${chartCard(p.pcs ? 'Power over time' : 'Alliance power over time', p.ph, compact)}${chartCard('Kills over time', p.kh, compact)}${chartCard('HQ level over time', p.lh)}</div>
