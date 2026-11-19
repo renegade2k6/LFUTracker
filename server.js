@@ -277,9 +277,20 @@ const Server = (() => {
       rows.map(r => rowHtml(b, r, data.names, data.meta.server)).join('')}`;
   }
 
+  // Switching boards must not scroll the page: update the URL without a hashchange (which re-renders and jumps to
+  // the top) and refresh just the menu, the picker and the list.
+  function switchBoard(key) {
+    state.board = key;
+    try { history.pushState(null, '', `#server/${encodeURIComponent(key)}`); } catch { location.hash = `#server/${encodeURIComponent(key)}`; return; }
+    document.querySelectorAll('#svpills [data-board]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.board === key)));
+    const sel = document.getElementById('svsel');
+    if (sel) sel.value = key;
+    drawRows();                                   // the page keeps its scroll position; the menu is sticky, so it stays in reach
+  }
+
   function set(key, value) {
     state[key] = value;
-    if (key === 'board') { location.hash = `#server/${encodeURIComponent(value)}`; return; }
+    if (key === 'board') { if (data) switchBoard(value); else location.hash = `#server/${encodeURIComponent(value)}`; return; }
     drawRows();
   }
 

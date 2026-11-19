@@ -145,6 +145,9 @@ const Profiles = (() => {
   .pf-meta{color:var(--text-dim);display:flex;flex-wrap:wrap;gap:.4rem .9rem;align-items:center;margin-top:.4rem}
   .pf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.75rem}
   .pf-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}
+  .pf-gl{margin:0 0 .9rem}.pf-gl h3{margin:0;padding:.45rem .85rem;background:linear-gradient(#8b8b90,#66666b);color:#fff;font:600 1rem var(--body,inherit);border-radius:4px 4px 0 0}
+  .pf-gl .row{display:flex;justify-content:space-between;gap:1rem;padding:.55rem .85rem;background:#2a2a2e;border-bottom:2px solid #18181b}
+  .pf-gl .row span{color:#a9a597}.pf-gl .row b{color:#fff;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
   .pf-tab{background:var(--bg-card-elev);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:.7rem .9rem}
   .pf-tab h3{margin:0;font:600 .75rem var(--mono);text-transform:uppercase;color:var(--text-dim);display:flex;justify-content:space-between}
   .pf-tab .rank{font:700 1.7rem var(--display);color:var(--hazard-text)}.pf-tab .val{color:var(--text-dim);font-variant-numeric:tabular-nums}
@@ -270,17 +273,37 @@ const Profiles = (() => {
       const d = detail && detail.players[uid];
       if (!d || location.hash !== `#p/${uid}`) return;
       document.getElementById('pfdetailnote')?.remove();
-      document.getElementById('pftabs').innerHTML = d.tabs.map(t => tabCard(t, t)).join('');
+      const tabsEl = document.getElementById('pftabs');       // absent when the player has no global ranks (popup-only profiles)
+      if (tabsEl) tabsEl.innerHTML = d.tabs.map(t => tabCard(t, t)).join('');
       document.getElementById('pfextra').innerHTML = extraCards(d);
     }).catch(() => { const n = document.getElementById('pfdetailnote'); if (n) n.textContent = 'Advanced details are unavailable right now.'; });
   }
 
+  // Commander Info "More Info" as the game groups it. Other players only expose Battles; your own account also shows CP.
+  // Labels and row order are the game's (the capture lists zombies before units defeated (yours); the game does not).
+  const GAME_SECTIONS = [
+    ['CP', [['totalCP', 'Total CP'], ['facilityCP', 'Facility Combat Power'], ['technologyCP', 'Technology Combat Power'], ['armyPower', 'Army Power']]],
+    ['Battles', [['battlesTotal', 'Total Battles'], ['battleVictories', 'Battle Victories'], ['unitsDefeatedEnemies', 'Units Defeated (Enemies)'],
+      ['unitsDefeatedYours', 'Units Defeated (Yours)'], ['unitsTreatedYours', 'Units Treated (Yours)'], ['zombiesDefeated', 'Zombies Defeated']]],
+  ];
+  // -> [{title, rows: [[label, value]]}]: the game's sections first, then anything else we captured that is not a repeat of them.
+  function commanderSections(popup) {
+    const all = {...(popup.player || {}), ...(popup.moreInfo || {})};
+    const used = new Set(), shown = new Set(), out = [];
+    for (const [title, keys] of GAME_SECTIONS) {
+      const rows = keys.filter(([k]) => all[k] != null && all[k] !== '').map(([k, label]) => { used.add(k); shown.add(String(all[k])); return [label, num(all[k])]; });
+      if (rows.length) out.push({title, rows});
+    }
+    const rest = Object.entries(all).filter(([k, v]) => !used.has(k) && v != null && v !== '' && !shown.has(String(v)))
+      .map(([k, v]) => [LABELS[k] || humanize(k), describe(v, k)]);
+    if (rest.length) out.push({title: 'More', rows: rest});
+    return out;
+  }
+  const sectionHtml = s => `<div class="pf-gl"><h3>${esc(s.title)}</h3>${s.rows.map(([l, v]) => `<div class="row"><span>${esc(l)}</span><b>${esc(v)}</b></div>`).join('')}</div>`;
+
   function extraCards(d) {
     let h = '';
-    if (d.popup) {
-      const rows = Object.entries({...d.popup.player, ...d.popup.moreInfo});
-      h += `<div class="pf-card"><h2>Commander info · ${esc(dateStr(d.popup.ts))}</h2><div class="pf-grid">${rows.map(([k, v]) => `<div class="pf-tab"><h3><span>${esc(LABELS[k] || humanize(k))}</span></h3><div class="val">${esc(typeof v === 'number' ? num(v) : v)}</div></div>`).join('')}</div></div>`;
-    }
+    if (d.popup) h += `<div class="pf-card"><h2>Commander info · ${esc(dateStr(d.popup.ts))}</h2>${commanderSections(d.popup).map(sectionHtml).join('')}</div>`;
     return h + `<p class="pf-note">Hero, beast and weapon entries show game ids; names are not mapped yet.</p>`;
   }
 
@@ -316,7 +339,7 @@ const Profiles = (() => {
   }
 
   const api = {owns, render, set, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
-    helpers: {num, compact, dateStr, ago, humanize}};
+    helpers: {num, compact, dateStr, ago, humanize}, commanderSections};
   return api;
 })();
 if (typeof module !== 'undefined') module.exports = Profiles;
