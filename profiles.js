@@ -5,7 +5,7 @@
 const Profiles = (() => {
   const MAIN = 'data/profiles.enc.json', DETAIL = 'data/profiles-detail.enc.json';
   const PAGE = 50;
-  const state = {q: '', server: '', star: false, tab: '', sort: 'pw', dir: -1, page: 0, alliance: -1};
+  const state = {q: '', server: '', exact: false, star: false, tab: '', sort: 'pw', dir: -1, page: 0, alliance: -1};
   let main = null, detail = null, byUid = new Map(), loading = null, detailLoading = null, shown = [];
 
   // ---------------------------------------------------------------- pure helpers
@@ -64,6 +64,7 @@ const Profiles = (() => {
     const out = players.filter(p =>
       (!q || p.search.includes(q)) &&
       (!s.server || String(p.sv) === s.server) &&
+      (!s.exact || (p.sv != null && !p.sx)) &&                    // exact servers only: from a leaderboard row or popup, not inferred
       (!s.star || p.st) &&
       (s.alliance < 0 || p.ai === s.alliance) &&
       (!s.tab || (p.tb && p.tb.some(t => String(t[0]) === s.tab))));
@@ -196,6 +197,7 @@ const Profiles = (() => {
         <label>Server<select onchange="Profiles.set('server',this.value)"><option value="">All</option>${servers.map(s => `<option value="${s}"${String(s) === state.server ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
         <label>Leaderboard<select onchange="Profiles.set('tab',this.value)"><option value="">Any</option>${main.tabs.map((t, i) => `<option value="${i}"${String(i) === state.tab ? ' selected' : ''}>${esc(t.l)}</option>`).join('')}</select></label>
         <label>Sort<select onchange="Profiles.set('sort',this.value)">${[['pw', 'Power'], ['kl', 'Kills'], ['lv', 'HQ level'], ['ls', 'Last seen'], ['name', 'Name'], ['alliance', 'Alliance']].map(([k, l]) => `<option value="${k}"${state.sort === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+        <label class="pf-check" title="Hide players whose server is only inferred from their alliance (~)"><input type="checkbox" ${state.exact ? 'checked' : ''} onchange="Profiles.set('exact',this.checked)"> exact server only</label>
         <label class="pf-check"><input type="checkbox" ${state.star ? 'checked' : ''} onchange="Profiles.set('star',this.checked)"> ★ advanced only</label>
         ${al ? `<label class="pf-check"><span class="pf-badge">${esc(al.b || al.n)} ✕</span><button type="button" class="pf-badge mute" onclick="Profiles.set('alliance',-1)">clear alliance</button></label>` : ''}
       </div>
@@ -323,7 +325,7 @@ const Profiles = (() => {
     state.page = 0;
     if (key === 'alliance') { location.hash = '#profiles'; if (document.getElementById('pfrows')) listView(); return; }
     if (key === 'q') { clearTimeout(timer); timer = setTimeout(drawRows, 120); return; }
-    if (key === 'sort' || key === 'tab' || key === 'server' || key === 'star') { listView(); const q = document.getElementById('pfq'); if (q && key === 'sort') q.blur(); }
+    if (key === 'sort' || key === 'tab' || key === 'server' || key === 'star' || key === 'exact') { listView(); const q = document.getElementById('pfq'); if (q && key === 'sort') q.blur(); }
   }
   function page(step) { state.page += step; drawRows(); document.getElementById('pfrows').scrollIntoView({block: 'start'}); }
 
