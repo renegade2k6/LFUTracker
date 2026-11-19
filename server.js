@@ -16,6 +16,14 @@ const Server = (() => {
   // Explore stores a stage id: 100500 is shown in game as 50-10 (chapter = id / 2000, stage = remainder / 50).
   const fmtValue = (board, v) => v == null ? '—' : board && board.f === 'stage' ? `${Math.floor(v / 2000)}-${(v % 2000) / 50}` : num(v);
 
+  // The table names ultimate weapons "Hero | Weapon". -> [weapon, hero]
+  function exName(names, id) {
+    const n = nameOf(names, 'ex', id);
+    if (!n) return [id != null ? `Ultimate weapon ${id}` : 'Ultimate weapon', ''];
+    const i = n.indexOf('|');
+    return i < 0 ? [n.trim(), ''] : [n.slice(i + 1).trim(), n.slice(0, i).trim()];
+  }
+
   // "#server" or "#server/<board key>"
   const owns = hash => /^#?server(\/|$)/.test(hash || '');
   const boardFromHash = hash => { const m = /^#?server\/(.+)$/.exec(hash || ''); return m ? decodeURIComponent(m[1]) : ''; };
@@ -35,8 +43,8 @@ const Server = (() => {
       return `${suit} · ${extra.n ?? pieces.length}/4 pieces — ${pieces.join(', ')}`;
     }
     if (kind === 'ex') {
-      const ex = nameOf(names, 'ex', extra.i) || (extra.i != null ? `Exclusive ${extra.i}` : 'Exclusive');
-      return `${ex} · Lv${extra.l ?? '?'} · ${extra.s ?? '?'}★`;
+      const [weapon, hero] = exName(names, extra.i);
+      return `${weapon}${hero ? ` (${hero})` : ''} · Lv${extra.l ?? '?'} · ${extra.s ?? '?'}★`;
     }
     if (kind === 'wm') {
       const wm = nameOf(names, 'wm', extra.d) || (extra.d != null ? `Machine ${extra.d}` : 'Machine');
@@ -62,7 +70,7 @@ const Server = (() => {
       }).join('');
       return `<div class="sv-build">${pieces}<span class="sv-txt">${esc(suit)} · ${esc(extra.n ?? (extra.e || []).length)}/4</span></div>`;
     }
-    if (kind === 'ex') return `<div class="sv-build"><span class="sv-txt" style="margin-left:0">${esc(extraText(kind, extra, names))}</span></div>`;
+    if (kind === 'ex') return `<div class="sv-build">${icon('x', extra.i, exName(names, extra.i).filter(Boolean).join(' · '))}<span class="sv-txt">${esc(extraText(kind, extra, names))}</span></div>`;
     if (kind === 'wm') {
       const wm = nameOf(names, 'wm', extra.d) || (extra.d != null ? `Machine ${extra.d}` : 'Machine');
       return `<div class="sv-build">${icon('w', extra.d, wm)}<span class="sv-txt">${esc(extraText(kind, extra, names))}</span></div>`;
@@ -183,6 +191,6 @@ const Server = (() => {
     window.scrollTo(0, 0);
   }
 
-  return {owns, render, set, state, filterRows, extraText, buildHtml, fmtValue, boardFromHash, nameOf, helpers: {num, dateStr}};
+  return {owns, render, set, state, filterRows, extraText, buildHtml, fmtValue, exName, boardFromHash, nameOf, helpers: {num, dateStr}};
 })();
 if (typeof module !== 'undefined') module.exports = Server;
