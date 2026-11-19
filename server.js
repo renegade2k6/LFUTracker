@@ -13,6 +13,9 @@ const Server = (() => {
   const dateStr = s => s ? new Date(s * 1000).toISOString().slice(0, 10) : '—';
   const nameOf = (names, kind, id) => (names && names[kind] && names[kind][id]) || null;
 
+  // Explore stores a stage id: 100500 is shown in game as 50-10 (chapter = id / 2000, stage = remainder / 50).
+  const fmtValue = (board, v) => v == null ? '—' : board && board.f === 'stage' ? `${Math.floor(v / 2000)}-${(v % 2000) / 50}` : num(v);
+
   // "#server" or "#server/<board key>"
   const owns = hash => /^#?server(\/|$)/.test(hash || '');
   const boardFromHash = hash => { const m = /^#?server\/(.+)$/.exec(hash || ''); return m ? decodeURIComponent(m[1]) : ''; };
@@ -30,6 +33,10 @@ const Server = (() => {
       const suit = nameOf(names, 'suit', extra.s) || (extra.s != null ? `Suit ${extra.s}` : 'Suit');
       const pieces = (extra.e || []).map(e => `${nameOf(names, 'equip', e[0]) || e[0]} Lv${e[1] ?? '?'} (${num(e[2])})`);
       return `${suit} · ${extra.n ?? pieces.length}/4 pieces — ${pieces.join(', ')}`;
+    }
+    if (kind === 'ex') {
+      const ex = nameOf(names, 'ex', extra.i) || (extra.i != null ? `Exclusive ${extra.i}` : 'Exclusive');
+      return `${ex} · Lv${extra.l ?? '?'} · ${extra.s ?? '?'}★`;
     }
     if (kind === 'wm') {
       const wm = nameOf(names, 'wm', extra.d) || (extra.d != null ? `Machine ${extra.d}` : 'Machine');
@@ -55,6 +62,7 @@ const Server = (() => {
       }).join('');
       return `<div class="sv-build">${pieces}<span class="sv-txt">${esc(suit)} · ${esc(extra.n ?? (extra.e || []).length)}/4</span></div>`;
     }
+    if (kind === 'ex') return `<div class="sv-build"><span class="sv-txt" style="margin-left:0">${esc(extraText(kind, extra, names))}</span></div>`;
     if (kind === 'wm') {
       const wm = nameOf(names, 'wm', extra.d) || (extra.d != null ? `Machine ${extra.d}` : 'Machine');
       return `<div class="sv-build">${icon('w', extra.d, wm)}<span class="sv-txt">${esc(extraText(kind, extra, names))}</span></div>`;
@@ -124,7 +132,7 @@ const Server = (() => {
       <div class="pf-hero"><p class="eyebrow">SERVER ${esc(m.server)}</p><h1>Server <span>${esc(m.server)}</span></h1>
         <p>How the players on our home server compare, board by board.</p></div>
       <div class="sv-note" role="note"><svg class="icon-sm" data-lucide="info" aria-hidden="true"></svg><div><b>Server ${esc(m.server)} data is from the in-game leaderboards.</b>
-        <span> It only covers players who appeared on a board when we captured it, so it is not a full roster. Ranks are within this server only, and each board was captured at its own time (shown below the picker).</span></div></div>
+        <span> It only covers players who appeared on a board when we captured it, so it is not a full roster. Ranks are within this server only, and each board was captured at its own time (shown above the table).</span></div></div>
       <div class="sv-pills" id="svpills">${pills}</div>
       <div class="sv-tools"><div class="pf-count" id="svcount"></div>
         <input type="search" id="svq" placeholder="Search name, tag or uid" aria-label="Search this board" value="${esc(state.q)}"></div>
@@ -144,7 +152,7 @@ const Server = (() => {
     document.getElementById('svcount').textContent = `${rows.length.toLocaleString('en-US')} of ${b.rows.length.toLocaleString('en-US')} players · ${b.l} · captured ${dateStr(b.ts)}`;
     document.getElementById('svtable').innerHTML = `<table class="pf sv-t"><thead><tr><th class="r">#</th><th>Player</th><th class="al">Alliance</th><th class="n">${esc(b.l)}</th>${b.x ? '<th>Build</th>' : ''}</tr></thead><tbody>${
       rows.map(r => `<tr class="${r[0] <= 3 ? 'top' + r[0] : ''}"><td class="r">${esc(r[0])}</td><td><a href="#p/${encodeURIComponent(r[1])}">${esc(r[2])}</a></td>
-        <td class="al">${r[3] ? `<span class="pf-badge">${esc(r[3])}</span>` : ''}</td><td class="n v">${num(r[4])}</td>
+        <td class="al">${r[3] ? `<span class="pf-badge">${esc(r[3])}</span>` : ''}</td><td class="n v">${fmtValue(b, r[4])}</td>
         ${b.x ? `<td class="b">${buildHtml(b.x, r[5], data.names)}</td>` : ''}</tr>`).join('')
     }</tbody></table>`;
   }
@@ -175,6 +183,6 @@ const Server = (() => {
     window.scrollTo(0, 0);
   }
 
-  return {owns, render, set, state, filterRows, extraText, buildHtml, boardFromHash, nameOf, helpers: {num, dateStr}};
+  return {owns, render, set, state, filterRows, extraText, buildHtml, fmtValue, boardFromHash, nameOf, helpers: {num, dateStr}};
 })();
 if (typeof module !== 'undefined') module.exports = Server;
