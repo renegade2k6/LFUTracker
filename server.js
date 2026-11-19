@@ -149,9 +149,10 @@ const Server = (() => {
       <div class="sv-bd"><div class="sv-pics">${main}</div><div class="sv-lbl"><span class="sv-set">${esc(weapon)}</span>${hero ? `<small>${esc(hero)}</small>` : ''}</div></div>
       <div class="sv-rt"><b>${esc(fmtValue(board, r[4]))}</b></div></div>`;
     }
+    const isAl = board.x === 'al';            // alliance rows: link to the alliance page, leader under the name
     return `<div class="sv-r${rank >= 1 && rank <= 3 ? ' top' + rank : ''}">
       <span class="sv-rk${medal}">${esc(rank)}</span>
-      <a class="sv-nm" href="#p/${encodeURIComponent(r[1])}">${r[3] ? `<span class="sv-tag">[${esc(r[3])}]</span>` : ''}${esc(r[2])}${(r[6] ?? server) != null ? ` <small>#${esc(r[6] ?? server)}</small>` : ''}</a>
+      <a class="sv-nm" href="${isAl ? '#a/' : '#p/'}${encodeURIComponent(r[1])}">${r[3] ? `<span class="sv-tag">[${esc(r[3])}]</span>` : ''}${esc(r[2])}${(r[6] ?? server) != null ? ` <small>#${esc(r[6] ?? server)}</small>` : ''}${isAl && r[5] && r[5].ld ? `<span class="sv-sub">Leader: ${esc(r[5].ld)}</span>` : ''}</a>
       <div class="sv-bd">${main ? `<div class="sv-pics">${main}${detailText(board.x, r[5]) ? `<span class="sv-txt">${esc(detailText(board.x, r[5]))}</span>` : ''}</div>` : ''}${mods}</div>
       <div class="sv-rt">${label ? `<span class="sv-set">${esc(label)}</span>` : ''}<b>${esc(fmtValue(board, r[4]))}</b></div></div>`;
   }
@@ -184,7 +185,7 @@ const Server = (() => {
   .sv-rk.r2{background:radial-gradient(circle at 35% 30%,#fafbff,#a9b2c6 70%);color:#2a2f3a;border-color:#e4e9f5}
   .sv-rk.r3{background:radial-gradient(circle at 35% 30%,#ffd9b8,#b97a4a 70%);color:#3a1f08;border-color:#f0b98c}
   .sv-nm{color:#f1f1f4;font-weight:600;overflow-wrap:anywhere;text-decoration:none}.sv-nm:hover{color:var(--hazard-text)}
-  .sv-nm small{color:#9c9cab;font-weight:500;margin-left:.2rem}.sv-tag{color:#e5e5ea;margin-right:.05rem}
+  .sv-nm small{color:#9c9cab;font-weight:500;margin-left:.2rem}.sv-sub{display:block;color:#a9a9b8;font-weight:500;font-size:.82rem}.sv-tag{color:#e5e5ea;margin-right:.05rem}
   .sv-bd{display:flex;flex-direction:column;gap:.35rem;align-items:flex-start}
   /* Top Ultimate Weapon: every row uses the same columns so the weapon, hero and names line up down the list */
   .sv-lh.ex,.sv-r.ex{grid-template-columns:3.4rem minmax(10rem,1fr) 24rem 6.5rem}
