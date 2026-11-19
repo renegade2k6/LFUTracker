@@ -42,6 +42,10 @@ const Server = (() => {
       const pieces = (extra.e || []).map(e => `${nameOf(names, 'equip', e[0]) || e[0]} Lv${e[1] ?? '?'} (${num(e[2])})`);
       return `${suit} · ${extra.n ?? pieces.length}/4 pieces — ${pieces.join(', ')}`;
     }
+    if (kind === 'hero') {
+      const hero = nameOf(names, 'hero', extra.h) || (extra.h != null ? `Hero ${extra.h}` : 'Hero');
+      return `${hero} · Lv${extra.l ?? '?'} · ${extra.s ?? '?'}★`;
+    }
     if (kind === 'ex') {
       const [weapon, hero] = exName(names, extra.i);
       return `${weapon}${hero ? ` (${hero})` : ''} · Lv${extra.l ?? '?'} · ${extra.s ?? '?'}★`;
@@ -70,6 +74,7 @@ const Server = (() => {
       }).join('');
       return `<div class="sv-build">${pieces}<span class="sv-txt">${esc(suit)} · ${esc(extra.n ?? (extra.e || []).length)}/4</span></div>`;
     }
+    if (kind === 'hero') return `<div class="sv-build">${icon('h', extra.h, nameOf(names, 'hero', extra.h) || `Hero ${extra.h}`)}<span class="sv-txt">${esc(extraText(kind, extra, names))}</span></div>`;
     if (kind === 'ex') return `<div class="sv-build">${icon('x', extra.i, exName(names, extra.i).filter(Boolean).join(' · '))}<span class="sv-txt">${esc(extraText(kind, extra, names))}</span></div>`;
     if (kind === 'wm') {
       const wm = nameOf(names, 'wm', extra.d) || (extra.d != null ? `Machine ${extra.d}` : 'Machine');
