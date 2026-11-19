@@ -145,14 +145,16 @@ const Server = (() => {
       const [weapon, hero] = exName(names, r[5] && r[5].i);
       return `<div class="sv-r ex${rank >= 1 && rank <= 3 ? ' top' + rank : ''}">
       <span class="sv-rk${medal}">${esc(rank)}</span>
-      <a class="sv-nm" href="#p/${encodeURIComponent(r[1])}">${r[3] ? `<span class="sv-tag">[${esc(r[3])}]</span>` : ''}${esc(r[2])}${(r[6] ?? server) != null ? ` <small>#${esc(r[6] ?? server)}</small>` : ''}</a>
+      <a class="sv-nm" href="#p/${encodeURIComponent(r[1])}">${r[3] ? `<span class="sv-tag">[${esc(r[3])}]</span>` : ''}${esc(r[2])}${r[6] != null ? ` <small>#${esc(r[6])}</small>` : ''}</a>
       <div class="sv-bd"><div class="sv-pics">${main}</div><div class="sv-lbl"><span class="sv-set">${esc(weapon)}</span>${hero ? `<small>${esc(hero)}</small>` : ''}</div></div>
       <div class="sv-rt"><b>${esc(fmtValue(board, r[4]))}</b></div></div>`;
     }
-    const isAl = board.x === 'al';            // alliance rows: link to the alliance page, leader under the name
+    const isAl = board.x === 'al';            // alliance rows: leader under the name, linked only if the tracker has that alliance
+    const tracked = !isAl || (typeof STATE !== 'undefined' && STATE && Array.isArray(STATE.alliances) && STATE.alliances.some(a => a.allianceId === r[1]));
+    const who = `${r[3] ? `<span class="sv-tag">[${esc(r[3])}]</span>` : ''}${esc(r[2])}${r[6] != null ? ` <small>#${esc(r[6])}</small>` : ''}${isAl && r[5] && r[5].ld ? `<span class="sv-sub">Leader: ${esc(r[5].ld)}</span>` : ''}`;
     return `<div class="sv-r${rank >= 1 && rank <= 3 ? ' top' + rank : ''}">
       <span class="sv-rk${medal}">${esc(rank)}</span>
-      <a class="sv-nm" href="${isAl ? '#a/' : '#p/'}${encodeURIComponent(r[1])}">${r[3] ? `<span class="sv-tag">[${esc(r[3])}]</span>` : ''}${esc(r[2])}${(r[6] ?? server) != null ? ` <small>#${esc(r[6] ?? server)}</small>` : ''}${isAl && r[5] && r[5].ld ? `<span class="sv-sub">Leader: ${esc(r[5].ld)}</span>` : ''}</a>
+      ${tracked ? `<a class="sv-nm" href="${isAl ? '#a/' : '#p/'}${encodeURIComponent(r[1])}">${who}</a>` : `<span class="sv-nm">${who}</span>`}
       <div class="sv-bd">${main ? `<div class="sv-pics">${main}${detailText(board.x, r[5]) ? `<span class="sv-txt">${esc(detailText(board.x, r[5]))}</span>` : ''}</div>` : ''}${mods}</div>
       <div class="sv-rt">${label ? `<span class="sv-set">${esc(label)}</span>` : ''}<b>${esc(fmtValue(board, r[4]))}</b></div></div>`;
   }
