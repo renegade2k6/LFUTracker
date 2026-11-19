@@ -9,6 +9,7 @@
 !/player-power.js
 !/merge.js
 !/vault.js
+!/profiles.js
 !/README.md
 !/favicon-32.png
 !/apple-touch-icon.png
@@ -19,3 +20,6 @@
 # Only the encrypted bundle is published; plain data stays local (scripts/lfdata.py).
 !/data/site.enc.json
 !/data/sample.json
+# Profiles (Beta): encrypted bundles only (scripts/profiles.py).
+!/data/profiles.enc.json
+!/data/profiles-detail.enc.json

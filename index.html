@@ -31,6 +31,7 @@
         <a href="#leaders" data-nav="leaders"><svg class="icon" data-lucide="trophy"></svg>Leaders</a>
         <a href="#all-alliances" data-nav="all-alliances"><svg class="icon" data-lucide="shield"></svg>All Alliances</a>
         <a href="#all-players" data-nav="all-players"><svg class="icon" data-lucide="users"></svg>All Players</a>
+        <a href="#profiles" data-nav="profiles"><svg class="icon" data-lucide="contact"></svg>Profiles (Beta)</a>
       </nav>
     </aside>
     <header class="topbar">
@@ -57,6 +58,7 @@
 <script src="directory.js"></script>
 <script src="merge.js"></script>
 <script src="vault.js"></script>
+<script src="profiles.js"></script>
 <script>
 let STATE = { alliances: [], history: {}, mergeReport: null, peaks: new Map() };
 let playerTracking = {records: {}, saved: true, conflicts: new Set()};
@@ -637,6 +639,7 @@ function exportDirectory() {
 }
 
 function render() {
+  if (typeof Profiles !== "undefined" && Profiles.owns(location.hash)) return Profiles.render();
   if (SAMPLE_MODE) return renderSample();
   if (trackedAlliances !== STATE.alliances) {
     let storage;
