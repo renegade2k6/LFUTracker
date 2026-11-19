@@ -3,9 +3,10 @@
    in-game leaderboard. Ranks here only mean something inside that server, so they are kept apart from the global
    Profiles data. Pure helpers are exported for tests (tests/server.test.cjs); everything that touches the DOM is in `render`. */
 const Server = (() => {
-  const BUNDLE = 'data/server.enc.json';
+  const BUNDLES = {server: 'data/server.enc.json', dimension: 'data/dimension.enc.json'};
   const state = {board: '', q: ''};
-  let data = null, loading = null;
+  let scope = 'server', data = null;           // two pages share this module: the homeworld boards and the dimension boards
+  const datas = {}, loadings = {};
 
   // ---------------------------------------------------------------- pure helpers
   const esc = v => v == null ? '' : String(v).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -25,8 +26,24 @@ const Server = (() => {
   }
 
   // "#server" or "#server/<board key>"
-  const owns = hash => /^#?server(\/|$)/.test(hash || '');
-  const boardFromHash = hash => { const m = /^#?server\/(.+)$/.exec(hash || ''); return m ? decodeURIComponent(m[1]) : ''; };
+  const owns = hash => /^#?(server|dimension)(\/|$)/.test(hash || '');
+  const scopeOf = hash => /^#?dimension(\/|$)/.test(hash || '') ? 'dimension' : 'server';
+  const boardFromHash = hash => { const m = /^#?(?:server|dimension)\/(.+)$/.exec(hash || ''); return m ? decodeURIComponent(m[1]) : ''; };
+  // A dimension lasts about 4 weeks, so an older snapshot is probably of a dimension that no longer exists.
+  const DIMENSION_DAYS = 28;
+  const ageDays = (iso, now = Date.now()) => { const t = Date.parse(iso || ''); return Number.isFinite(t) ? (now - t) / 864e5 : null; };
+
+  // The notice above the boards, per page.
+  const noteHtml = inner => `<div class="sv-note" role="note"><svg class="icon-sm" data-lucide="info" aria-hidden="true"></svg><div>${inner}</div></div>`;
+  function homeworldNote() {
+    return noteHtml(`<b>Homeworld data is from the in-game leaderboards.</b><span> Only players who were in the homeworld at the time of the snapshot are listed, so players who are currently away in their dimension maps do not appear. It also only covers players who appeared on a board when we captured it, so it is not a full roster. Ranks are positions on that board, and each board was captured at its own time (shown above the list).</span>`);
+  }
+  function dimensionNote(m, now = Date.now()) {
+    const age = ageDays(m.capturedAtUtc, now), stale = age != null && age > DIMENSION_DAYS;
+    const when = m.capturedAtUtc ? dateStr(Date.parse(m.capturedAtUtc) / 1000) : 'an unknown date';
+    return noteHtml(`<b>Dimension data is from the in-game season-map rankings.</b><span> The game lists only the top 150 players (and the top alliances) on each tab, from every server in the dimension${m.servers && m.servers.length ? ` (${esc(m.servers.length)} servers in this snapshot)` : ''}. Dimensions change about every 4 weeks, so this is the dimension as of ${esc(when)} and may no longer be current.</span>${
+      stale ? `<br><b class="sv-stale">This snapshot is ${esc(Math.floor(age))} days old, so the dimension has probably changed.</b>` : ''}`);
+  }
 
   function filterRows(board, q) {
     const needle = (q || '').trim().toLowerCase();
@@ -163,7 +180,7 @@ const Server = (() => {
   .sv{max-width:1100px}
   .sv-note{display:flex;gap:.7rem;align-items:flex-start;background:var(--hazard-dim);border:1px solid var(--border-glow);border-radius:var(--radius);
     padding:.75rem 1rem;margin:1rem 0;color:var(--text);font-size:.88rem;line-height:1.5}
-  .sv-note b{color:var(--hazard-text)} .sv-note span{color:var(--text-dim)}
+  .sv-note b{color:var(--hazard-text)} .sv-note span{color:var(--text-dim)} .sv-note b.sv-stale{color:#ff8a7a}
   .sv-wrap{display:grid;grid-template-columns:13rem minmax(0,1fr);gap:1rem;align-items:start}
   .sv-menu{display:flex;flex-direction:column;gap:.35rem;position:sticky;top:1rem}
   .sv-mi{text-align:left;background:linear-gradient(90deg,#1d1d21,#26262b);color:#b9b2a2;border:1px solid #34343b;border-left:3px solid #6b5a33;border-radius:6px;padding:.7rem .85rem;font:600 .9rem var(--display);letter-spacing:.02em;cursor:pointer;transition:.12s}
@@ -246,16 +263,16 @@ const Server = (() => {
   }
 
   // ---------------------------------------------------------------- data
-  async function fetchBundle() {
-    const res = await fetch(BUNDLE, {cache: 'no-store'});
+  async function fetchBundle(sc) {
+    const res = await fetch(BUNDLES[sc], {cache: 'no-store'});
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const pw = SiteVault.saved();
     if (!pw) throw new Error('locked');
     return SiteVault.open(await res.json(), pw);
   }
-  function load() {
-    if (!loading) loading = fetchBundle().then(d => (data = d)).catch(e => { loading = null; throw e; });
-    return loading;
+  function load(sc) {
+    if (!loadings[sc]) loadings[sc] = fetchBundle(sc).then(d => (datas[sc] = d)).catch(e => { loadings[sc] = null; throw e; });
+    return loadings[sc];
   }
 
   // ---------------------------------------------------------------- views (DOM)
@@ -270,10 +287,11 @@ const Server = (() => {
     const tabs = boards.map(x => `<option value="${esc(x.k)}"${x.k === b.k ? ' selected' : ''}>${esc(x.l)}</option>`).join('');
     const menu = boards.map(x => `<button type="button" class="sv-mi" data-board="${esc(x.k)}" aria-pressed="${x.k === b.k}">${esc(x.l)}</button>`).join('');
     view().innerHTML = `<div class="sv">
-      <div class="pf-hero"><p class="eyebrow">YOUR SERVER ${esc(m.server)}</p><h1>Homeworld <span>${esc(m.homeworld ?? '')}</span></h1>
-        <p>How the players in our homeworld compare, board by board.</p></div>
-      <div class="sv-note" role="note"><svg class="icon-sm" data-lucide="info" aria-hidden="true"></svg><div><b>Homeworld data is from the in-game leaderboards.</b>
-        <span> Only players who were in the homeworld at the time of the snapshot are listed, so players who are currently away in their dimension maps do not appear. It also only covers players who appeared on a board when we captured it, so it is not a full roster. Ranks are positions on that board, and each board was captured at its own time (shown above the list).</span></div></div>
+      ${scope === 'dimension'
+        ? `<div class="pf-hero"><p class="eyebrow">SEASON-MAP RANKINGS${m.season != null ? ` · SEASON ${esc(m.season)}` : ''}</p><h1>Dimension</h1>
+        <p>How the players in our current dimension compare, tab by tab.</p></div>${dimensionNote(m)}`
+        : `<div class="pf-hero"><p class="eyebrow">YOUR SERVER ${esc(m.server)}</p><h1>Homeworld <span>${esc(m.homeworld ?? '')}</span></h1>
+        <p>How the players in our homeworld compare, board by board.</p></div>${homeworldNote()}`}
       <div class="sv-selwrap"><select id="svsel" aria-label="Board">${tabs}</select></div>
       <div class="sv-tools"><div class="pf-count" id="svcount"></div>
         <input type="search" id="svq" placeholder="Search name, tag, server or uid" aria-label="Search this board" value="${esc(state.q)}"></div>
@@ -292,7 +310,7 @@ const Server = (() => {
     const b = data.boards.find(x => x.k === state.board);
     if (!b) return;
     const rows = filterRows(b, state.q);
-    document.getElementById('svcount').textContent = `${rows.length.toLocaleString('en-US')} of ${b.rows.length.toLocaleString('en-US')} players · ${b.l} · captured ${dateStr(b.ts)}`;
+    document.getElementById('svcount').textContent = `${rows.length.toLocaleString('en-US')} of ${b.rows.length.toLocaleString('en-US')} ${b.x === 'al' ? 'alliances' : 'players'} · ${b.l} · captured ${dateStr(b.ts)}`;
     document.getElementById('svtable').innerHTML = `<div class="sv-lh${b.x === 'ex' ? ' ex' : ''}"><span>Ranking</span><span>Name</span><span></span><span class="rt">${esc(b.c || b.l)}</span></div>${
       rows.map(r => rowHtml(b, r, data.names, data.meta.server)).join('')}`;
   }
@@ -301,7 +319,7 @@ const Server = (() => {
   // the top) and refresh just the menu, the picker and the list.
   function switchBoard(key) {
     state.board = key;
-    const hash = `#server/${encodeURIComponent(key)}`;
+    const hash = `#${scope}/${encodeURIComponent(key)}`;
     try { if (location.hash !== hash) history.pushState(null, '', hash); } catch { location.hash = hash; return; }
     document.querySelectorAll('#svpills [data-board]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.board === key)));
     const sel = document.getElementById('svsel');
@@ -311,30 +329,34 @@ const Server = (() => {
 
   function set(key, value) {
     state[key] = value;
-    if (key === 'board') { if (data) switchBoard(value); else location.hash = `#server/${encodeURIComponent(value)}`; return; }
+    if (key === 'board') { if (data) switchBoard(value); else location.hash = `#${scope}/${encodeURIComponent(value)}`; return; }
     drawRows();
   }
 
   async function render() {
     if (typeof Profiles !== 'undefined' && Profiles.ensureStyle) Profiles.ensureStyle();
     ensureStyle();
-    document.querySelectorAll('[data-nav]').forEach(l => l.dataset.nav === 'server' ? l.setAttribute('aria-current', 'page') : l.removeAttribute('aria-current'));
+    const hash = location.hash, sc = scopeOf(hash);
+    if (sc !== scope) { scope = sc; state.board = ''; state.q = ''; }       // a different page: start from its first board
+    data = datas[sc] || null;
+    document.querySelectorAll('[data-nav]').forEach(l => l.dataset.nav === sc ? l.setAttribute('aria-current', 'page') : l.removeAttribute('aria-current'));
     const label = document.getElementById('pageLabel');
-    if (label) label.textContent = data && data.meta && data.meta.homeworld ? `Homeworld ${data.meta.homeworld}` : 'Homeworld';
-    if (locked()) { view().innerHTML = card('Server', '<p>Server leaderboards are part of the protected data. Log in to view them.</p><button type="button" class="primary-action" onclick="showLogin()">Log in</button>'); return; }
-    const hash = location.hash;
-    if (!data) view().innerHTML = '<div class="empty" role="status">Loading server boards…</div>';
-    try { await load(); } catch (e) {
-      if (location.hash === hash) view().innerHTML = card('Server unavailable', `<p>${esc(e.message === 'locked' ? 'Log in first.' : 'Could not load the server data (' + e.message + '). Run Deploy again, or refresh the page.')}</p>`);
+    if (label) label.textContent = sc === 'dimension' ? 'Dimension' : (data && data.meta && data.meta.homeworld ? `Homeworld ${data.meta.homeworld}` : 'Homeworld');
+    const what = sc === 'dimension' ? 'Dimension' : 'Server';
+    if (locked()) { view().innerHTML = card(what, `<p>${what === 'Dimension' ? 'Dimension' : 'Server'} leaderboards are part of the protected data. Log in to view them.</p><button type="button" class="primary-action" onclick="showLogin()">Log in</button>`); return; }
+    if (!data) view().innerHTML = `<div class="empty" role="status">Loading ${sc === 'dimension' ? 'dimension' : 'server'} boards…</div>`;
+    try { await load(sc); } catch (e) {
+      if (location.hash === hash) view().innerHTML = card(`${what} unavailable`, `<p>${esc(e.message === 'locked' ? 'Log in first.' : `Could not load the ${what.toLowerCase()} data (` + e.message + '). ' + (sc === 'dimension' ? 'No dimension snapshot has been published yet, or ' : '') + 'Run Deploy again, or refresh the page.')}</p>`);
       return;
     }
     if (location.hash !== hash) return;
-    if (!data.boards.length) { view().innerHTML = card('Server', '<p>No server boards captured yet.</p>'); return; }
+    data = datas[sc];
+    if (!data.boards.length) { view().innerHTML = card(what, '<p>No boards captured yet.</p>'); return; }
     boardView(boardFromHash(hash) || state.board);
     if (window.lucide) lucide.createIcons();
     window.scrollTo(0, 0);
   }
 
-  return {owns, render, set, state, switchBoard, _setData: d => { data = d; }, filterRows, extraText, setText, detailText, buildHtml, rowHtml, fmtValue, exName, gearTier, boardFromHash, nameOf, helpers: {num, dateStr}};
+  return {owns, scopeOf, ageDays, dimensionNote, homeworldNote, render, set, state, switchBoard, _setData: d => { data = d; datas[scope] = d; }, filterRows, extraText, setText, detailText, buildHtml, rowHtml, fmtValue, exName, gearTier, boardFromHash, nameOf, helpers: {num, dateStr}};
 })();
 if (typeof module !== 'undefined') module.exports = Server;

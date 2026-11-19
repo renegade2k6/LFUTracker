@@ -25,7 +25,7 @@ jobs:
           cp index.html theme.css directory.js rankings.js player-power.js merge.js vault.js profiles.js server.js _site/
           cp logo.png favicon-32.png apple-touch-icon.png hero-radar.png _site/
           cp -r img _site/
-          cp data/site.enc.json data/sample.json data/profiles.enc.json data/profiles-detail.enc.json data/server.enc.json _site/data/
+          cp data/site.enc.json data/sample.json data/profiles.enc.json data/profiles-detail.enc.json data/server.enc.json data/dimension.enc.json _site/data/
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v4
         with:

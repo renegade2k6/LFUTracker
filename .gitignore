@@ -27,3 +27,4 @@
 !/data/profiles-detail.enc.json
 # Server tab: encrypted bundle only (scripts/profiles.py).
 !/data/server.enc.json
+!/data/dimension.enc.json
