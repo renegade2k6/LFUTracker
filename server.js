@@ -281,7 +281,8 @@ const Server = (() => {
   // the top) and refresh just the menu, the picker and the list.
   function switchBoard(key) {
     state.board = key;
-    try { history.pushState(null, '', `#server/${encodeURIComponent(key)}`); } catch { location.hash = `#server/${encodeURIComponent(key)}`; return; }
+    const hash = `#server/${encodeURIComponent(key)}`;
+    try { if (location.hash !== hash) history.pushState(null, '', hash); } catch { location.hash = hash; return; }
     document.querySelectorAll('#svpills [data-board]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.board === key)));
     const sel = document.getElementById('svsel');
     if (sel) sel.value = key;
@@ -314,6 +315,6 @@ const Server = (() => {
     window.scrollTo(0, 0);
   }
 
-  return {owns, render, set, state, filterRows, extraText, setText, detailText, buildHtml, rowHtml, fmtValue, exName, gearTier, boardFromHash, nameOf, helpers: {num, dateStr}};
+  return {owns, render, set, state, switchBoard, _setData: d => { data = d; }, filterRows, extraText, setText, detailText, buildHtml, rowHtml, fmtValue, exName, gearTier, boardFromHash, nameOf, helpers: {num, dateStr}};
 })();
 if (typeof module !== 'undefined') module.exports = Server;

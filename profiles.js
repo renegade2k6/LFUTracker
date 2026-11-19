@@ -286,15 +286,18 @@ const Profiles = (() => {
     ['Battles', [['battlesTotal', 'Total Battles'], ['battleVictories', 'Battle Victories'], ['unitsDefeatedEnemies', 'Units Defeated (Enemies)'],
       ['unitsDefeatedYours', 'Units Defeated (Yours)'], ['unitsTreatedYours', 'Units Treated (Yours)'], ['zombiesDefeated', 'Zombies Defeated']]],
   ];
+  // Popup fields that only repeat a row of the sections above (same number, older name). Hidden by KEY, and only when the
+  // sections are shown, so a profile without More Info still lists them and an unrelated field is never hidden by value.
+  const SECTION_REPEATS = new Set(['armyKill', 'buildingPower', 'sciencePower', 'battleWin', 'allBattleCount', 'zombieKill', 'armyDead', 'armyCure']);
   // -> [{title, rows: [[label, value]]}]: the game's sections first, then anything else we captured that is not a repeat of them.
   function commanderSections(popup) {
     const all = {...(popup.player || {}), ...(popup.moreInfo || {})};
-    const used = new Set(), shown = new Set(), out = [];
+    const used = new Set(), out = [];
     for (const [title, keys] of GAME_SECTIONS) {
-      const rows = keys.filter(([k]) => all[k] != null && all[k] !== '').map(([k, label]) => { used.add(k); shown.add(String(all[k])); return [label, num(all[k])]; });
+      const rows = keys.filter(([k]) => all[k] != null && all[k] !== '').map(([k, label]) => { used.add(k); return [label, num(all[k])]; });
       if (rows.length) out.push({title, rows});
     }
-    const rest = Object.entries(all).filter(([k, v]) => !used.has(k) && v != null && v !== '' && !shown.has(String(v)))
+    const rest = Object.entries(all).filter(([k, v]) => !used.has(k) && v != null && v !== '' && !(out.length && SECTION_REPEATS.has(k)))
       .map(([k, v]) => [LABELS[k] || humanize(k), describe(v, k)]);
     if (rest.length) out.push({title: 'More', rows: rest});
     return out;
