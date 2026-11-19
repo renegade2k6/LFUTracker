@@ -191,13 +191,13 @@ const Profiles = (() => {
         <label class="grow">Search<input type="search" id="pfq" placeholder="Name, alliance tag, alliance name or uid…" value="${esc(state.q)}" oninput="Profiles.set('q',this.value)"></label>
         <label>Server<select onchange="Profiles.set('server',this.value)"><option value="">All</option>${servers.map(s => `<option value="${s}"${String(s) === state.server ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
         <label>Leaderboard<select onchange="Profiles.set('tab',this.value)"><option value="">Any</option>${main.tabs.map((t, i) => `<option value="${i}"${String(i) === state.tab ? ' selected' : ''}>${esc(t.l)}</option>`).join('')}</select></label>
-        <label>Sort<select onchange="Profiles.set('sort',this.value)">${[['pw', 'Power'], ['kl', 'Kills'], ['lv', 'HQ level'], ['ls', 'Last seen'], ['tabs', 'Most captured'], ['name', 'Name'], ['alliance', 'Alliance']].map(([k, l]) => `<option value="${k}"${state.sort === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+        <label>Sort<select onchange="Profiles.set('sort',this.value)">${[['pw', 'Power'], ['kl', 'Kills'], ['lv', 'HQ level'], ['ls', 'Last seen'], ['name', 'Name'], ['alliance', 'Alliance']].map(([k, l]) => `<option value="${k}"${state.sort === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
         <label class="pf-check"><input type="checkbox" ${state.star ? 'checked' : ''} onchange="Profiles.set('star',this.checked)"> ★ advanced only</label>
         ${al ? `<label class="pf-check"><span class="pf-badge">${esc(al.b || al.n)} ✕</span><button type="button" class="pf-badge mute" onclick="Profiles.set('alliance',-1)">clear alliance</button></label>` : ''}
       </div>
       <div class="pf-count" id="pfcount" role="status"></div>
       <div class="pf-scroll"><table class="pf" aria-label="Player profiles"><thead><tr>
-        <th></th>${[['name', 'Player'], ['alliance', 'Alliance'], ['', 'Server'], ['pw', 'Power'], ['lv', 'HQ'], ['kl', 'Kills'], ['tabs', 'Boards'], ['ls', 'Last seen']].map(([k, l]) => `<th${k ? ` onclick="Profiles.set('sort','${k}')"` : ''} class="${k === state.sort ? 'sorted' : ''}${['pw', 'lv', 'kl', 'tabs'].includes(k) ? ' n' : ''}">${l}${k === state.sort ? (state.dir < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('')}
+        <th></th>${[['name', 'Player'], ['alliance', 'Alliance'], ['', 'Server'], ['pw', 'Power'], ['lv', 'HQ'], ['kl', 'Kills'], ['ls', 'Last seen']].map(([k, l]) => `<th${k ? ` onclick="Profiles.set('sort','${k}')"` : ''} class="${k === state.sort ? 'sorted' : ''}${['pw', 'lv', 'kl'].includes(k) ? ' n' : ''}">${l}${k === state.sort ? (state.dir < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('')}
       </tr></thead><tbody id="pfrows"></tbody></table></div>
       <div class="pf-pager"><button type="button" id="pfprev" onclick="Profiles.page(-1)">← Previous</button><span id="pfpage"></span><button type="button" id="pfnext" onclick="Profiles.page(1)">Next →</button></div>
       <p class="pf-note">Beta. Each value carries its own capture date: rosters are refreshed whenever an alliance screen is opened, global leaderboard ranks only for players who were on a list when somebody looked. A blank means "never captured", not zero. Only global (cross-server) leaderboards are shown; server-only lists are left out because they only cover one server.</p>`;
@@ -216,8 +216,8 @@ const Profiles = (() => {
         <td><a href="#p/${esc(p.u)}">${esc(p.n)}</a></td>
         <td>${p.b ? esc(p.b) : '<span class="pf-badge mute">none</span>'}${a ? '' : p.b ? ' <span class="pf-badge mute" title="Not in the newest roster we captured for this alliance">left?</span>' : ''}</td>
         <td>${p.sv != null ? esc(p.sv) : '—'}</td><td class="n">${p.pw != null ? num(p.pw) : '—'}</td><td class="n">${p.lv != null ? p.lv : '—'}</td>
-        <td class="n">${p.kl != null ? num(p.kl) : '—'}</td><td class="n">${p.tabCount || ''}</td><td title="${esc(dateStr(p.ls))}">${esc(ago(p.ls))}</td></tr>`;
-    }).join('') : `<tr><td colspan="9" class="empty">No matches. Try another name, tag or server.</td></tr>`;
+        <td class="n">${p.kl != null ? num(p.kl) : '—'}</td><td title="${esc(dateStr(p.ls))}">${esc(ago(p.ls))}</td></tr>`;
+    }).join('') : `<tr><td colspan="8" class="empty">No matches. Try another name, tag or server.</td></tr>`;
     document.getElementById('pfpage').textContent = `Page ${state.page + 1} / ${pages}`;
     document.getElementById('pfprev').disabled = state.page === 0;
     document.getElementById('pfnext').disabled = state.page >= pages - 1;
@@ -254,7 +254,7 @@ const Profiles = (() => {
         <div class="pf-meta"><span>uid ${esc(p.u)}</span><span title="${esc(dateStr(p.ls))}">last seen ${esc(ago(p.ls))}</span></div></div></div>
       <div class="pf-tiles">${stat('Power', p.pw != null ? num(p.pw) : '—', delta(p.ph) != null ? `<span class="${delta(p.ph) >= 0 ? 'pf-up' : 'pf-down'}">${delta(p.ph) >= 0 ? '+' : ''}${compact(delta(p.ph))} since ${esc(dateStr(p.ph[0][0]))}</span>` : '')}
         ${stat('HQ level', p.lv != null ? p.lv : '—')}${stat('Kills', p.kl != null ? num(p.kl) : '—')}${stat('Joined alliance', p.jt ? esc(dateStr(p.jt)) : '—')}
-        ${p.sr ? stat('Season rank', `#${esc(p.sr[0])}`, `${compact(p.sr[1])} pts · server ${esc(p.sr[2])} · ${esc(dateStr(p.sr[3]))}`) : ''}</div>
+</div>
       <div class="pf-grid2">${chartCard('Power over time', p.ph, compact)}${chartCard('Kills over time', p.kh, compact)}${chartCard('HQ level over time', p.lh)}</div>
       ${tabs.length ? `<div class="pf-card"><h2>Global leaderboards (${tabs.length})</h2><div class="pf-grid" id="pftabs">${tabs.map(t => tabCard(t)).join('')}</div>
         ${p.st ? '<p class="pf-note" id="pfdetailnote">Loading the advanced profile…</p>' : ''}</div>` : ''}
