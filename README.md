@@ -28,10 +28,28 @@ never committed to this repository.
 | `logo.png`, `favicon-32.png`, `apple-touch-icon.png` | Header logo, browser tab icon, phone home-screen icon |
 | `hero-radar.png` | Overview hero radar (the sweep is CSS on top) |
 | `data/site.enc.json` | Encrypted site data |
+| `profiles.js`, `data/profiles.enc.json`, `data/profiles-detail.enc.json` | Profiles (Beta): one page per player. Headline power is the in-game Commander CP when captured; the alliance member-list power is shown separately. A `~` after a server means it is the player's alliance server (the player's own was not captured) |
+| `server.js`, `data/server.enc.json`, `data/dimension.enc.json` | **Homeworld 21** and **Dimension** pages (see below) |
+| `img/` | Small WebP icons (gear, war beasts, ultimate weapons, heroes, skills, modules) used by those pages; only icons the boards use are exported |
 
 Deployed to GitHub Pages by `.github/workflows/pages.yml` on every push to `master`.
 The workflow publishes an explicit file list: a new file the page loads must be added to
 its `cp` step and to the `.gitignore` whitelist, or it 404s on the live site.
+
+## Homeworld 21 and Dimension pages
+
+Both pages are laid out like the in-game leaderboard (menu of boards, rank medals, `[Tag]Name #server`, item tiles with
+levels, the game's own column headers) and are decrypted in the browser like the rest of the site.
+
+- **Homeworld 21** lists the in-game leaderboards for the homeworld, which is made up of several servers
+  (260, 263, 280, 310, 316, 328, 395, 399, 400). Every row keeps the player's own `#server`. Only players in the homeworld
+  at the time of the snapshot are listed, so players currently away in their dimension maps do not appear, and only players
+  who appeared on a board when it was captured (it is not a full roster). Ranks are positions on that board.
+- **Dimension** shows the game's season-map rankings: Player Power (top 150 players) and Alliance Power, from every server in
+  the dimension. A dimension lasts about 4 weeks, so the page shows when the snapshot was taken and warns after 28 days
+  that the dimension has probably changed.
+- Both are snapshots from passive in-game captures, not live data. Arena boards are never published, and the global
+  Decor / Prosperity boards live on the Profiles pages.
 
 ## All Alliances and All Players
 
