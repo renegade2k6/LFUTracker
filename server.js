@@ -77,8 +77,8 @@ const Server = (() => {
       const m = names && names.mod && names.mod[id];
       if (!m) return `<span class="sv-mod" title="Module ${esc(id)}"><b>?</b></span>`;
       const label = `${m[3] || 'Module'} Lv${m[0]}`;
-      const tier = Number(m[0]) >= 16 ? 'hi' : 'lo';          // 16 and up gold, below that red (as in game)
-      return `<span class="sv-mod ${tier}" title="${esc(label)}">${m[2] ? `<img src="img/m/${encodeURIComponent(m[2])}.webp" width="26" height="26" loading="lazy" alt="" onerror="this.style.display='none'">` : ''}<b>${esc(m[0])}</b></span>`;
+      const q = Number.isInteger(m[1]) ? m[1] : 0;           // the game's own quality tier for that module level
+      return `<span class="sv-mod q${q}" title="${esc(label)}">${m[2] ? `<img src="img/m/${encodeURIComponent(m[2])}.webp" width="26" height="26" loading="lazy" alt="" onerror="this.style.display='none'">` : ''}<b>${esc(m[0])}</b></span>`;
     }).join('')}</div>`;
   }
 
@@ -126,7 +126,8 @@ const Server = (() => {
   .sv-mods{display:flex;gap:.25rem;margin-top:.3rem}
   .sv-mod{position:relative;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;background:var(--bg-card-elev);border:1px solid var(--border)}
   .sv-mod img{object-fit:contain}.sv-mod b{position:absolute;right:-3px;bottom:-4px;font:700 .62rem var(--mono);line-height:1;padding:1px 3px;border-radius:4px;background:#000c;color:var(--text)}
-  .sv-mod.hi{border-color:#ffc83d}.sv-mod.lo{border-color:#ff5a4d}
+  /* tier colours as shown in the game's War Beast Factory: Lv 7-9 purple, 10-12 orange, 13-15 red, 16+ gold */
+  .sv-mod.q1{border-color:#9aa3b2}.sv-mod.q2{border-color:#4a9cff}.sv-mod.q3{border-color:#9a6cd0}.sv-mod.q4{border-color:#e8845a}.sv-mod.q5{border-color:#e0485a}.sv-mod.q6{border-color:#ffc83d}
   .sv-ico{object-fit:contain;border-radius:5px;background:var(--bg-card-elev);border:1px solid var(--border-subtle)}
   .sv-txt{color:var(--text-dim);font-size:.8rem;margin-left:.45rem;line-height:1.3}
   .sv-selwrap{display:none;margin:1rem 0 .4rem}
