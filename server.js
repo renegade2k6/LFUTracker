@@ -270,7 +270,7 @@ const Server = (() => {
       <div class="pf-hero"><p class="eyebrow">SERVER ${esc(m.server)}</p><h1>Server <span>${esc(m.server)}</span></h1>
         <p>How the players on our home server compare, board by board.</p></div>
       <div class="sv-note" role="note"><svg class="icon-sm" data-lucide="info" aria-hidden="true"></svg><div><b>Server ${esc(m.server)} data is from the in-game leaderboards.</b>
-        <span> It only covers players who appeared on a board when we captured it, so it is not a full roster. Ranks are within this server only, and each board was captured at its own time (shown above the list).</span></div></div>
+        <span> It only covers players on Server ${esc(m.server)}, as of the snapshot. Players who are currently in their dimension maps are not included. It also only covers players who appeared on a board when we captured it, so it is not a full roster. Ranks are within this server only, and each board was captured at its own time (shown above the list).</span></div></div>
       <div class="sv-selwrap"><select id="svsel" aria-label="Board">${tabs}</select></div>
       <div class="sv-tools"><div class="pf-count" id="svcount"></div>
         <input type="search" id="svq" placeholder="Search name, tag or uid" aria-label="Search this board" value="${esc(state.q)}"></div>
