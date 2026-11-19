@@ -346,7 +346,10 @@ const Server = (() => {
     if (locked()) { view().innerHTML = card(what, `<p>${what === 'Dimension' ? 'Dimension' : 'Server'} leaderboards are part of the protected data. Log in to view them.</p><button type="button" class="primary-action" onclick="showLogin()">Log in</button>`); return; }
     if (!data) view().innerHTML = `<div class="empty" role="status">Loading ${sc === 'dimension' ? 'dimension' : 'server'} boards…</div>`;
     try { await load(sc); } catch (e) {
-      if (location.hash === hash) view().innerHTML = card(`${what} unavailable`, `<p>${esc(e.message === 'locked' ? 'Log in first.' : `Could not load the ${what.toLowerCase()} data (` + e.message + '). ' + (sc === 'dimension' ? 'No dimension snapshot has been published yet, or ' : '') + 'Run Deploy again, or refresh the page.')}</p>`);
+      const msg = e.message === 'locked' ? 'Log in first.'
+        : sc === 'dimension' && e.message === 'HTTP 404' ? 'No dimension snapshot has been published yet.'
+        : `Could not load the ${what.toLowerCase()} data (${e.message}). Run Deploy again, or refresh the page.`;
+      if (location.hash === hash) view().innerHTML = card(`${what} unavailable`, `<p>${esc(msg)}</p>`);
       return;
     }
     if (location.hash !== hash) return;
