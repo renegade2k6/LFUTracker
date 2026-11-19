@@ -767,7 +767,7 @@ function startFull(unlocked) {
   STATE.mergeReport = merged.report;
   STATE.peaks = Directory.peaks(unlocked.playerPeaks, leaderboard);
   document.getElementById("topMeta").innerHTML = `${meta ? `Updated ${esc(relTime(meta.generatedAtUtc))} · ` : ""}<button type="button" class="lock-button" onclick="lockSite()">Lock</button>`;
-  location.hash = "";
+  if (!(typeof Profiles !== "undefined" && Profiles.owns(location.hash))) location.hash = "";  // keep shared Profiles links
   render();
 }
 

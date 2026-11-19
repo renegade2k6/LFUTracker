@@ -28,14 +28,19 @@ const Profiles = (() => {
     if (m < 1440) return `${Math.round(m / 60)}h ago`;
     return `${Math.round(m / 1440)}d ago`;
   };
-  const stars = t => t >= 2 ? '★★' : t === 1 ? '★' : '';
+  const stars = t => t ? '★' : '';
   // "Explore" stores a stage id: 100500 is shown in game as 50-10 (chapter = id / 2000, stage = remainder / 50).
   function formatValue(tab, v) {
     if (v == null) return '—';
     if (tab && tab.f === 'cur_id') return `${Math.floor(v / 2000)}-${(v % 2000) / 50}`;
     return num(v);
   }
-  const humanize = k => k.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
+  const humanize = k => k.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ').replace(/^./, c => c.toUpperCase()).replace(/\bId\b/g, 'ID');
+  const LABELS = {armyKill: 'Kills (units defeated)', armyDead: 'Units lost', armyCure: 'Units treated', battleWin: 'Battles won',
+    allBattleCount: 'Battles fought', zombieKill: 'Zombies defeated', likeNum: 'Likes', manorValue: 'Manor value',
+    buildingPower: 'Building power', sciencePower: 'Tech power', armyPower: 'Army power', serverName: 'Home server',
+    sharecode: 'Share code', totalCP: 'Total CP', facilityCP: 'Facility CP', technologyCP: 'Technology CP',
+    infirmaryCapacity: 'Infirmary capacity'};
   function describe(v, key = '') {
     if (v == null) return '';
     if (Array.isArray(v)) return v.map(x => describe(x, key)).filter(Boolean).join(' · ');
@@ -180,8 +185,8 @@ const Profiles = (() => {
     const withTabs = players.filter(p => p.tb).length;
     view().innerHTML = `<section class="pf-hero"><p class="eyebrow">INTELLIGENCE / PROFILES</p>
       <h1>Player <span>Profiles</span><span class="pf-beta">BETA</span></h1>
-      <p>Every survivor we have seen, built from alliance rosters and the in-game leaderboards. Roster stats exist for nearly everyone; players marked <span class="pf-star">★</span> have been captured across several leaderboards and get an advanced profile.</p></section>
-      <div class="pf-tiles">${stat('Profiles', num(m.players))}${stat('Advanced ★', num(m.stars), `${num(m.stars2)} with ★★`)}${stat('On a leaderboard', num(withTabs), `${(100 * withTabs / m.players).toFixed(1)}% of profiles`)}${stat('Alliances', num(m.alliances))}${stat('Data refreshed', esc(ago(Date.parse(m.generatedAtUtc) / 1000)))}</div>
+      <p>Every survivor we have seen, built from alliance rosters and the in-game leaderboards. Roster stats exist for nearly everyone; players marked <span class="pf-star">★</span> appear on the global leaderboards or have had their commander popup captured, and get an advanced profile.</p></section>
+      <div class="pf-tiles">${stat('Profiles', num(m.players))}${stat('Advanced ★', num(m.stars), `both global boards or popup`)}${stat('On a leaderboard', num(withTabs), `${(100 * withTabs / m.players).toFixed(1)}% of profiles`)}${stat('Alliances', num(m.alliances))}${stat('Data refreshed', esc(ago(Date.parse(m.generatedAtUtc) / 1000)))}</div>
       <div class="pf-bar" role="search">
         <label class="grow">Search<input type="search" id="pfq" placeholder="Name, alliance tag, alliance name or uid…" value="${esc(state.q)}" oninput="Profiles.set('q',this.value)"></label>
         <label>Server<select onchange="Profiles.set('server',this.value)"><option value="">All</option>${servers.map(s => `<option value="${s}"${String(s) === state.server ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
@@ -195,7 +200,7 @@ const Profiles = (() => {
         <th></th>${[['name', 'Player'], ['alliance', 'Alliance'], ['', 'Server'], ['pw', 'Power'], ['lv', 'HQ'], ['kl', 'Kills'], ['tabs', 'Boards'], ['ls', 'Last seen']].map(([k, l]) => `<th${k ? ` onclick="Profiles.set('sort','${k}')"` : ''} class="${k === state.sort ? 'sorted' : ''}${['pw', 'lv', 'kl', 'tabs'].includes(k) ? ' n' : ''}">${l}${k === state.sort ? (state.dir < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('')}
       </tr></thead><tbody id="pfrows"></tbody></table></div>
       <div class="pf-pager"><button type="button" id="pfprev" onclick="Profiles.page(-1)">← Previous</button><span id="pfpage"></span><button type="button" id="pfnext" onclick="Profiles.page(1)">Next →</button></div>
-      <p class="pf-note">Beta. Each value carries its own capture date: rosters are refreshed whenever an alliance screen is opened, leaderboard ranks only for players who were on a list when somebody looked. A blank means "never captured", not zero. Leaderboard ranks are positions inside the list that was captured, so they are only comparable within the same server list.</p>`;
+      <p class="pf-note">Beta. Each value carries its own capture date: rosters are refreshed whenever an alliance screen is opened, global leaderboard ranks only for players who were on a list when somebody looked. A blank means "never captured", not zero. Only global (cross-server) leaderboards are shown; server-only lists are left out because they only cover one server.</p>`;
     drawRows();
   }
 
@@ -207,7 +212,7 @@ const Profiles = (() => {
     document.getElementById('pfcount').textContent = `${num(shown.length)} of ${num(main.players.length)} profiles`;
     document.getElementById('pfrows').innerHTML = slice.length ? slice.map(p => {
       const a = allianceOf(p);
-      return `<tr><td>${p.st ? `<span class="pf-star" title="${p.st > 1 ? 'Advanced profile (8+ leaderboards)' : 'Advanced profile'}">${stars(p.st)}</span>` : ''}</td>
+      return `<tr><td>${p.st ? `<span class="pf-star" title="Advanced profile">${stars(p.st)}</span>` : ''}</td>
         <td><a href="#p/${esc(p.u)}">${esc(p.n)}</a></td>
         <td>${p.b ? esc(p.b) : '<span class="pf-badge mute">none</span>'}${a ? '' : p.b ? ' <span class="pf-badge mute" title="Not in the newest roster we captured for this alliance">left?</span>' : ''}</td>
         <td>${p.sv != null ? esc(p.sv) : '—'}</td><td class="n">${p.pw != null ? num(p.pw) : '—'}</td><td class="n">${p.lv != null ? p.lv : '—'}</td>
@@ -251,7 +256,7 @@ const Profiles = (() => {
         ${stat('HQ level', p.lv != null ? p.lv : '—')}${stat('Kills', p.kl != null ? num(p.kl) : '—')}${stat('Joined alliance', p.jt ? esc(dateStr(p.jt)) : '—')}
         ${p.sr ? stat('Season rank', `#${esc(p.sr[0])}`, `${compact(p.sr[1])} pts · server ${esc(p.sr[2])} · ${esc(dateStr(p.sr[3]))}`) : ''}</div>
       <div class="pf-grid2">${chartCard('Power over time', p.ph, compact)}${chartCard('Kills over time', p.kh, compact)}${chartCard('HQ level over time', p.lh)}</div>
-      ${tabs.length ? `<div class="pf-card"><h2>Leaderboards (${tabs.length})</h2><div class="pf-grid" id="pftabs">${tabs.map(t => tabCard(t)).join('')}</div>
+      ${tabs.length ? `<div class="pf-card"><h2>Global leaderboards (${tabs.length})</h2><div class="pf-grid" id="pftabs">${tabs.map(t => tabCard(t)).join('')}</div>
         ${p.st ? '<p class="pf-note" id="pfdetailnote">Loading the advanced profile…</p>' : ''}</div>` : ''}
       ${p.al ? `<div class="pf-card"><h2>Name &amp; alliance history</h2><ul class="pf-timeline">${[...p.al].reverse().map(x => `<li><span><b>${esc(x[0])}</b> ${x[1] ? `<span class="pf-badge mute">${esc(x[1])}</span>` : ''}</span><span>${esc(dateStr(x[2]))}${x[3] !== x[2] ? ' → ' + esc(dateStr(x[3])) : ''}</span></li>`).join('')}</ul></div>` : ''}
       <div id="pfextra"></div>
@@ -269,10 +274,7 @@ const Profiles = (() => {
     let h = '';
     if (d.popup) {
       const rows = Object.entries({...d.popup.player, ...d.popup.moreInfo});
-      h += `<div class="pf-card"><h2>Commander info · ${esc(dateStr(d.popup.ts))}</h2><div class="pf-grid">${rows.map(([k, v]) => `<div class="pf-tab"><h3><span>${esc(humanize(k))}</span></h3><div class="val">${esc(typeof v === 'number' ? num(v) : v)}</div></div>`).join('')}</div></div>`;
-    }
-    if (d.own) {
-      h += `<div class="pf-card"><h2>Own More Info (local) · ${esc(dateStr(d.own.ts))}</h2><p class="pf-note">${esc(describe(d.own.values))}</p></div>`;
+      h += `<div class="pf-card"><h2>Commander info · ${esc(dateStr(d.popup.ts))}</h2><div class="pf-grid">${rows.map(([k, v]) => `<div class="pf-tab"><h3><span>${esc(LABELS[k] || humanize(k))}</span></h3><div class="val">${esc(typeof v === 'number' ? num(v) : v)}</div></div>`).join('')}</div></div>`;
     }
     return h + `<p class="pf-note">Hero, beast and weapon entries show game ids; names are not mapped yet.</p>`;
   }
@@ -308,7 +310,7 @@ const Profiles = (() => {
     window.scrollTo(0, 0);
   }
 
-  const api = {owns, render, set, page, state, formatValue, applyFilters, normalize, spark, describe, delta, downsampleLabel: stars,
+  const api = {owns, render, set, page, state, formatValue, applyFilters, normalize, spark, describe, delta, stars,
     helpers: {num, compact, dateStr, ago, humanize}};
   return api;
 })();
