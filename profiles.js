@@ -201,7 +201,9 @@ const Profiles = (() => {
   .pf-crumbs li{display:flex;align-items:center;min-width:0;font:500 .9rem var(--body,inherit)}
   .pf-crumbs li+li::before{content:"/";color:var(--text-faint);margin:0 .15rem;font-weight:400}
   .pf-crumbs a,.pf-crumbs li[aria-current] span{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .7rem;border-radius:var(--radius-sm);color:var(--text-dim);text-decoration:none;max-width:24ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:background .15s,color .15s}
-  .pf-crumbs a:hover,.pf-crumbs a:focus-visible{background:var(--hazard-dim);color:var(--hazard-text);outline:none}
+  .pf-crumbs a:hover,.pf-crumbs a:focus-visible{background:var(--hazard-dim);color:var(--hazard-text)}
+  .pf-crumbs a:focus-visible,.pf-crumbs .back:focus-visible,a.pf-chip:focus-visible,.pf-mates a:focus-visible,.pf-more:focus-visible{outline:2px solid var(--hazard-text);outline-offset:2px}
+  .pf-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .pf-crumbs li[aria-current] span{color:var(--text);font-weight:700;max-width:34ch}
   .pf-crumbs svg{width:15px;height:15px;flex:none}
   .pf-crumbs .back{display:inline-flex;align-items:center;gap:.4rem;color:var(--text-dim);font-size:.82rem;text-decoration:none;padding:.4rem .75rem;border:1px solid var(--border);border-radius:99px;transition:all .15s}
@@ -215,7 +217,7 @@ const Profiles = (() => {
   .pf-chips{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}
   .pf-chip{display:inline-flex;align-items:center;gap:.4rem;font:600 .78rem var(--mono);padding:.3rem .7rem;border-radius:99px;background:var(--bg-card-elev);border:1px solid var(--border);color:var(--text-dim);text-decoration:none;transition:transform .15s,border-color .15s,color .15s,background .15s}
   .pf-chip svg{width:13px;height:13px;flex:none}
-  a.pf-chip:hover,a.pf-chip:focus-visible{transform:translateY(-1px);color:var(--hazard-text);border-color:var(--border-glow);background:var(--hazard-dim);outline:none}
+  a.pf-chip:hover,a.pf-chip:focus-visible{transform:translateY(-1px);color:var(--hazard-text);border-color:var(--border-glow);background:var(--hazard-dim)}
   .pf-chip.tag{background:var(--hazard-dim);color:var(--hazard-text);border-color:var(--border-glow)}
   .pf-chip.alliance{color:var(--text);font-weight:700;padding:.32rem .8rem}
   .pf-chip.good{background:var(--good-dim);color:var(--good);border-color:transparent}.pf-chip.good::before{content:"";width:.45rem;height:.45rem;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good)}
@@ -388,7 +390,7 @@ const Profiles = (() => {
     trail.push({label: p.n});
     const joined = p.jt ? `${dateStr(p.jt)} <span class="of pf-up">${Math.max(0, Math.round((Date.now() / 1000 - p.jt) / 86400))} days</span>` : '<span class="dim">Not captured</span>';
     const tile = (icon, label, value) => `<div class="pf-tile"><small>${icn(icon)}${esc(label)}</small><b>${value}</b></div>`;
-    const mates = group && group.length > 1 ? (() => {
+    const mates = a && group && group.length > 1 ? (() => {
       let list = group.slice(0, 8);
       if (aRank > 8) list = [...list.slice(0, 7), p];
       return `<div class="pf-card"><h2>${esc(p.b || 'Alliance')} · top by power</h2><ul class="pf-mates">${list.map(x => {
@@ -415,7 +417,7 @@ const Profiles = (() => {
             <div class="pf-sub"><span>uid ${esc(p.u)}</span></div>
           </div>
         </div>
-        <div class="pf-power"><small>POWER</small><b id="pfpower">${p.pw != null ? num(p.pw) : '—'}</b>
+        <div class="pf-power"><small>POWER</small><b><span id="pfpower" aria-hidden="true">${p.pw != null ? num(p.pw) : '—'}</span><span class="pf-sr">${p.pw != null ? num(p.pw) : 'not captured'}</span></b>
           ${hd != null ? `<span class="d ${hd >= 0 ? 'pf-up' : 'pf-down'}">${hd >= 0 ? '+' : ''}${compact(hd)} since ${esc(dateStr(p.ph[0][0]))}</span>` : ''}
           ${pk != null && pk !== p.pw ? `<span class="pk">Highest seen <em>${num(pk)}</em></span>` : ''}
           ${p.ph && p.ph.length > 1 ? spark(p.ph, {w: 220, h: 34}) : ''}</div>
