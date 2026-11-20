@@ -38,6 +38,14 @@ const Server = (() => {
   function homeworldNote() {
     return noteHtml(`<b>Homeworld data is from the in-game leaderboards.</b><span> Only players who were in the homeworld at the time of the snapshot are listed, so players who are currently away in their dimension maps do not appear. It also only covers players who appeared on a board when we captured it, so it is not a full roster. Ranks are positions on that board, and each board was captured at its own time (shown above the list).</span>`);
   }
+  // Facts of the snapshotted dimension; every value comes from the capture, so it changes by itself when the dimension does.
+  function dimensionFacts(m) {
+    const f = [['Season', m.season], ['Dimension server', m.world], ['Map group', m.group], ['Homeworlds', m.homeworlds],
+               ['Servers', m.servers && m.servers.length], ['Our server', m.self],
+               ['Snapshot', m.capturedAtUtc ? dateStr(Date.parse(m.capturedAtUtc) / 1000) : null]]
+      .filter(x => x[1] != null && x[1] !== '');
+    return f.length ? `<dl class="dm-facts">${f.map(x => `<div><dt>${esc(x[0])}</dt><dd>${esc(x[1])}</dd></div>`).join('')}</dl>` : '';
+  }
   function dimensionNote(m, now = Date.now()) {
     const age = ageDays(m.capturedAtUtc, now), stale = age != null && age > DIMENSION_DAYS;
     const when = m.capturedAtUtc ? dateStr(Date.parse(m.capturedAtUtc) / 1000) : 'an unknown date';
@@ -288,8 +296,8 @@ const Server = (() => {
     const menu = boards.map(x => `<button type="button" class="sv-mi" data-board="${esc(x.k)}" aria-pressed="${x.k === b.k}">${esc(x.l)}</button>`).join('');
     view().innerHTML = `<div class="sv">
       ${scope === 'dimension'
-        ? `<div class="pf-hero"><p class="eyebrow">SEASON-MAP RANKINGS${m.season != null ? ` · SEASON ${esc(m.season)}` : ''}</p><h1>Dimension</h1>
-        <p>How the players in our current dimension compare, tab by tab.</p></div>${dimensionNote(m)}`
+        ? `<div class="pf-hero"><p class="eyebrow">SEASON-MAP RANKINGS${m.season != null ? ` · SEASON ${esc(m.season)}` : ''}</p><h1>Dimension${m.world != null ? ` <span>${esc(m.world)}</span>` : ''}</h1>
+        <p>How the players in our current dimension compare, tab by tab.</p>${dimensionFacts(m)}</div>${dimensionNote(m)}`
         : `<div class="pf-hero"><p class="eyebrow">YOUR SERVER ${esc(m.server)}</p><h1>Homeworld <span>${esc(m.homeworld ?? '')}</span></h1>
         <p>How the players in our homeworld compare, board by board.</p></div>${homeworldNote()}`}
       <div class="sv-selwrap"><select id="svsel" aria-label="Board">${tabs}</select></div>
@@ -360,6 +368,6 @@ const Server = (() => {
     window.scrollTo(0, 0);
   }
 
-  return {owns, scopeOf, ageDays, dimensionNote, homeworldNote, render, set, state, switchBoard, _setData: d => { data = d; datas[scope] = d; }, filterRows, extraText, setText, detailText, buildHtml, rowHtml, fmtValue, exName, gearTier, boardFromHash, nameOf, helpers: {num, dateStr}};
+  return {owns, scopeOf, dimensionFacts, ageDays, dimensionNote, homeworldNote, render, set, state, switchBoard, _setData: d => { data = d; datas[scope] = d; }, filterRows, extraText, setText, detailText, buildHtml, rowHtml, fmtValue, exName, gearTier, boardFromHash, nameOf, helpers: {num, dateStr}};
 })();
 if (typeof module !== 'undefined') module.exports = Server;

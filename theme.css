@@ -2006,3 +2006,8 @@ body.locked nav a:not([data-nav="overview"]), body.locked .search { display: non
   .search { width: 100%; max-width: none; }
   .search:focus-within { width: 100%; }
 }
+
+.dm-facts{display:flex;flex-wrap:wrap;gap:.5rem .75rem;margin:.9rem 0 0;padding:0}
+.dm-facts div{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.35rem .75rem;min-width:5.5rem}
+.dm-facts dt{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;opacity:.65}
+.dm-facts dd{margin:0;font-size:1.1rem;font-weight:700}
