@@ -68,7 +68,7 @@ const Profiles = (() => {
       (!s.star || p.st) &&
       (s.alliance < 0 || p.ai === s.alliance) &&
       (!s.tab || (p.tb && p.tb.some(t => String(t[0]) === s.tab))));
-    const key = {pw: p => p.pw, kl: p => p.kl, lv: p => p.lv, ls: p => p.ls, tabs: p => p.tabCount * 10 + (p.st || 0),
+    const key = {pw: p => p.pw, kl: p => p.kl, ls: p => p.ls, tabs: p => p.tabCount * 10 + (p.st || 0),
       name: p => p.n.toLowerCase(), alliance: p => (p.b || '').toLowerCase()}[s.sort] || (p => p.pw);
     return out.sort((a, b) => {
       const x = key(a), y = key(b);
@@ -98,11 +98,11 @@ const Profiles = (() => {
   // CSV of the rows as shown (same order), with full numbers. Cells starting with = + - @ are neutralised for spreadsheets.
   function csv(rows, alliances, ext = trackerPeaks()) {
     const cell = v => { let t = String(v ?? ''); if (/^[\s]*[=+@-]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
-    const head = ['Player Name', 'Alliance Name', 'Alliance Tag', 'Server Number', 'Power', 'Highest Power Seen', 'HQ Level', 'Kills', 'Last Seen (UTC)', 'uid'];
+    const head = ['Player Name', 'Alliance Name', 'Alliance Tag', 'Server Number', 'Power', 'Highest Power Seen', 'Kills', 'Last Seen (UTC)', 'uid'];
     const body = rows.map(p => {
       const al = p.ai != null && alliances ? alliances[p.ai] : null;
       const pk = peakOf(p, ext);
-      return [p.n, (al && al.n) || p.an, (al && al.b) || p.b, p.sv, p.pw, pk != null && pk !== p.pw ? pk : '', p.lv, p.kl, p.ls ? new Date(p.ls * 1000).toISOString().replace('T', ' ').slice(0, 19) : '', p.u];
+      return [p.n, (al && al.n) || p.an, (al && al.b) || p.b, p.sv, p.pw, pk != null && pk !== p.pw ? pk : '', p.kl, p.ls ? new Date(p.ls * 1000).toISOString().replace('T', ' ').slice(0, 19) : '', p.u];
     });
     return '﻿' + [head, ...body].map(r => r.map(cell).join(',')).join('\r\n');
   }
@@ -222,7 +222,7 @@ const Profiles = (() => {
         <label class="grow">Search<input type="search" id="pfq" placeholder="Name, alliance tag, alliance name or uid…" value="${esc(state.q)}" oninput="Profiles.set('q',this.value)"></label>
         <label>Server<select onchange="Profiles.set('server',this.value)"><option value="">All</option>${servers.map(s => `<option value="${s}"${String(s) === state.server ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
         <label>Leaderboard<select onchange="Profiles.set('tab',this.value)"><option value="">Any</option>${main.tabs.map((t, i) => `<option value="${i}"${String(i) === state.tab ? ' selected' : ''}>${esc(t.l)}</option>`).join('')}</select></label>
-        <label>Sort<select onchange="Profiles.set('sort',this.value)">${[['pw', 'Power'], ['kl', 'Kills'], ['lv', 'HQ level'], ['ls', 'Last seen'], ['name', 'Name'], ['alliance', 'Alliance']].map(([k, l]) => `<option value="${k}"${state.sort === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+        <label>Sort<select onchange="Profiles.set('sort',this.value)">${[['pw', 'Power'], ['kl', 'Kills'], ['ls', 'Last seen'], ['name', 'Name'], ['alliance', 'Alliance']].map(([k, l]) => `<option value="${k}"${state.sort === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
         <label class="pf-check" title="Hide players whose server is only inferred from their alliance (~)"><input type="checkbox" ${state.exact ? 'checked' : ''} onchange="Profiles.set('exact',this.checked)"> exact server only</label>
         <label class="pf-check"><input type="checkbox" ${state.star ? 'checked' : ''} onchange="Profiles.set('star',this.checked)"> ★ advanced only</label>
         ${al ? `<label class="pf-check"><span class="pf-badge">${esc(al.b || al.n)} ✕</span><button type="button" class="pf-badge mute" onclick="Profiles.set('alliance',-1)">clear alliance</button></label>` : ''}
@@ -230,7 +230,7 @@ const Profiles = (() => {
       <div class="pf-count" id="pfcount" role="status"></div><div class="pf-actions"><button type="button" class="pf-badge mute" onclick="Profiles.exportCsv()" title="Download every matching profile, in the current sort order, with full numbers">Export CSV</button></div>
       <p class="pf-note">Server: a <b>~</b> after the number means it is the server of the player's alliance, because the player's own server was not captured (the Server filter includes these). Without a ~ the server comes from a leaderboard row or the player's profile popup.</p>
       <div class="pf-scroll"><table class="pf" aria-label="Player profiles"><thead><tr>
-        <th></th>${[['name', 'Player'], ['', 'Alliance name'], ['alliance', 'Tag'], ['', 'Server'], ['pw', 'Power'], ['lv', 'HQ'], ['kl', 'Kills'], ['ls', 'Last seen']].map(([k, l]) => `<th${k ? ` onclick="Profiles.set('sort','${k}')"` : ''} class="${k === state.sort ? 'sorted' : ''}${['pw', 'lv', 'kl'].includes(k) ? ' n' : ''}">${l}${k === state.sort ? (state.dir < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('')}
+        <th></th>${[['name', 'Player'], ['', 'Alliance name'], ['alliance', 'Tag'], ['', 'Server'], ['pw', 'Power'], ['kl', 'Kills'], ['ls', 'Last seen']].map(([k, l]) => `<th${k ? ` onclick="Profiles.set('sort','${k}')"` : ''} class="${k === state.sort ? 'sorted' : ''}${['pw', 'kl'].includes(k) ? ' n' : ''}">${l}${k === state.sort ? (state.dir < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('')}
       </tr></thead><tbody id="pfrows"></tbody></table></div>
       <div class="pf-pager"><button type="button" id="pfprev" onclick="Profiles.page(-1)">← Previous</button><span id="pfpage"></span><button type="button" id="pfnext" onclick="Profiles.page(1)">Next →</button></div>
       <p class="pf-note">Beta. Each value carries its own capture date: rosters are refreshed whenever an alliance screen is opened, global leaderboard ranks only for players who were on a list when somebody looked. A blank means "never captured", not zero. Only global (cross-server) leaderboards are shown; server-only lists are left out because they only cover one server.</p>`;
@@ -248,9 +248,9 @@ const Profiles = (() => {
       return `<tr><td>${p.st ? `<span class="pf-star" title="Advanced profile">${stars(p.st)}</span>` : ''}</td>
         <td><a href="#p/${esc(p.u)}">${esc(p.n)}</a></td>
         <td class="pf-an">${esc((a && a.n) || p.an)}</td><td>${p.b ? esc(p.b) : '<span class="pf-badge mute">none</span>'}${a ? '' : p.b ? ' <span class="pf-badge mute" title="Not in the newest roster we captured for this alliance">left?</span>' : ''}</td>
-        <td${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>${p.sv != null ? esc(p.sv) : '—'}${p.sx ? '<small style="color:var(--text-faint)" aria-label="alliance server, inferred"> ~</small>' : ''}</td><td class="n">${p.pw != null ? num(p.pw) : '—'}${peakOf(p) != null && peakOf(p) !== p.pw ? ` <span class="power-peak" title="Highest power seen">(${num(peakOf(p))})</span>` : ''}</td><td class="n">${p.lv != null ? p.lv : '—'}</td>
+        <td${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>${p.sv != null ? esc(p.sv) : '—'}${p.sx ? '<small style="color:var(--text-faint)" aria-label="alliance server, inferred"> ~</small>' : ''}</td><td class="n">${p.pw != null ? num(p.pw) : '—'}${peakOf(p) != null && peakOf(p) !== p.pw ? ` <span class="power-peak" title="Highest power seen">(${num(peakOf(p))})</span>` : ''}</td>
         <td class="n">${p.kl != null ? num(p.kl) : '—'}</td><td title="${esc(dateStr(p.ls))}">${esc(ago(p.ls))}</td></tr>`;
-    }).join('') : `<tr><td colspan="9" class="empty">No matches. Try another name, tag or server.</td></tr>`;
+    }).join('') : `<tr><td colspan="8" class="empty">No matches. Try another name, tag or server.</td></tr>`;
     document.getElementById('pfpage').textContent = `Page ${state.page + 1} / ${pages}`;
     document.getElementById('pfprev').disabled = state.page === 0;
     document.getElementById('pfnext').disabled = state.page >= pages - 1;
@@ -287,9 +287,9 @@ const Profiles = (() => {
         ${p.sv != null ? `<span${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>Server ${esc(p.sv)}${p.sx ? ' ~ <small>(alliance server)</small>' : ''}</span>` : ''}${p.on != null ? `<span class="pf-badge ${p.on ? 'good' : 'mute'}">${p.on ? 'online at capture' : 'offline at capture'}</span>` : ''}</div></div>
         <div class="pf-meta"><span>uid ${esc(p.u)}</span><span title="${esc(dateStr(p.ls))}">last seen ${esc(ago(p.ls))}</span></div></div></div>
       <div class="pf-tiles">${stat(p.pc ? 'Power' : 'Alliance power', p.pw != null ? num(p.pw) : '—', hd != null ? `<span class="${hd >= 0 ? 'pf-up' : 'pf-down'}">${hd >= 0 ? '+' : ''}${compact(hd)} since ${esc(dateStr(p.ph[0][0]))}</span>` : '')}
-        ${peakOf(p) != null && peakOf(p) !== p.pw ? stat('Peak power', num(peakOf(p)), '<span>highest seen</span>') : ''}${p.aw != null ? stat('Alliance power', num(p.aw), '<span>as in the alliance member list</span>') : ''}${stat('HQ level', p.lv != null ? p.lv : '—')}${stat('Kills', p.kl != null ? num(p.kl) : '—')}${stat('Joined alliance', p.jt ? esc(dateStr(p.jt)) : '—')}
+        ${peakOf(p) != null && peakOf(p) !== p.pw ? stat('Peak power', num(peakOf(p)), '<span>highest seen</span>') : ''}${p.aw != null ? stat('Alliance power', num(p.aw), '<span>as in the alliance member list</span>') : ''}${stat('Kills', p.kl != null ? num(p.kl) : '—')}${stat('Joined alliance', p.jt ? esc(dateStr(p.jt)) : '—')}
 </div>
-      <div class="pf-grid2">${chartCard(p.pcs ? 'Power over time' : 'Alliance power over time', p.ph, compact)}${chartCard('Kills over time', p.kh, compact)}${chartCard('HQ level over time', p.lh)}</div>
+      <div class="pf-grid2">${chartCard(p.pcs ? 'Power over time' : 'Alliance power over time', p.ph, compact)}${chartCard('Kills over time', p.kh, compact)}</div>
       ${p.cr ? `<div class="pf-card"><h2>Cultural relics</h2><div class="pf-grid"><div class="pf-tab"><h3><span>Relic power</span><span>${p.cr[2] != null ? 'Server ' + esc(p.cr[2]) : 'Server list'}</span></h3>
         <div class="rank">#${esc(p.cr[1])}</div><div class="val">${esc(num(p.cr[0]))} <time>· ${esc(dateStr(p.cr[3]))}</time></div>
         ${p.ch && p.ch.length > 1 ? spark(p.ch, {w: 200, h: 36}) : ''}<div class="x">Rank within that server's list only, shown where we captured it.</div></div></div></div>` : ''}
