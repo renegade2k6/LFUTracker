@@ -44,7 +44,7 @@ const Profiles = (() => {
   function describe(v, key = '') {
     if (v == null) return '';
     if (Array.isArray(v)) return v.map(x => describe(x, key)).filter(Boolean).join(' · ');
-    if (typeof v === 'object') return Object.entries(v).map(([k, x]) => {
+    if (typeof v === 'object') return Object.entries(v).filter(([k]) => !/^(cur)?server(id)?$/i.test(k)).map(([k, x]) => {   // server ids on leaderboard rows are merged host servers, not the player's
       const d = describe(x, k);
       return d === '' ? '' : `${humanize(k)} ${d}`;
     }).filter(Boolean).join(', ');
