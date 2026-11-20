@@ -28,7 +28,7 @@ const Directory = (() => {
       if (m.movedToAllianceId) return;
       const key = m.uid ? String(m.uid) : `${a.allianceId}/${i}`;
       const row = {name: m.name || 'Unknown', alliance: a.name || a.abbr || 'Unknown', abbr: a.abbr || null, power: m.power ?? null,
-        server: m.originServerId ?? a.originServerId ?? null, id: a.allianceId, captured: Date.parse(m.capturedAtUtc || a.capturedAtUtc) || 0};
+        server: m.originServerId ?? a.originServerId ?? null, id: a.allianceId, uid: m.uid != null && m.uid !== '' ? String(m.uid) : null, captured: Date.parse(m.capturedAtUtc || a.capturedAtUtc) || 0};
       if (!players.has(key) || row.captured > players.get(key).captured) players.set(key, row);
     }));
     return [...players.entries()].map(([key, r]) => {

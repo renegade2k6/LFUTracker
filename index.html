@@ -485,7 +485,7 @@ function renderDetail(allianceId) {
     return `
     <tr>
       <td class="rank-cell num">${i + 1}</td>
-      <td><span class="name-cell"><span class="dot ${m.online ? "on" : "off"}" title="${m.online ? "Online" : "Offline"}"></span>${esc(m.name)}${m.movedToAllianceId ? ` <a class="player-history-note" href="#a/${encodeURIComponent(m.movedToAllianceId)}">moved →</a>` : ''}</span></td>
+      <td><span class="name-cell"><span class="dot ${m.online ? "on" : "off"}" title="${m.online ? "Online" : "Offline"}"></span>${m.uid != null && m.uid !== '' ? `<a class="member-link" href="#p/${encodeURIComponent(m.uid)}" title="Open this player's profile">${esc(m.name)}</a>` : esc(m.name)}${m.movedToAllianceId ? ` <a class="player-history-note" href="#a/${encodeURIComponent(m.movedToAllianceId)}">moved →</a>` : ''}</span></td>
       <td data-label="Power" class="num power-cell" data-sort="${Number(m.power) || 0}">
         <div class="roster-power-num">${num(m.power)}</div>
         <div class="roster-power-bar"><i style="width:${pct}%"></i></div>
@@ -603,7 +603,7 @@ function renderDirectoryPage() {
   const d = directoryState;
   const start = d.page * DIRECTORY_PAGE_SIZE;
   const pageRows = d.visible.slice(start, start + DIRECTORY_PAGE_SIZE);
-  document.getElementById('databaseRows').innerHTML = pageRows.length ? pageRows.map(r => `<tr>${Directory.columns[d.kind].map(([key]) => `<td class="${['power','members','server'].includes(key) ? 'numeric' : ''}">${r[key] == null ? '—' : key === 'name' && d.kind === 'alliances' || key === 'alliance' || key === 'abbr' && d.kind === 'players' ? `<a href="#a/${encodeURIComponent(r.id)}">${esc(r[key])}</a>` : ['power','members'].includes(key) ? num(r[key]) + (key === 'power' && r.peak != null ? ` <span class="power-peak" title="Max seen power">(${num(r.peak)})</span>` : '') : esc(r[key])}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${Directory.columns[d.kind].length}" class="empty">No matches. Try another name, tag or server.</td></tr>`;
+  document.getElementById('databaseRows').innerHTML = pageRows.length ? pageRows.map(r => `<tr>${Directory.columns[d.kind].map(([key]) => `<td class="${['power','members','server'].includes(key) ? 'numeric' : ''}">${r[key] == null ? '—' : key === 'name' && d.kind === 'players' && r.uid ? `<a href="#p/${encodeURIComponent(r.uid)}" title="Open this player's profile">${esc(r[key])}</a>` : key === 'name' && d.kind === 'alliances' || key === 'alliance' || key === 'abbr' && d.kind === 'players' ? `<a href="#a/${encodeURIComponent(r.id)}">${esc(r[key])}</a>` : ['power','members'].includes(key) ? num(r[key]) + (key === 'power' && r.peak != null ? ` <span class="power-peak" title="Max seen power">(${num(r.peak)})</span>` : '') : esc(r[key])}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${Directory.columns[d.kind].length}" class="empty">No matches. Try another name, tag or server.</td></tr>`;
   document.getElementById('databasePage').textContent = d.visible.length ? `Showing ${num(start + 1)}–${num(start + pageRows.length)} of ${num(d.visible.length)}` : 'No matching rows';
   document.getElementById('previousDatabasePage').disabled = d.page === 0;
   document.getElementById('nextDatabasePage').disabled = start + pageRows.length >= d.visible.length;
