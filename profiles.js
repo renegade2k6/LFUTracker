@@ -191,6 +191,36 @@ const Profiles = (() => {
   .pf-up{color:var(--good)}.pf-down{color:var(--danger)}
   .pf-timeline{list-style:none;margin:0;padding:0}.pf-timeline li{padding:.45rem 0;border-top:1px solid var(--border-subtle);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
   .pf-note{color:var(--text-faint);font-size:.8rem;margin-top:1rem;line-height:1.5}
+  /* ---- profile page ---- */
+  .pf-crumbs{margin:0 0 1rem}.pf-crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:.35rem}
+  .pf-crumbs li{display:flex;align-items:center;gap:.35rem;font:600 .72rem var(--mono);text-transform:uppercase;letter-spacing:.08em}
+  .pf-crumbs li+li::before{content:"";width:.42rem;height:.42rem;border-top:1.5px solid var(--text-faint);border-right:1.5px solid var(--text-faint);transform:rotate(45deg);margin-right:.2rem}
+  .pf-crumbs a,.pf-crumbs li[aria-current] span{display:inline-block;padding:.3rem .7rem;border-radius:99px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-dim);text-decoration:none;max-width:22ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+  .pf-crumbs a:hover,.pf-crumbs a:focus-visible{color:var(--hazard-text);border-color:var(--border-glow);background:var(--hazard-dim)}
+  .pf-crumbs li[aria-current] span{text-transform:none;letter-spacing:.02em;font-size:.8rem;color:var(--hazard-text);border-color:var(--border-glow);background:var(--hazard-dim);max-width:30ch}
+  .pf-profile{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1.2rem 2rem;align-items:center;background:linear-gradient(135deg,var(--bg-card-elev),var(--bg-card));border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:1.4rem 1.6rem;position:relative;overflow:hidden}
+  .pf-profile::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(var(--hazard),transparent)}
+  .pf-id{display:flex;gap:1.1rem;align-items:center;min-width:0}
+  .pf-avatar{flex:none;width:4.4rem;height:4.4rem;border-radius:50%;display:grid;place-items:center;font:700 1.9rem var(--display);color:var(--hazard-text);background:radial-gradient(circle at 30% 25%,var(--hazard-dim),var(--bg-card));border:2px solid var(--border-glow);box-shadow:0 0 0 4px var(--hazard-dim)}
+  .pf-idtext{min-width:0}.pf-idtext .eyebrow{margin:0}
+  .pf-idtext h1{margin:.1rem 0 .5rem;font:700 clamp(1.7rem,4vw,2.6rem)/1.1 var(--display);overflow-wrap:anywhere}
+  .pf-chips{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+  .pf-chip{display:inline-flex;align-items:center;gap:.35rem;font:600 .74rem var(--mono);padding:.2rem .6rem;border-radius:99px;background:var(--bg-card-elev);border:1px solid var(--border);color:var(--text-dim);text-decoration:none}
+  a.pf-chip:hover{color:var(--hazard-text);border-color:var(--border-glow)}.pf-chip.tag{background:var(--hazard-dim);color:var(--hazard-text);border-color:var(--border-glow)}
+  .pf-chip.good{background:var(--good-dim);color:var(--good);border-color:transparent}
+  .pf-sub{margin-top:.55rem;color:var(--text-faint);font-size:.78rem;display:flex;flex-wrap:wrap;gap:.2rem 1rem}
+  .pf-links{margin-top:.5rem;display:flex;flex-wrap:wrap;gap:.3rem 1rem;font-size:.82rem}.pf-links a{color:var(--hazard-text);text-decoration:none}.pf-links a:hover{text-decoration:underline}
+  .pf-power{text-align:right;min-width:12rem}.pf-power small{display:block;font:600 .72rem var(--mono);letter-spacing:.14em;color:var(--text-faint)}
+  .pf-power b{display:block;font:700 clamp(2rem,5vw,3.2rem)/1.05 var(--display);letter-spacing:.01em;font-variant-numeric:tabular-nums}
+  .pf-power .d{display:block;font-size:.82rem;margin-top:.25rem}.pf-power .pk{display:block;color:var(--text-dim);font-size:.82rem;margin-top:.15rem}
+  .pf-tiles.compact{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin:1rem 0}
+  .pf-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:0 1.2rem;align-items:start}
+  .pf-main,.pf-side{min-width:0}.pf-side .pf-card:first-child,.pf-main>.pf-card:first-child,.pf-main>.pf-grid2:first-child{margin-top:0}
+  .pf-card h2{display:flex;align-items:center;gap:.5rem}.pf-card h2::before{content:"";width:3px;height:.9em;border-radius:2px;background:var(--hazard)}
+  .pf-main>.pf-grid2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .pf-cols.solo{grid-template-columns:minmax(0,1fr)}.pf-cols.solo .pf-main>.pf-grid2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  @media(max-width:900px){.pf-cols{grid-template-columns:1fr}.pf-side .pf-card:first-child{margin-top:1rem}}
+  @media(max-width:640px){.pf-profile{grid-template-columns:1fr;padding:1.1rem}.pf-power{text-align:left}.pf-avatar{width:3.4rem;height:3.4rem;font-size:1.5rem}}
   .pf-lock{text-align:center;padding:3rem 1rem}.pf-lock button{margin-top:1rem}
   @media(max-width:640px){.pf-bar label{flex:1 1 45%}.pf-bar .grow{flex-basis:100%}}`;
   function ensureStyle() {
@@ -280,31 +310,61 @@ const Profiles = (() => {
       ${text ? `<div class="x">${esc(text)}</div>` : ''}${x ? `<div class="x">${esc(x)}</div>` : ''}</div>`;
   }
 
+  // Breadcrumb trail: every step but the last is a link; the last is the page you are on.
+  function crumbs(items) {
+    return `<nav class="pf-crumbs" aria-label="Breadcrumb"><ol>${items.map((c, k) => k === items.length - 1
+      ? `<li aria-current="page"><span title="${esc(c.title || c.label)}">${esc(c.label)}</span></li>`
+      : `<li><a href="${c.href}"${c.onclick ? ` onclick="${c.onclick}"` : ''}${c.title ? ` title="${esc(c.title)}"` : ''}>${esc(c.label)}</a></li>`).join('')}</ol></nav>`;
+  }
   function profileView(uid) {
     const p = byUid.get(uid);
-    if (!p) { view().innerHTML = `<a class="back-btn" href="#profiles">&larr; Back</a><div class="pf-card empty">Profile not found in the current export.</div>`; return; }
+    if (!p) { view().innerHTML = crumbs([{label: 'Home', href: '#'}, {label: 'Profiles', href: '#profiles'}, {label: 'Not found'}]) + `<div class="pf-card empty">Profile not found in the current export.</div>`; return; }
     const a = allianceOf(p);
-    const trackerLink = a && typeof STATE !== 'undefined' && STATE.alliances.some(x => x.allianceId === a.id) ? `<a href="#a/${encodeURIComponent(a.id)}">tracker page →</a>` : '';
+    const trackerLink = a && typeof STATE !== 'undefined' && STATE.alliances.some(x => x.allianceId === a.id) ? `<a href="#a/${encodeURIComponent(a.id)}">Tracker alliance page →</a>` : '';
     const tabs = (p.tb || []).map(t => ({i: t[0], r: t[1], v: t[2], ts: t[3]}));
-    const hd = delta(p.ph);
-    view().innerHTML = `<a class="back-btn" href="#profiles">&larr; All profiles</a>
-      <div class="pf-card"><div class="pf-head"><div><p class="eyebrow">PLAYER PROFILE</p><h1>${esc(p.n)} ${p.st ? `<span class="pf-star" title="Advanced profile">${stars(p.st)}</span>` : ''}</h1>
-        <div class="pf-meta">${p.b ? `<span class="pf-badge">${esc(p.b)}</span>` : '<span class="pf-badge mute">no alliance</span>'}<span>${esc(p.an)}</span>
-        ${a ? `<a href="#profiles" onclick="Profiles.set('alliance',${p.ai});return true">${num(a.m)} members →</a> ${trackerLink}` : p.b ? '<span class="pf-badge mute" title="Missing from the newest roster we captured for this alliance (left, kicked or just not captured yet)">not in latest roster</span>' : ''}
-        ${p.sv != null ? `<span${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>Server ${esc(p.sv)}${p.sx ? ' ~ <small>(alliance server)</small>' : ''}</span>` : ''}${p.on != null ? `<span class="pf-badge ${p.on ? 'good' : 'mute'}">${p.on ? 'online at capture' : 'offline at capture'}</span>` : ''}</div></div>
-        <div class="pf-meta"><span>uid ${esc(p.u)}</span><span title="${esc(dateStr(p.ls))}">last seen ${esc(ago(p.ls))}</span></div></div></div>
-      <div class="pf-tiles">${stat('Power', p.pw != null ? num(p.pw) : '—', hd != null ? `<span class="${hd >= 0 ? 'pf-up' : 'pf-down'}">${hd >= 0 ? '+' : ''}${compact(hd)} since ${esc(dateStr(p.ph[0][0]))}</span>` : '')}
-        ${peakOf(p) != null && peakOf(p) !== p.pw ? stat('Peak power', num(peakOf(p)), '<span>highest seen</span>') : ''}${stat('Kills', p.kl != null ? num(p.kl) : '—')}${stat('Joined alliance', p.jt ? esc(dateStr(p.jt)) : '—')}
-</div>
-      <div class="pf-grid2">${chartCard('Power over time', p.ph, compact)}${chartCard('Kills over time', p.kh, compact)}</div>
-      ${p.cr ? `<div class="pf-card"><h2>Cultural relics</h2><div class="pf-grid"><div class="pf-tab"><h3><span>Relic power</span><span>${p.cr[2] != null ? 'Server ' + esc(p.cr[2]) : 'Server list'}</span></h3>
-        <div class="rank">#${esc(p.cr[1])}</div><div class="val">${esc(num(p.cr[0]))} <time>· ${esc(dateStr(p.cr[3]))}</time></div>
-        ${p.ch && p.ch.length > 1 ? spark(p.ch, {w: 200, h: 36}) : ''}<div class="x">Rank within that server's list only, shown where we captured it.</div></div></div></div>` : ''}
-      ${tabs.length ? `<div class="pf-card"><h2>Global leaderboards (${tabs.length})</h2><div class="pf-grid" id="pftabs">${tabs.map(t => tabCard(t)).join('')}</div>
-        ${p.st ? '<p class="pf-note" id="pfdetailnote">Loading the advanced profile…</p>' : ''}</div>` : ''}
-      ${p.mv ? `<div class="pf-card"><h2>Alliance moves</h2><ul class="pf-timeline">${[...p.mv].reverse().map(x => `<li><span>${x[1] ? `<span class="pf-badge mute">${esc(x[1])}</span> ` : ''}<b>${esc(x[0])}</b></span><span>${esc(dateStr(x[2]))}${x[3] !== x[2] ? ' → ' + esc(dateStr(x[3])) : ''}</span></li>`).join('')}</ul><p class="pf-note">Alliances this player was seen in on a complete roster; dates are first and last sighting.</p></div>` : ''}
-      ${p.al ? `<div class="pf-card"><h2>Name &amp; alliance history</h2><ul class="pf-timeline">${[...p.al].reverse().map(x => `<li><span><b>${esc(x[0])}</b> ${x[1] ? `<span class="pf-badge mute">${esc(x[1])}</span>` : ''}</span><span>${esc(dateStr(x[2]))}${x[3] !== x[2] ? ' → ' + esc(dateStr(x[3])) : ''}</span></li>`).join('')}</ul></div>` : ''}
-      <div id="pfextra"></div>
+    const hd = delta(p.ph), pk = peakOf(p);
+    const initial = esc(Array.from(String(p.n))[0] || '?');
+    const allianceName = (a && a.n) || p.an;
+    const trail = [{label: 'Home', href: '#'}, {label: 'Profiles', href: '#profiles'}];
+    if (p.ai != null && a) trail.push({label: p.b || allianceName, href: '#profiles', onclick: `Profiles.set('alliance',${p.ai});return true`, title: `${allianceName}: all members`});
+    trail.push({label: p.n});
+    const joined = p.jt ? `${dateStr(p.jt)} <small class="pf-up">${Math.max(0, Math.round((Date.now() / 1000 - p.jt) / 86400))} days</small>` : '—';
+    view().innerHTML = `${crumbs(trail)}
+      <section class="pf-profile">
+        <div class="pf-id">
+          <div class="pf-avatar" aria-hidden="true">${initial}</div>
+          <div class="pf-idtext"><p class="eyebrow">PLAYER PROFILE</p>
+            <h1>${esc(p.n)} ${p.st ? `<span class="pf-star" title="Advanced profile">${stars(p.st)}</span>` : ''}</h1>
+            <div class="pf-chips">
+              ${p.b ? `<span class="pf-chip tag">${esc(p.b)}</span>` : '<span class="pf-chip">no alliance</span>'}${allianceName ? `<span class="pf-chip">${esc(allianceName)}</span>` : ''}
+              ${p.sv != null ? `<span class="pf-chip"${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>Server ${esc(p.sv)}${p.sx ? ' ~' : ''}</span>` : ''}
+              ${p.on != null ? `<span class="pf-chip ${p.on ? 'good' : ''}">${p.on ? 'online at capture' : 'offline at capture'}</span>` : ''}
+              ${!a && p.b ? '<span class="pf-chip" title="Missing from the newest roster we captured for this alliance (left, kicked or just not captured yet)">not in latest roster</span>' : ''}
+            </div>
+            <div class="pf-sub"><span>uid ${esc(p.u)}</span></div>
+            ${a ? `<div class="pf-links"><a href="#profiles" onclick="Profiles.set('alliance',${p.ai});return true">${num(a.m)} alliance members →</a>${trackerLink}</div>` : ''}
+          </div>
+        </div>
+        <div class="pf-power"><small>POWER</small><b>${p.pw != null ? num(p.pw) : '—'}</b>
+          ${hd != null ? `<span class="d ${hd >= 0 ? 'pf-up' : 'pf-down'}">${hd >= 0 ? '+' : ''}${compact(hd)} since ${esc(dateStr(p.ph[0][0]))}</span>` : ''}
+          ${pk != null && pk !== p.pw ? `<span class="pk">Highest seen <b style="display:inline;font:inherit;color:var(--text)">${num(pk)}</b></span>` : ''}</div>
+      </section>
+      <div class="pf-tiles compact">${stat('Kills', p.kl != null ? num(p.kl) : '—')}${stat('Joined alliance', joined)}${stat('Leaderboards', tabs.length ? num(tabs.length) : '—')}${stat('Last seen', esc(ago(p.ls)))}</div>
+      <div class="pf-cols${p.mv || p.al || p.cr ? '' : ' solo'}">
+        <div class="pf-main">
+          <div class="pf-grid2">${chartCard('Power over time', p.ph, compact)}${chartCard('Kills over time', p.kh, compact)}</div>
+          ${tabs.length ? `<div class="pf-card"><h2>Global leaderboards (${tabs.length})</h2><div class="pf-grid" id="pftabs">${tabs.map(t => tabCard(t)).join('')}</div>
+            ${p.st ? '<p class="pf-note" id="pfdetailnote">Loading the advanced profile…</p>' : ''}</div>` : ''}
+          <div id="pfextra"></div>
+        </div>
+        <aside class="pf-side">
+          ${p.mv ? `<div class="pf-card"><h2>Alliance moves</h2><ul class="pf-timeline">${[...p.mv].reverse().map(x => `<li><span>${x[1] ? `<span class="pf-badge mute">${esc(x[1])}</span> ` : ''}<b>${esc(x[0])}</b></span><span>${esc(dateStr(x[2]))}${x[3] !== x[2] ? ' → ' + esc(dateStr(x[3])) : ''}</span></li>`).join('')}</ul><p class="pf-note">Alliances this player was seen in on a complete roster; dates are first and last sighting.</p></div>` : ''}
+          ${p.al ? `<div class="pf-card"><h2>Name &amp; alliance history</h2><ul class="pf-timeline">${[...p.al].reverse().map(x => `<li><span><b>${esc(x[0])}</b> ${x[1] ? `<span class="pf-badge mute">${esc(x[1])}</span>` : ''}</span><span>${esc(dateStr(x[2]))}${x[3] !== x[2] ? ' → ' + esc(dateStr(x[3])) : ''}</span></li>`).join('')}</ul></div>` : ''}
+          ${p.cr ? `<div class="pf-card"><h2>Cultural relics</h2><div class="pf-tab"><h3><span>Relic power</span><span>${p.cr[2] != null ? 'Server ' + esc(p.cr[2]) : 'Server list'}</span></h3>
+            <div class="rank">#${esc(p.cr[1])}</div><div class="val">${esc(num(p.cr[0]))} <time>· ${esc(dateStr(p.cr[3]))}</time></div>
+            ${p.ch && p.ch.length > 1 ? spark(p.ch, {w: 200, h: 36}) : ''}<div class="x">Rank within that server's list only, shown where we captured it.</div></div></div>` : ''}
+        </aside>
+      </div>
       <p class="pf-note">Values come from passive captures of what the game already shows. Each carries its own capture date; leaderboard ranks are positions in the captured list, not a live standing.</p>`;
     if (p.st) loadDetail().then(() => {
       const d = detail && detail.players[uid];

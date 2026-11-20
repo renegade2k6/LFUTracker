@@ -30,7 +30,6 @@
         <a href="#alliances" data-nav="alliances"><svg class="icon" data-lucide="flag"></svg>Directory</a>
         <a href="#leaders" data-nav="leaders"><svg class="icon" data-lucide="trophy"></svg>Leaders</a>
         <a href="#all-alliances" data-nav="all-alliances"><svg class="icon" data-lucide="shield"></svg>All Alliances</a>
-        <a href="#all-players" data-nav="all-players"><svg class="icon" data-lucide="users"></svg>All Players</a>
         <a href="#profiles" data-nav="profiles"><svg class="icon" data-lucide="contact"></svg>Profiles (Beta)</a>
         <a href="#server" data-nav="server"><svg class="icon" data-lucide="server"></svg>Homeworld 21</a>
         <a href="#dimension" data-nav="dimension"><svg class="icon" data-lucide="orbit"></svg>Dimension</a>
@@ -377,7 +376,7 @@ function renderList() {
       <div>
         <p class="eyebrow"><span class="status-dot"></span> LAST FORTRESS / COMMUNITY INTELLIGENCE</p>
         <h2>Alliance intelligence.<br><span>A clearer view.</span></h2>
-        <div class="hero-actions"><a class="primary-action" href="#all-alliances">Alliance database <span aria-hidden="true">↗</span></a><a class="secondary-action" href="#all-players">Browse players →</a></div>
+        <div class="hero-actions"><a class="primary-action" href="#all-alliances">Alliance database <span aria-hidden="true">↗</span></a><a class="secondary-action" href="#profiles">Browse players →</a></div>
       </div>
       <div class="hero-radar"><div class="hero-scope" aria-hidden="true"></div><p class="scope-label">ALLIANCE INTELLIGENCE</p><p class="scope-caption">${servers} SERVERS / ${sorted.length} ALLIANCES</p></div>
     </div>
@@ -643,6 +642,7 @@ function exportDirectory() {
 }
 
 function render() {
+  if (location.hash === "#all-players") { location.hash = "#profiles"; return; }   // the All Players tab is retired; Profiles replaces it
   if (typeof Profiles !== "undefined" && Profiles.owns(location.hash)) return Profiles.render();
   if (typeof Server !== "undefined" && Server.owns(location.hash)) return Server.render();
   if (SAMPLE_MODE) return renderSample();
