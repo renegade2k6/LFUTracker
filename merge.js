@@ -42,6 +42,11 @@ const DataMerge = (() => {
      Rows: [uid, power, capturedAtUtc, source]. They only ever update the power of a player already on the site. */
   function fromLatestPower(payload) {
     const obs = {alliances: [], players: [], history: []};
+    // Newest tag / name seen for an alliance id on a leaderboard row or popup: [allianceId, abbr, name, capturedAtUtc]
+    for (const r of (payload && Array.isArray(payload.alliances) ? payload.alliances : [])) {
+      const at = Array.isArray(r) ? time(r[3]) : null;
+      if (at !== null && r[0]) obs.alliances.push({allianceId: String(r[0]), abbr: r[1] || undefined, name: r[2] || undefined, at, source: 'leaderboard row'});
+    }
     for (const r of (payload && Array.isArray(payload.players) ? payload.players : [])) {
       const at = Array.isArray(r) ? time(r[2]) : null;
       if (at !== null && r[0] != null && Number.isFinite(Number(r[1]))) obs.players.push({uid: String(r[0]), power: Number(r[1]), at, source: String(r[3] || 'commander')});

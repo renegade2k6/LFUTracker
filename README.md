@@ -28,7 +28,8 @@ never committed to this repository.
 | `logo.png`, `favicon-32.png`, `apple-touch-icon.png` | Header logo, browser tab icon, phone home-screen icon |
 | `hero-radar.png` | Overview hero radar (the sweep is CSS on top) |
 | `data/site.enc.json` | Encrypted site data |
-| `profiles.js`, `data/profiles.enc.json`, `data/profiles-detail.enc.json` | Profiles (Beta): one page per player. Headline power is the in-game Commander CP when captured; the alliance member-list power is shown separately. A `~` after a server means it is the player's alliance server (the player's own was not captured) |
+| `profiles.js`, `data/profiles.enc.json`, `data/profiles-detail.enc.json` | Profiles (Beta): the player list (replaces the old All Players tab) and one page per player. A player has **one** power number: the newest observation from any source (alliance roster, season-map Player Power, commander popup, commander CP list). A `~` after a server means it is the player's alliance server (the player's own was not captured) |
+| `data/power.enc.json` | The newest power of every player, so the tracker's own merge (alliance rosters) shows the same number as Profiles |
 | `server.js`, `data/server.enc.json`, `data/dimension.enc.json` | **Homeworld 21** and **Dimension** pages (see below) |
 | `img/` | Small WebP icons (gear, war beasts, ultimate weapons, heroes, skills, modules) used by those pages; only icons the boards use are exported |
 
@@ -51,9 +52,9 @@ levels, the game's own column headers) and are decrypted in the browser like the
 - Both are snapshots from passive in-game captures, not live data. Arena boards are never published, and the global
   Decor / Prosperity boards live on the Profiles pages.
 
-## All Alliances and All Players
+## All Alliances and the player list
 
-Both tables use the same headers, in the same order:
+The **All Players** tab is retired: `#all-players` links go to **Profiles (Beta)**, whose list and CSV export use the same columns, order and formats. Both tables use the same headers, in the same order:
 
 | Page | Columns |
 | --- | --- |
@@ -63,6 +64,18 @@ Both tables use the same headers, in the same order:
 Labelled search boxes sit above each table (All Players: player name, alliance name,
 alliance tag; All Alliances: alliance name, alliance tag). Every filled box must match;
 **Clear filters** empties them. The header search matches any of these fields.
+
+## One number, on every tab
+
+- **Power**: the newest capture of any kind wins (roster, season-map Player Power, commander popup, commander CP). Dimension and Homeworld show
+  the power of their own board at that board's capture time, as dated snapshots.
+- **Alliance**: a player's alliance is the newest sighting, so a leaderboard row newer than their last roster capture can move them (and an
+  alliance renamed since its last roster shows its newest tag). The tracker's alliance rosters keep listing the roster they were captured from.
+- **Names**: the game's rich-text colour codes (`<#0ff>name</color>`) are removed from every displayed name and tag on every tab
+  (`Directory.clean`); the CSV and the encrypted data keep the game's raw text.
+- **Accuracy gate**: `Deploy.bat` runs `scripts/audit_published.py` before it commits and stops if the published data does not match the
+  raw captures. `scripts/audit_tabs.py` (tabs agree with each other) and `scripts/audit_boards.py` (every Homeworld board, alliance rosters,
+  sanity checks) are run on demand.
 
 ## CSV exports
 

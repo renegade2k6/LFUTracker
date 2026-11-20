@@ -56,12 +56,12 @@ const Profiles = (() => {
   const clean = v => v == null ? v : String(v).replace(RICH, '').replace(/\s{2,}/g, ' ').trim();
   function normalize(payload) {
     const players = payload.players;
-    for (const a of payload.alliances || []) { a.nraw = a.n; a.braw = a.b; a.n = clean(a.n); a.b = clean(a.b); }
+    for (const a of payload.alliances || []) { a.nraw = a.n; a.braw = a.b; a.n = clean(a.n) || a.n; a.b = clean(a.b) || a.b; }
     for (const p of players) {
       p.nraw = p.n; p.anraw = p.an; p.braw = p.b;
-      p.n = clean(p.n) || p.n; p.an = clean(p.an); p.b = clean(p.b);
+      p.n = clean(p.n) || p.n; p.an = clean(p.an) || p.an; p.b = clean(p.b) || p.b;
       p.tabCount = p.tb ? p.tb.length : 0;
-      p.search = `${p.n} ${p.b} ${p.an} ${p.u}`.toLowerCase();
+      p.search = `${p.n} ${p.b} ${p.an} ${p.u} ${p.nraw} ${p.anraw} ${p.braw}`.toLowerCase();     // raw markup is searchable too
       p.nl = String(p.n).toLowerCase(); p.anl = String(p.an || '').toLowerCase(); p.bl = String(p.b || '').toLowerCase();
     }
     return payload;
@@ -186,7 +186,7 @@ const Profiles = (() => {
   .pf-meta{color:var(--text-dim);display:flex;flex-wrap:wrap;gap:.4rem .9rem;align-items:center;margin-top:.4rem}
   .pf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.75rem}
   .pf-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}
-  .pf-gl{margin:0 0 .9rem}.pf-gl h3{margin:0;padding:.45rem .85rem;background:linear-gradient(#8b8b90,#66666b);color:#fff;font:600 1rem var(--body,inherit);border-radius:4px 4px 0 0}
+  .pf-gl{margin:0 0 .9rem}.pf-gl h3{margin:0;padding:.45rem .85rem;background:linear-gradient(#8b8b90,#66666b);color:#fff;font:600 1rem var(--font);border-radius:4px 4px 0 0}
   .pf-gl .row{display:flex;justify-content:space-between;gap:1rem;padding:.55rem .85rem;background:#2a2a2e;border-bottom:2px solid #18181b}
   .pf-gl .row span{color:#a9a597}.pf-gl .row b{color:#fff;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
   .pf-tab{background:var(--bg-card-elev);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:.7rem .9rem}
@@ -204,7 +204,7 @@ const Profiles = (() => {
   @media(prefers-reduced-motion:reduce){.pf-page>*{animation:none}.pf-avatar{animation:none!important}}
   .pf-crumbs{margin:0 0 1.1rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:.35rem .5rem .35rem .4rem}
   .pf-crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:.1rem;min-width:0}
-  .pf-crumbs li{display:flex;align-items:center;min-width:0;font:500 .9rem var(--body,inherit)}
+  .pf-crumbs li{display:flex;align-items:center;min-width:0;font:500 .9rem var(--font)}
   .pf-crumbs li+li::before{content:"/";color:var(--text-faint);margin:0 .15rem;font-weight:400}
   .pf-crumbs a,.pf-crumbs li[aria-current] span{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .7rem;border-radius:var(--radius-sm);color:var(--text-dim);text-decoration:none;max-width:24ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:background .15s,color .15s}
   .pf-crumbs a:hover,.pf-crumbs a:focus-visible{background:var(--hazard-dim);color:var(--hazard-text)}
@@ -238,7 +238,7 @@ const Profiles = (() => {
   @media(max-width:560px){.pf-tiles.compact{grid-template-columns:repeat(2,minmax(0,1fr))}}
   .pf-tiles.compact .pf-tile{position:relative;transition:transform .15s,border-color .15s}.pf-tiles.compact .pf-tile:hover{transform:translateY(-2px);border-color:var(--border-glow)}
   .pf-tile small{display:flex;align-items:center;gap:.4rem}.pf-tile small svg{width:13px;height:13px;color:var(--hazard-text)}
-  .pf-tile .dim{color:var(--text-faint);font:500 1rem var(--body,inherit)}.pf-tile .of{font:500 .8rem var(--body,inherit);color:var(--text-faint);letter-spacing:0;text-transform:none;margin-left:.2rem}.pf-tile .of.pf-up{color:var(--good)}
+  .pf-tile .dim{color:var(--text-faint);font:500 1rem var(--font)}.pf-tile .of{font:500 .8rem var(--font);color:var(--text-faint);letter-spacing:0;text-transform:none;margin-left:.2rem}.pf-tile .of.pf-up{color:var(--good)}
   .pf-tile b a{color:inherit;text-decoration:none}.pf-tile b a:hover{color:var(--hazard-text)}
   .pf-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:0 1.2rem;align-items:start}
   .pf-main,.pf-side{min-width:0}.pf-side .pf-card:first-child,.pf-main>.pf-card:first-child,.pf-main>.pf-grid2:first-child{margin-top:0}
@@ -422,7 +422,7 @@ const Profiles = (() => {
               ${a ? `<a class="pf-chip" href="#profiles" onclick="${filterAlliance}" title="Every member of this alliance">${icn('users')}${num(a.m)} members</a>` : ''}
               ${p.sv != null ? `<span class="pf-chip"${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>${icn('server')}Server ${esc(p.sv)}${p.sx ? ' ~' : ''}</span>` : ''}
               ${p.on != null ? `<span class="pf-chip ${p.on ? 'good' : ''}">${p.on ? 'online at capture' : 'offline at capture'}</span>` : ''}
-              ${!a && p.b ? '<span class="pf-chip" title="Missing from the newest roster we captured for this alliance (left, kicked or just not captured yet)">not in latest roster</span>' : ''}
+              ${!a && p.b ? (p.ax ? '<span class="pf-chip" title="Seen in this alliance on a leaderboard row newer than any roster we hold for them; we have no roster of this alliance">from a newer leaderboard row</span>' : '<span class="pf-chip" title="Missing from the newest roster we captured for this alliance (left, kicked or just not captured yet)">not in latest roster</span>') : ''}
             </div>
             <div class="pf-sub"><span>uid ${esc(p.u)}</span></div>
           </div>
@@ -531,7 +531,7 @@ const Profiles = (() => {
     window.scrollTo(0, 0);
   }
 
-  const api = {owns, render, set, exportCsv, csv, peakOf, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
+  const api = {owns, render, set, exportCsv, csv, peakOf, clean, _reset: () => { main = null; detail = null; byUid = new Map(); loading = null; detailLoading = null; shown = []; rankCache = null; }, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
     helpers: {num, compact, dateStr, ago, humanize}, commanderSections};
   return api;
 })();

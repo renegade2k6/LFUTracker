@@ -12,6 +12,12 @@ const Server = (() => {
   const esc = v => v == null ? '' : String(v).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const num = v => Number.isFinite(Number(v)) && v != null ? Number(v).toLocaleString('en-US') : '—';
   const dateStr = s => s ? new Date(s * 1000).toISOString().slice(0, 10) : '—';
+  // Player (row[2]) and alliance tag (row[3]) text without the game's colour codes, as on every other tab.
+  const rich = v => typeof Directory !== 'undefined' && Directory.clean ? (Directory.clean(v) || v) : v;
+  function cleanNames(d) {
+    for (const b of (d && d.boards) || []) for (const r of b.rows || []) { if (r[2] != null) r[2] = rich(r[2]); if (r[3] != null) r[3] = rich(r[3]); }
+    return d;
+  }
   const nameOf = (names, kind, id) => (names && names[kind] && names[kind][id]) || null;
 
   // Explore stores a stage id: 100500 is shown in game as 50-10 (chapter = id / 2000, stage = remainder / 50).
@@ -278,7 +284,7 @@ const Server = (() => {
     return SiteVault.open(await res.json(), pw);
   }
   function load(sc) {
-    if (!loadings[sc]) loadings[sc] = fetchBundle(sc).then(d => (datas[sc] = d)).catch(e => { loadings[sc] = null; throw e; });
+    if (!loadings[sc]) loadings[sc] = fetchBundle(sc).then(d => (datas[sc] = cleanNames(d))).catch(e => { loadings[sc] = null; throw e; });
     return loadings[sc];
   }
 
@@ -295,10 +301,10 @@ const Server = (() => {
     const menu = boards.map(x => `<button type="button" class="sv-mi" data-board="${esc(x.k)}" aria-pressed="${x.k === b.k}">${esc(x.l)}</button>`).join('');
     view().innerHTML = `<div class="sv">
       ${scope === 'dimension'
-        ? `<div class="pf-hero"><p class="eyebrow">SEASON-MAP RANKINGS${m.season != null ? ` · SEASON ${esc(m.season)}` : ''}</p><h1>Dimension${m.world != null ? ` <span>${esc(m.world)}</span>` : ''}</h1>
-        <p>How the players in our current dimension compare, tab by tab.</p>${dimensionFacts(m)}</div>${dimensionNote(m)}`
-        : `<div class="pf-hero"><p class="eyebrow">YOUR SERVER ${esc(m.server)}</p><h1>Homeworld <span>${esc(m.homeworld ?? '')}</span></h1>
-        <p>How the players in our homeworld compare, board by board.</p></div>${homeworldNote()}`}
+        ? `<section class="database-heading"><p class="eyebrow">INTELLIGENCE / SEASON-MAP RANKINGS${m.season != null ? ` · SEASON ${esc(m.season)}` : ''}</p><h1>DIMENSION${m.world != null ? ` <span>${esc(m.world)}</span>` : ''}<span class="database-dot">.</span></h1>
+        <p>How the players in our current dimension compare, tab by tab.</p>${dimensionFacts(m)}</section>${dimensionNote(m)}`
+        : `<section class="database-heading"><p class="eyebrow">INTELLIGENCE / YOUR SERVER ${esc(m.server)}</p><h1>HOMEWORLD <span>${esc(m.homeworld ?? '')}</span><span class="database-dot">.</span></h1>
+        <p>How the players in our homeworld compare, board by board.</p></section>${homeworldNote()}`}
       <div class="sv-selwrap"><select id="svsel" aria-label="Board">${tabs}</select></div>
       <div class="sv-tools"><div class="pf-count" id="svcount"></div>
         <input type="search" id="svq" placeholder="Search name, tag, server or uid" aria-label="Search this board" value="${esc(state.q)}"></div>
@@ -367,6 +373,6 @@ const Server = (() => {
     window.scrollTo(0, 0);
   }
 
-  return {owns, scopeOf, dimensionFacts, ageDays, dimensionNote, homeworldNote, render, set, state, switchBoard, _setData: d => { data = d; datas[scope] = d; }, filterRows, extraText, setText, detailText, buildHtml, rowHtml, fmtValue, exName, gearTier, boardFromHash, nameOf, helpers: {num, dateStr}};
+  return {owns, scopeOf, dimensionFacts, ageDays, dimensionNote, homeworldNote, render, set, state, switchBoard, cleanNames, _setData: d => { data = d; datas[scope] = d; }, filterRows, extraText, setText, detailText, buildHtml, rowHtml, fmtValue, exName, gearTier, boardFromHash, nameOf, helpers: {num, dateStr}};
 })();
 if (typeof module !== 'undefined') module.exports = Server;

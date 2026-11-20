@@ -780,6 +780,10 @@ async function startFull(unlocked) {
   const merged = DataMerge.apply(alliances, history,
     DataMerge.combine(DataMerge.fromSeasonLeaderboard(leaderboard), DataMerge.fromLatestPower(latestPower)));
   STATE.alliances = merged.alliances;
+  for (const a of STATE.alliances) {            // same display names as the Profiles tab (game colour codes dropped)
+    a.name = Directory.clean(a.name) || a.name; a.abbr = Directory.clean(a.abbr) || a.abbr; a.leaderName = Directory.clean(a.leaderName) || a.leaderName;
+    for (const m of a.members || []) m.name = Directory.clean(m.name) || m.name;
+  }
   STATE.history = merged.history;
   STATE.mergeReport = merged.report;
   STATE.peaks = Directory.peaks(unlocked.playerPeaks, leaderboard);

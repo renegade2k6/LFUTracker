@@ -6,6 +6,9 @@ const Directory = (() => {
   };
   // CSV-only extra column; the on-screen table keeps `columns` as-is.
   const csvExtra = {alliances: [['updated', 'Last Updated (UTC)']], players: [['updated', 'Last Updated (UTC)']]};
+  // Game rich-text tags (<#0ff>name</color>, <color=#f00>, <b>, <i>, <size=20>) are dropped for display on every tab.
+  const RICH = /<\/?(?:#[0-9a-f]{3,8}|color(?:=[^>]*)?|b|i|size(?:=[^>]*)?)>/gi;
+  const clean = v => v == null ? v : String(v).replace(RICH, '').replace(/\s{2,}/g, ' ').trim();
   const utc = ms => ms ? new Date(ms).toISOString().slice(0, 19).replace('T', ' ') : null;
   const power = v => v == null || String(v).trim() === '' || !(Number(v) >= 0) ? null : Number(v);
   /* Highest power seen per uid: exported roster peaks plus every season-leaderboard capture. */
@@ -63,6 +66,6 @@ const Directory = (() => {
     const value = (r, key) => kind === 'players' && key === 'power' && r.peak != null ? `${r.power ?? ''} (${r.peak})`.trim() : r[key];
     return '\uFEFF' + [cols.map(c => c[1]), ...rows.map(r => cols.map(c => value(r, c[0])))].map(r => r.map(cell).join(',')).join('\r\n');
   }
-  return {columns, peaks, records, sorted, csv};
+  return {columns, peaks, records, sorted, csv, clean};
 })();
 if (typeof module !== 'undefined') module.exports = Directory;
