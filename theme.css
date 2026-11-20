@@ -1707,7 +1707,7 @@ tr:last-child td {
   text-align: center;
 }
 
-.database-table .power-peak {
+.database-table .power-peak, .pf-table .power-peak, td .power-peak {
   color: var(--text-faint);
   font-weight: 400;
 }
