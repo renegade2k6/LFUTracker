@@ -767,7 +767,7 @@ async function loadLatestPower() {
     if (!pw) return null;
     const res = await fetch('data/power.enc.json', {cache: 'no-store'});
     return res.ok ? await SiteVault.open(await res.json(), pw) : null;
-  } catch { return null; }
+  } catch (err) { console.warn('Newest-power file unavailable; the tracker shows its own sources only:', err && err.message); return null; }
 }
 
 async function startFull(unlocked) {
@@ -789,7 +789,7 @@ async function startFull(unlocked) {
 }
 
 async function showLogin() {
-  startFull(await askPassword(BUNDLE));
+  await startFull(await askPassword(BUNDLE));
 }
 window.showLogin = showLogin;
 
@@ -806,7 +806,7 @@ async function main() {
   }
   const known = SiteVault.saved();
   if (known) {
-    try { return startFull(await SiteVault.open(BUNDLE, known)); } catch { SiteVault.forget(); }
+    try { return await startFull(await SiteVault.open(BUNDLE, known)); } catch (err) { console.warn('Unlock failed, asking for the password again:', err && err.message); SiteVault.forget(); }
   }
   SAMPLE = await loadJson("data/sample.json", null);
   if (SAMPLE.__failed) return showLogin();

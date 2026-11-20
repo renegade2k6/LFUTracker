@@ -37,7 +37,8 @@ const DataMerge = (() => {
     return obs;
   }
 
-  /* Newest commander-popup / commander-CP power per player (data/power.enc.json, written by scripts/profiles.py).
+  /* Newest known power per player (data/power.enc.json, written by scripts/profiles.py: roster, season map, commander popup or CP list).
+     Tie rule: a row only wins when strictly newer than the player's own capture, so on an exactly equal timestamp the tracker's roster value stays.
      Rows: [uid, power, capturedAtUtc, source]. They only ever update the power of a player already on the site. */
   function fromLatestPower(payload) {
     const obs = {alliances: [], players: [], history: []};

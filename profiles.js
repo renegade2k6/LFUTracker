@@ -192,35 +192,61 @@ const Profiles = (() => {
   .pf-timeline{list-style:none;margin:0;padding:0}.pf-timeline li{padding:.45rem 0;border-top:1px solid var(--border-subtle);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
   .pf-note{color:var(--text-faint);font-size:.8rem;margin-top:1rem;line-height:1.5}
   /* ---- profile page ---- */
-  .pf-crumbs{margin:0 0 1rem}.pf-crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:.35rem}
-  .pf-crumbs li{display:flex;align-items:center;gap:.35rem;font:600 .72rem var(--mono);text-transform:uppercase;letter-spacing:.08em}
-  .pf-crumbs li+li::before{content:"";width:.42rem;height:.42rem;border-top:1.5px solid var(--text-faint);border-right:1.5px solid var(--text-faint);transform:rotate(45deg);margin-right:.2rem}
-  .pf-crumbs a,.pf-crumbs li[aria-current] span{display:inline-block;padding:.3rem .7rem;border-radius:99px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-dim);text-decoration:none;max-width:22ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
-  .pf-crumbs a:hover,.pf-crumbs a:focus-visible{color:var(--hazard-text);border-color:var(--border-glow);background:var(--hazard-dim)}
-  .pf-crumbs li[aria-current] span{text-transform:none;letter-spacing:.02em;font-size:.8rem;color:var(--hazard-text);border-color:var(--border-glow);background:var(--hazard-dim);max-width:30ch}
-  .pf-profile{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1.2rem 2rem;align-items:center;background:linear-gradient(135deg,var(--bg-card-elev),var(--bg-card));border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:1.4rem 1.6rem;position:relative;overflow:hidden}
-  .pf-profile::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(var(--hazard),transparent)}
-  .pf-id{display:flex;gap:1.1rem;align-items:center;min-width:0}
-  .pf-avatar{flex:none;width:4.4rem;height:4.4rem;border-radius:50%;display:grid;place-items:center;font:700 1.9rem var(--display);color:var(--hazard-text);background:radial-gradient(circle at 30% 25%,var(--hazard-dim),var(--bg-card));border:2px solid var(--border-glow);box-shadow:0 0 0 4px var(--hazard-dim)}
+  @keyframes pf-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes pf-glow{0%,100%{box-shadow:0 0 0 0 rgba(255,122,24,.0)}50%{box-shadow:0 0 22px 2px rgba(255,122,24,.22)}}
+  .pf-page>*{animation:pf-rise .45s ease both}.pf-page>*:nth-child(2){animation-delay:.05s}.pf-page>*:nth-child(3){animation-delay:.1s}.pf-page>*:nth-child(4){animation-delay:.15s}.pf-page>*:nth-child(5){animation-delay:.2s}
+  @media(prefers-reduced-motion:reduce){.pf-page>*{animation:none}.pf-avatar{animation:none!important}}
+  .pf-crumbs{margin:0 0 1.1rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:.35rem .5rem .35rem .4rem}
+  .pf-crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:.1rem;min-width:0}
+  .pf-crumbs li{display:flex;align-items:center;min-width:0;font:500 .9rem var(--body,inherit)}
+  .pf-crumbs li+li::before{content:"/";color:var(--text-faint);margin:0 .15rem;font-weight:400}
+  .pf-crumbs a,.pf-crumbs li[aria-current] span{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .7rem;border-radius:var(--radius-sm);color:var(--text-dim);text-decoration:none;max-width:24ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:background .15s,color .15s}
+  .pf-crumbs a:hover,.pf-crumbs a:focus-visible{background:var(--hazard-dim);color:var(--hazard-text);outline:none}
+  .pf-crumbs li[aria-current] span{color:var(--text);font-weight:700;max-width:34ch}
+  .pf-crumbs svg{width:15px;height:15px;flex:none}
+  .pf-crumbs .back{display:inline-flex;align-items:center;gap:.4rem;color:var(--text-dim);font-size:.82rem;text-decoration:none;padding:.4rem .75rem;border:1px solid var(--border);border-radius:99px;transition:all .15s}
+  .pf-crumbs .back:hover{color:var(--hazard-text);border-color:var(--border-glow);background:var(--hazard-dim)}
+  .pf-profile{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1.2rem 2.4rem;align-items:center;background:radial-gradient(120% 140% at 0% 0%,var(--pf-tint,rgba(255,122,24,.16)),transparent 55%),linear-gradient(135deg,var(--bg-card-elev),var(--bg-card));border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:1.6rem 1.8rem;position:relative;overflow:hidden}
+  .pf-profile::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(var(--pf-accent,var(--hazard)),transparent)}
+  .pf-id{display:flex;gap:1.3rem;align-items:center;min-width:0}
+  .pf-avatar{flex:none;width:5.2rem;height:5.2rem;border-radius:50%;display:grid;place-items:center;font:700 2.2rem var(--display);color:#fff;background:conic-gradient(from 200deg,var(--pf-accent,var(--hazard)),var(--pf-accent2,#7a3a0c),var(--pf-accent,var(--hazard)));box-shadow:0 0 0 4px var(--bg-card),0 0 0 6px var(--pf-accent,var(--hazard));animation:pf-glow 4s ease-in-out infinite;text-shadow:0 2px 8px rgba(0,0,0,.45)}
   .pf-idtext{min-width:0}.pf-idtext .eyebrow{margin:0}
-  .pf-idtext h1{margin:.1rem 0 .5rem;font:700 clamp(1.7rem,4vw,2.6rem)/1.1 var(--display);overflow-wrap:anywhere}
-  .pf-chips{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
-  .pf-chip{display:inline-flex;align-items:center;gap:.35rem;font:600 .74rem var(--mono);padding:.2rem .6rem;border-radius:99px;background:var(--bg-card-elev);border:1px solid var(--border);color:var(--text-dim);text-decoration:none}
-  a.pf-chip:hover{color:var(--hazard-text);border-color:var(--border-glow)}.pf-chip.tag{background:var(--hazard-dim);color:var(--hazard-text);border-color:var(--border-glow)}
-  .pf-chip.good{background:var(--good-dim);color:var(--good);border-color:transparent}
-  .pf-sub{margin-top:.55rem;color:var(--text-faint);font-size:.78rem;display:flex;flex-wrap:wrap;gap:.2rem 1rem}
-  .pf-links{margin-top:.5rem;display:flex;flex-wrap:wrap;gap:.3rem 1rem;font-size:.82rem}.pf-links a{color:var(--hazard-text);text-decoration:none}.pf-links a:hover{text-decoration:underline}
-  .pf-power{text-align:right;min-width:12rem}.pf-power small{display:block;font:600 .72rem var(--mono);letter-spacing:.14em;color:var(--text-faint)}
-  .pf-power b{display:block;font:700 clamp(2rem,5vw,3.2rem)/1.05 var(--display);letter-spacing:.01em;font-variant-numeric:tabular-nums}
-  .pf-power .d{display:block;font-size:.82rem;margin-top:.25rem}.pf-power .pk{display:block;color:var(--text-dim);font-size:.82rem;margin-top:.15rem}
-  .pf-tiles.compact{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin:1rem 0}
-  .pf-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:0 1.2rem;align-items:start}
+  .pf-idtext h1{margin:.1rem 0 .6rem;font:700 clamp(1.9rem,4.2vw,2.9rem)/1.08 var(--display);overflow-wrap:anywhere}
+  .pf-chips{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}
+  .pf-chip{display:inline-flex;align-items:center;gap:.4rem;font:600 .78rem var(--mono);padding:.3rem .7rem;border-radius:99px;background:var(--bg-card-elev);border:1px solid var(--border);color:var(--text-dim);text-decoration:none;transition:transform .15s,border-color .15s,color .15s,background .15s}
+  .pf-chip svg{width:13px;height:13px;flex:none}
+  a.pf-chip:hover,a.pf-chip:focus-visible{transform:translateY(-1px);color:var(--hazard-text);border-color:var(--border-glow);background:var(--hazard-dim);outline:none}
+  .pf-chip.tag{background:var(--hazard-dim);color:var(--hazard-text);border-color:var(--border-glow)}
+  .pf-chip.alliance{color:var(--text);font-weight:700;padding:.32rem .8rem}
+  .pf-chip.good{background:var(--good-dim);color:var(--good);border-color:transparent}.pf-chip.good::before{content:"";width:.45rem;height:.45rem;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good)}
+  .pf-sub{margin-top:.6rem;color:var(--text-faint);font-size:.78rem;display:flex;flex-wrap:wrap;gap:.2rem 1rem}
+  .pf-power{text-align:right;min-width:13rem}.pf-power small{display:block;font:600 .72rem var(--mono);letter-spacing:.16em;color:var(--text-faint)}
+  .pf-power b{display:block;font:700 clamp(2.2rem,5.2vw,3.6rem)/1.02 var(--display);letter-spacing:.01em;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff,#ffd9b3);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .pf-power .d{display:block;font-size:.84rem;margin-top:.3rem}.pf-power .pk{display:block;color:var(--text-dim);font-size:.84rem;margin-top:.15rem}.pf-power .pk em{font-style:normal;color:var(--text)}
+  .pf-power .pf-spark{width:100%;height:34px;margin-top:.5rem;opacity:.9}
+  .pf-tiles.compact{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:1rem 0}
+  .pf-tiles.compact .pf-tile{position:relative;transition:transform .15s,border-color .15s}.pf-tiles.compact .pf-tile:hover{transform:translateY(-2px);border-color:var(--border-glow)}
+  .pf-tile small{display:flex;align-items:center;gap:.4rem}.pf-tile small svg{width:13px;height:13px;color:var(--hazard-text)}
+  .pf-tile .dim{color:var(--text-faint);font:500 1rem var(--body,inherit)}.pf-tile .of{font:500 .8rem var(--body,inherit);color:var(--text-faint);letter-spacing:0;text-transform:none;margin-left:.2rem}.pf-tile .of.pf-up{color:var(--good)}
+  .pf-tile b a{color:inherit;text-decoration:none}.pf-tile b a:hover{color:var(--hazard-text)}
+  .pf-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:0 1.2rem;align-items:start}
   .pf-main,.pf-side{min-width:0}.pf-side .pf-card:first-child,.pf-main>.pf-card:first-child,.pf-main>.pf-grid2:first-child{margin-top:0}
+  .pf-card{transition:border-color .2s}.pf-card:hover{border-color:var(--border)}
   .pf-card h2{display:flex;align-items:center;gap:.5rem}.pf-card h2::before{content:"";width:3px;height:.9em;border-radius:2px;background:var(--hazard)}
   .pf-main>.pf-grid2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
   .pf-cols.solo{grid-template-columns:minmax(0,1fr)}.pf-cols.solo .pf-main>.pf-grid2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  .pf-tab{position:relative;transition:transform .15s,border-color .15s}.pf-tab:hover{transform:translateY(-2px);border-color:var(--border-glow)}
+  .pf-tab.m1{border-color:#c9a227;background:linear-gradient(160deg,rgba(201,162,39,.16),var(--bg-card-elev))}.pf-tab.m1 .rank{color:#ffd54a}
+  .pf-tab.m2{border-color:#9aa3ad;background:linear-gradient(160deg,rgba(154,163,173,.14),var(--bg-card-elev))}.pf-tab.m2 .rank{color:#d5dbe2}
+  .pf-tab.m3{border-color:#b9733c;background:linear-gradient(160deg,rgba(185,115,60,.16),var(--bg-card-elev))}.pf-tab.m3 .rank{color:#ef9b5e}
+  .pf-mates{list-style:none;margin:0;padding:0}.pf-mates li{border-top:1px solid var(--border-subtle)}.pf-mates li:first-child{border-top:0}
+  .pf-mates a,.pf-mates .me{display:grid;grid-template-columns:1.8rem minmax(0,1fr) auto;gap:.6rem;align-items:center;padding:.5rem .4rem;color:var(--text);text-decoration:none;border-radius:var(--radius-sm);transition:background .15s}
+  .pf-mates a:hover{background:var(--bg-card-hover);color:var(--hazard-text)}.pf-mates .me{background:var(--hazard-dim)}
+  .pf-mates i{font:600 .72rem var(--mono);color:var(--text-faint);font-style:normal;text-align:right}
+  .pf-mates span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pf-mates b{font-variant-numeric:tabular-nums;font-weight:600;color:var(--text-dim);font-size:.85rem}
+  .pf-more{display:block;margin-top:.6rem;font-size:.82rem;color:var(--hazard-text);text-decoration:none}.pf-more:hover{text-decoration:underline}
   @media(max-width:900px){.pf-cols{grid-template-columns:1fr}.pf-side .pf-card:first-child{margin-top:1rem}}
-  @media(max-width:640px){.pf-profile{grid-template-columns:1fr;padding:1.1rem}.pf-power{text-align:left}.pf-avatar{width:3.4rem;height:3.4rem;font-size:1.5rem}}
+  @media(max-width:640px){.pf-profile{grid-template-columns:1fr;padding:1.2rem}.pf-power{text-align:left}.pf-avatar{width:4rem;height:4rem;font-size:1.7rem}.pf-crumbs .back{display:none}}
   .pf-lock{text-align:center;padding:3rem 1rem}.pf-lock button{margin-top:1rem}
   @media(max-width:640px){.pf-bar label{flex:1 1 45%}.pf-bar .grow{flex-basis:100%}}`;
   function ensureStyle() {
@@ -305,52 +331,104 @@ const Profiles = (() => {
     const hist = t.h && t.h.length > 1 ? spark(t.h.map(h => [h[0], -h[1]]), {w: 200, h: 36}) : '';
     const text = extra ? describe(extra.snap ? extra.snap : null) : '';
     const x = extra && extra.x ? describe(extra.x) : '';
-    return `<div class="pf-tab"><h3><span>${esc(tab.l)}</span><span>${esc(tab.g)}</span></h3>
+    return `<div class="pf-tab${medal(Number(t.r))}"><h3><span>${esc(tab.l)}</span><span>${esc(tab.g)}</span></h3>
       <div class="rank">#${esc(t.r)}</div><div class="val">${esc(formatValue(tab, t.v))} <time>· ${esc(dateStr(t.ts))}</time></div>${hist}
       ${text ? `<div class="x">${esc(text)}</div>` : ''}${x ? `<div class="x">${esc(x)}</div>` : ''}</div>`;
   }
 
-  // Breadcrumb trail: every step but the last is a link; the last is the page you are on.
-  function crumbs(items) {
+  // Breadcrumb bar: every step but the last is a link; the last is the page you are on. Labels are plain text (escaped here).
+  function crumbs(items, back) {
+    const icon = name => `<svg data-lucide="${name}" aria-hidden="true"></svg>`;
     return `<nav class="pf-crumbs" aria-label="Breadcrumb"><ol>${items.map((c, k) => k === items.length - 1
       ? `<li aria-current="page"><span title="${esc(c.title || c.label)}">${esc(c.label)}</span></li>`
-      : `<li><a href="${c.href}"${c.onclick ? ` onclick="${c.onclick}"` : ''}${c.title ? ` title="${esc(c.title)}"` : ''}>${esc(c.label)}</a></li>`).join('')}</ol></nav>`;
+      : `<li><a href="${c.href}"${c.onclick ? ` onclick="${c.onclick}"` : ''}${c.title ? ` title="${esc(c.title)}"` : ''}>${c.icon ? icon(c.icon) : ''}${esc(c.label)}</a></li>`).join('')}</ol>
+      ${back ? `<a class="back" href="${back.href}">${icon('arrow-left')}${esc(back.label)}</a>` : ''}</nav>`;
   }
+  // Power ranks, computed once per loaded export: across every profile and within each alliance.
+  let rankCache = null;
+  function ranks() {
+    if (rankCache && rankCache.main === main) return rankCache;
+    const byPower = main.players.filter(x => x.pw != null).sort((x, y) => y.pw - x.pw);
+    const global = new Map(), groups = new Map();
+    byPower.forEach((x, k) => { global.set(x.u, k + 1); if (x.ai != null) (groups.get(x.ai) || groups.set(x.ai, []).get(x.ai)).push(x); });
+    rankCache = {main, global, groups, total: byPower.length};
+    return rankCache;
+  }
+  const hue = str => { let h = 0; for (const c of String(str)) h = (h * 31 + c.codePointAt(0)) % 360; return h; };
+  // Count the power up once when the page opens (skipped for reduced motion and tiny values).
+  function countUp(el, target) {
+    if (!el || !Number.isFinite(target) || target < 1000 || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    const t0 = performance.now(), dur = 700;
+    const step = now => {
+      const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = num(Math.round(target * e));
+      if (k < 1 && el.isConnected) requestAnimationFrame(step); else el.textContent = num(target);
+    };
+    requestAnimationFrame(step);
+  }
+  const icn = name => `<svg data-lucide="${name}" aria-hidden="true"></svg>`;
+  const medal = r => r === 1 ? ' m1' : r === 2 ? ' m2' : r === 3 ? ' m3' : '';
+
   function profileView(uid) {
     const p = byUid.get(uid);
-    if (!p) { view().innerHTML = crumbs([{label: 'Home', href: '#'}, {label: 'Profiles', href: '#profiles'}, {label: 'Not found'}]) + `<div class="pf-card empty">Profile not found in the current export.</div>`; return; }
+    if (!p) { view().innerHTML = crumbs([{label: 'Home', href: '#', icon: 'home'}, {label: 'Profiles', href: '#profiles'}, {label: 'Not found'}], {href: '#profiles', label: 'All profiles'}) + `<div class="pf-card empty">Profile not found in the current export.</div>`; return; }
     const a = allianceOf(p);
-    const trackerLink = a && typeof STATE !== 'undefined' && STATE.alliances.some(x => x.allianceId === a.id) ? `<a href="#a/${encodeURIComponent(a.id)}">Tracker alliance page →</a>` : '';
+    const tracked = a && typeof STATE !== 'undefined' && STATE.alliances.some(x => x.allianceId === a.id);
+    const alliancePage = tracked ? `#a/${encodeURIComponent(a.id)}` : null;       // the tracker's alliance page, when we track that alliance
+    const filterAlliance = a ? `Profiles.set('alliance',${Number(p.ai)});return true` : '';
     const tabs = (p.tb || []).map(t => ({i: t[0], r: t[1], v: t[2], ts: t[3]}));
     const hd = delta(p.ph), pk = peakOf(p);
+    const R = ranks(), gRank = R.global.get(p.u), group = p.ai != null ? R.groups.get(p.ai) : null;
+    const aRank = group ? group.findIndex(x => x.u === p.u) + 1 : 0;
     const initial = esc(Array.from(String(p.n))[0] || '?');
     const allianceName = (a && a.n) || p.an;
-    const trail = [{label: 'Home', href: '#'}, {label: 'Profiles', href: '#profiles'}];
-    if (p.ai != null && a) trail.push({label: p.b || allianceName, href: '#profiles', onclick: `Profiles.set('alliance',${p.ai});return true`, title: `${allianceName}: all members`});
+    const h = hue(p.b || p.u);
+    const trail = [{label: 'Home', href: '#', icon: 'home'}, {label: 'Profiles', href: '#profiles'}];
+    if (a) trail.push({label: allianceName || p.b, href: alliancePage || '#profiles', onclick: alliancePage ? '' : filterAlliance, title: tracked ? `Open ${allianceName} on the tracker` : `${allianceName}: all members`});
     trail.push({label: p.n});
-    const joined = p.jt ? `${dateStr(p.jt)} <small class="pf-up">${Math.max(0, Math.round((Date.now() / 1000 - p.jt) / 86400))} days</small>` : '—';
-    view().innerHTML = `${crumbs(trail)}
+    const joined = p.jt ? `${dateStr(p.jt)} <span class="of pf-up">${Math.max(0, Math.round((Date.now() / 1000 - p.jt) / 86400))} days</span>` : '<span class="dim">Not captured</span>';
+    const tile = (icon, label, value) => `<div class="pf-tile"><small>${icn(icon)}${esc(label)}</small><b>${value}</b></div>`;
+    const mates = group && group.length > 1 ? (() => {
+      let list = group.slice(0, 8);
+      if (aRank > 8) list = [...list.slice(0, 7), p];
+      return `<div class="pf-card"><h2>${esc(p.b || 'Alliance')} · top by power</h2><ul class="pf-mates">${list.map(x => {
+        const r = group.indexOf(x) + 1;
+        return x.u === p.u ? `<li><div class="me"><i>${r}</i><span><b style="color:var(--text)">${esc(x.n)}</b></span><b>${num(x.pw)}</b></div></li>`
+          : `<li><a href="#p/${encodeURIComponent(x.u)}"><i>${r}</i><span>${esc(x.n)}</span><b>${num(x.pw)}</b></a></li>`;
+      }).join('')}</ul><a class="pf-more" href="${alliancePage || '#profiles'}"${alliancePage ? '' : ` onclick="${filterAlliance}"`}>${alliancePage ? 'Open the full roster on the tracker →' : `All ${num(group.length)} members →`}</a></div>`;
+    })() : '';
+    view().innerHTML = `<div class="pf-page" style="--pf-accent:hsl(${h} 85% 55%);--pf-accent2:hsl(${(h + 40) % 360} 70% 28%);--pf-tint:hsl(${h} 85% 55% / .15)">
+      ${crumbs(trail, {href: '#profiles', label: 'All profiles'})}
       <section class="pf-profile">
         <div class="pf-id">
           <div class="pf-avatar" aria-hidden="true">${initial}</div>
           <div class="pf-idtext"><p class="eyebrow">PLAYER PROFILE</p>
             <h1>${esc(p.n)} ${p.st ? `<span class="pf-star" title="Advanced profile">${stars(p.st)}</span>` : ''}</h1>
             <div class="pf-chips">
-              ${p.b ? `<span class="pf-chip tag">${esc(p.b)}</span>` : '<span class="pf-chip">no alliance</span>'}${allianceName ? `<span class="pf-chip">${esc(allianceName)}</span>` : ''}
-              ${p.sv != null ? `<span class="pf-chip"${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>Server ${esc(p.sv)}${p.sx ? ' ~' : ''}</span>` : ''}
+              ${a ? `<a class="pf-chip alliance" href="${alliancePage || '#profiles'}"${alliancePage ? '' : ` onclick="${filterAlliance}"`} title="${tracked ? 'Open this alliance on the tracker' : 'See every member of this alliance'}">${icn('shield')}${p.b ? `<span class="pf-chip tag" style="padding:.05rem .45rem">${esc(p.b)}</span>` : ''}${esc(allianceName)}</a>`
+                : p.b ? `<span class="pf-chip tag">${esc(p.b)}</span>${allianceName ? `<span class="pf-chip">${esc(allianceName)}</span>` : ''}` : '<span class="pf-chip">no alliance</span>'}
+              ${a ? `<a class="pf-chip" href="#profiles" onclick="${filterAlliance}" title="Every member of this alliance">${icn('users')}${num(a.m)} members</a>` : ''}
+              ${p.sv != null ? `<span class="pf-chip"${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>${icn('server')}Server ${esc(p.sv)}${p.sx ? ' ~' : ''}</span>` : ''}
               ${p.on != null ? `<span class="pf-chip ${p.on ? 'good' : ''}">${p.on ? 'online at capture' : 'offline at capture'}</span>` : ''}
               ${!a && p.b ? '<span class="pf-chip" title="Missing from the newest roster we captured for this alliance (left, kicked or just not captured yet)">not in latest roster</span>' : ''}
             </div>
             <div class="pf-sub"><span>uid ${esc(p.u)}</span></div>
-            ${a ? `<div class="pf-links"><a href="#profiles" onclick="Profiles.set('alliance',${p.ai});return true">${num(a.m)} alliance members →</a>${trackerLink}</div>` : ''}
           </div>
         </div>
-        <div class="pf-power"><small>POWER</small><b>${p.pw != null ? num(p.pw) : '—'}</b>
+        <div class="pf-power"><small>POWER</small><b id="pfpower">${p.pw != null ? num(p.pw) : '—'}</b>
           ${hd != null ? `<span class="d ${hd >= 0 ? 'pf-up' : 'pf-down'}">${hd >= 0 ? '+' : ''}${compact(hd)} since ${esc(dateStr(p.ph[0][0]))}</span>` : ''}
-          ${pk != null && pk !== p.pw ? `<span class="pk">Highest seen <b style="display:inline;font:inherit;color:var(--text)">${num(pk)}</b></span>` : ''}</div>
+          ${pk != null && pk !== p.pw ? `<span class="pk">Highest seen <em>${num(pk)}</em></span>` : ''}
+          ${p.ph && p.ph.length > 1 ? spark(p.ph, {w: 220, h: 34}) : ''}</div>
       </section>
-      <div class="pf-tiles compact">${stat('Kills', p.kl != null ? num(p.kl) : '—')}${stat('Joined alliance', joined)}${stat('Leaderboards', tabs.length ? num(tabs.length) : '—')}${stat('Last seen', esc(ago(p.ls)))}</div>
-      <div class="pf-cols${p.mv || p.al || p.cr ? '' : ' solo'}">
+      <div class="pf-tiles compact">
+        ${tile('crown', 'Power rank', gRank ? `#${num(gRank)} <span class="of">of ${num(R.total)}</span>` : '<span class="dim">—</span>')}
+        ${aRank ? tile('shield', `Rank in ${p.b || 'alliance'}`, `#${num(aRank)} <span class="of">of ${num(group.length)}</span>`) : ''}
+        ${tile('swords', 'Kills', p.kl != null ? num(p.kl) : '<span class="dim">Not captured</span>')}
+        ${tile('calendar', 'Joined alliance', joined)}
+        ${tile('trophy', 'Leaderboards', tabs.length ? num(tabs.length) : '<span class="dim">None</span>')}
+        ${tile('clock', 'Last seen', esc(ago(p.ls)))}
+      </div>
+      <div class="pf-cols${p.mv || p.al || p.cr || mates ? '' : ' solo'}">
         <div class="pf-main">
           <div class="pf-grid2">${chartCard('Power over time', p.ph, compact)}${chartCard('Kills over time', p.kh, compact)}</div>
           ${tabs.length ? `<div class="pf-card"><h2>Global leaderboards (${tabs.length})</h2><div class="pf-grid" id="pftabs">${tabs.map(t => tabCard(t)).join('')}</div>
@@ -358,6 +436,7 @@ const Profiles = (() => {
           <div id="pfextra"></div>
         </div>
         <aside class="pf-side">
+          ${mates}
           ${p.mv ? `<div class="pf-card"><h2>Alliance moves</h2><ul class="pf-timeline">${[...p.mv].reverse().map(x => `<li><span>${x[1] ? `<span class="pf-badge mute">${esc(x[1])}</span> ` : ''}<b>${esc(x[0])}</b></span><span>${esc(dateStr(x[2]))}${x[3] !== x[2] ? ' → ' + esc(dateStr(x[3])) : ''}</span></li>`).join('')}</ul><p class="pf-note">Alliances this player was seen in on a complete roster; dates are first and last sighting.</p></div>` : ''}
           ${p.al ? `<div class="pf-card"><h2>Name &amp; alliance history</h2><ul class="pf-timeline">${[...p.al].reverse().map(x => `<li><span><b>${esc(x[0])}</b> ${x[1] ? `<span class="pf-badge mute">${esc(x[1])}</span>` : ''}</span><span>${esc(dateStr(x[2]))}${x[3] !== x[2] ? ' → ' + esc(dateStr(x[3])) : ''}</span></li>`).join('')}</ul></div>` : ''}
           ${p.cr ? `<div class="pf-card"><h2>Cultural relics</h2><div class="pf-tab"><h3><span>Relic power</span><span>${p.cr[2] != null ? 'Server ' + esc(p.cr[2]) : 'Server list'}</span></h3>
@@ -365,7 +444,9 @@ const Profiles = (() => {
             ${p.ch && p.ch.length > 1 ? spark(p.ch, {w: 200, h: 36}) : ''}<div class="x">Rank within that server's list only, shown where we captured it.</div></div></div>` : ''}
         </aside>
       </div>
-      <p class="pf-note">Values come from passive captures of what the game already shows. Each carries its own capture date; leaderboard ranks are positions in the captured list, not a live standing.</p>`;
+      <p class="pf-note">Values come from passive captures of what the game already shows. Each carries its own capture date; leaderboard ranks are positions in the captured list, not a live standing.</p>
+    </div>`;
+    countUp(document.getElementById('pfpower'), p.pw);
     if (p.st) loadDetail().then(() => {
       const d = detail && detail.players[uid];
       if (!d || location.hash !== `#p/${uid}`) return;
