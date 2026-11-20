@@ -112,25 +112,155 @@ const Profiles = (() => {
   // formula-safe cells). Power is the same single number the table and profile show.
   // Players never seen with a name carry their id as `n`; All Players never exported those, so the CSV leaves them out.
   const hasName = p => !((p.nraw ?? p.n) === p.u || !(p.nraw ?? p.n));
+  const HEAD = ['Player Name', 'Alliance Name', 'Alliance Tag', 'Server Number', 'Power', 'Last Updated (UTC)'];
+  const utc = s => { const d = s ? new Date(s * 1000) : null; return d && !isNaN(d) && Math.abs(d) < 8.64e15 ? d.toISOString().slice(0, 19).replace('T', ' ') : ''; };
+  function baseRow(p, alliances, ext) {
+    const al = p.ai != null && alliances ? alliances[p.ai] : null;
+    const power = p.pw;
+    const peak = peakOf(p, ext);
+    const shownPower = peak != null ? `${power ?? ''} (${peak})`.trim() : power;
+    return [p.nraw ?? p.n, (al && (al.nraw ?? al.n)) || (p.anraw ?? p.an), (al && (al.braw ?? al.b)) || (p.braw ?? p.b), p.sv, shownPower, utc(p.ls)];
+  }
   function csv(rows, alliances, ext = trackerPeaks()) {
     const cell = v => { let t = String(v ?? ''); if (/^[\s]*[=+@-]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
-    const head = ['Player Name', 'Alliance Name', 'Alliance Tag', 'Server Number', 'Power', 'Last Updated (UTC)'];
-    const body = rows.filter(hasName).map(p => {
-      const al = p.ai != null && alliances ? alliances[p.ai] : null;
-      const power = p.pw;
-      const peak = peakOf(p, ext);
-      const shownPower = peak != null ? `${power ?? ''} (${peak})`.trim() : power;
-      return [p.nraw ?? p.n, (al && (al.nraw ?? al.n)) || (p.anraw ?? p.an), (al && (al.braw ?? al.b)) || (p.braw ?? p.b), p.sv, shownPower,
-              p.ls ? new Date(p.ls * 1000).toISOString().slice(0, 19).replace('T', ' ') : ''];
-    });
-    return '﻿' + [head, ...body].map(r => r.map(cell).join(',')).join('\r\n');
+    const body = rows.filter(hasName).map(p => baseRow(p, alliances, ext));
+    return '﻿' + [HEAD, ...body].map(r => r.map(cell).join(',')).join('\r\n');
+  }
+  function download(parts, name) {
+    const url = URL.createObjectURL(new Blob(Array.isArray(parts) ? parts : [parts], {type: 'text/csv;charset=utf-8;'}));
+    const a = document.createElement('a');
+    a.href = url; a.download = `${name}-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
   function exportCsv() {
     if (!main) return;
-    const url = URL.createObjectURL(new Blob([csv(shown, main.alliances)], {type: 'text/csv;charset=utf-8;'}));
-    const a = document.createElement('a');
-    a.href = url; a.download = `commanders-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    download(csv(shown, main.alliances), 'commanders');
+  }
+
+  /* "All Commander Data": the first six columns exactly as the normal export, then everything else we hold, one flat row per
+     commander for a spreadsheet. Numbers stay numbers (no brackets or separators), dates are UTC, a blank means never captured.
+     Histories are summarised (points, first/last, lowest/highest), never packed into a cell. Advanced-profile fields (popup stats,
+     per-leaderboard extras, equipment/hero snapshots) are flattened to one column per path; columns are the union across players. */
+  const MAX_COLS = 16384;                                   // Excel's column limit
+  const NO_SERVER = /^(cur)?server(id)?$/i;                 // merged host servers on leaderboard rows are not the player's
+  const FIXED = ['Player ID', 'Power (number)', 'Highest Power Seen', 'Server Is Exact', 'Advanced Profile', 'Kills', 'City Level', 'Position ID',
+    'Current Server ID', 'Online', 'Joined (UTC)', 'Alliance From Leaderboard', 'Alliance Moves', 'Previous Alliances', 'Previous Names'];
+  function flatten(v, path, out) {
+    if (v == null || v === '') return;
+    if (Array.isArray(v)) { v.forEach((x, i) => flatten(x, `${path} · #${i + 1}`, out)); return; }
+    if (typeof v === 'object') {
+      for (const [k, x] of Object.entries(v)) if (!NO_SERVER.test(k)) flatten(x, `${path} · ${LABELS[k] || humanize(k)}`, out);
+      return;
+    }
+    out.set(path, typeof v === 'boolean' ? (v ? 'Yes' : 'No') : v);
+  }
+  function summary(name, pts, out) {
+    if (!Array.isArray(pts) || !pts.length) return;
+    const vs = pts.map(x => x[1]).filter(Number.isFinite);
+    out.set(`${name} · Points`, pts.length);
+    out.set(`${name} · First Seen (UTC)`, utc(pts[0][0]));
+    out.set(`${name} · First Value`, pts[0][1]);
+    out.set(`${name} · Last Seen (UTC)`, utc(pts[pts.length - 1][0]));
+    out.set(`${name} · Last Value`, pts[pts.length - 1][1]);
+    if (vs.length) { out.set(`${name} · Lowest`, Math.min(...vs)); out.set(`${name} · Highest`, Math.max(...vs)); }
+  }
+  // Every column after the first six, as a Map(column name -> value). d is the advanced profile (or undefined).
+  function extraCells(p, tabs, d, ext) {
+    const o = new Map();
+    const put = (k, v) => { if (v != null && v !== '') o.set(k, v); };
+    put('Player ID', p.u); put('Power (number)', p.pw); put('Highest Power Seen', peakOf(p, ext));
+    put('Server Is Exact', p.sv != null ? (p.sx ? 'No' : 'Yes') : null); put('Advanced Profile', p.st ? 'Yes' : null);
+    put('Kills', p.kl); put('City Level', p.lv); put('Position ID', p.ps); put('Current Server ID', p.cs);
+    put('Online', p.on == null ? null : (p.on ? 'Yes' : 'No')); put('Joined (UTC)', utc(p.jt));
+    put('Alliance From Leaderboard', p.ax ? 'Yes' : null);
+    if (p.mv) {
+      put('Alliance Moves', p.mv.length);
+      put('Previous Alliances', p.mv.map(m => `${m[0] || ''}${m[1] ? ` [${m[1]}]` : ''} ${utc(m[2]).slice(0, 10)}→${utc(m[3]).slice(0, 10)}`.trim()).join('; '));
+    }
+    if (p.al) put('Previous Names', p.al.map(a => Array.isArray(a) ? a.filter(Boolean).join(' ') : a).join(' | '));
+    summary('Power History', p.ph, o); summary('Kills History', p.kh, o); summary('City Level History', p.lh, o);
+    if (p.cr) {
+      put('Cultural Relics · Power', p.cr[0]); put('Cultural Relics · Rank In Server List', p.cr[1]);
+      put('Cultural Relics · Server', p.cr[2]); put('Cultural Relics · Captured (UTC)', utc(p.cr[3]));
+    }
+    summary('Cultural Relics History', p.ch, o);
+    const board = i => { const t = tabs[i]; return t ? `${t.l} (${t.g})` : `Board ${i}`; };
+    (p.tb || []).forEach(([i, rank, v, ts]) => { const b = board(i); put(`${b} · Rank`, rank); put(`${b} · Value`, v); put(`${b} · Captured (UTC)`, utc(ts)); });
+    if (d) {
+      for (const t of d.tabs || []) {
+        const b = board(t.i);
+        put(`${b} · Rank`, t.r); put(`${b} · Value`, t.v); put(`${b} · Captured (UTC)`, utc(t.ts));
+        flatten(t.x, `${b} · Extra`, o); flatten(t.snap, `${b} · Snapshot`, o);
+        if (t.h && t.h.length > 1) summary(`${b} · Rank History`, t.h, o);
+      }
+      if (d.popup) {
+        put('Commander Info · Captured (UTC)', utc(d.popup.ts));
+        flatten({...(d.popup.player || {}), ...(d.popup.moreInfo || {})}, 'Commander Info', o);
+      }
+    }
+    return o;
+  }
+  function wideCell(v) {
+    if (typeof v === 'number') return Number.isFinite(v) ? String(v) : '';
+    let t = String(v ?? '');
+    if (/^[\s]*[=+@-]/.test(t)) t = "'" + t;
+    return '"' + t.replace(/"/g, '""') + '"';
+  }
+  // Yields CSV text in chunks ({text, info}); the async exporter pauses between chunks so the page never freezes.
+  function* wideChunks(rows, alliances, tabs, detailPlayers, ext = trackerPeaks(), chunk = 500) {
+    const list = rows.filter(hasName);
+    const cells = [], dynamic = [], seen = new Set(FIXED);
+    for (let i = 0; i < list.length; i++) {                // pass 1: every row's fields and the column union, yielding so the page can repaint
+      const o = extraCells(list[i], tabs || [], detailPlayers && detailPlayers[list[i].u], ext);
+      cells.push(o);
+      for (const k of o.keys()) if (!seen.has(k)) { seen.add(k); dynamic.push(k); }
+      if (i % chunk === chunk - 1) yield {text: '', info: null, pct: Math.round(50 * (i + 1) / list.length)};
+    }
+    const cols = [...FIXED, ...dynamic].slice(0, MAX_COLS - HEAD.length);
+    const info = {columns: HEAD.length + cols.length, rows: list.length, dropped: Math.max(0, FIXED.length + dynamic.length - cols.length)};
+    yield {text: '﻿' + [...HEAD, ...cols].map(wideCell).join(',') + '\r\n', info};
+    for (let i = 0; i < list.length; i += chunk) {
+      const out = [];
+      for (let j = i; j < Math.min(list.length, i + chunk); j++) {
+        const o = cells[j], base = baseRow(list[j], alliances, ext);
+        out.push([...base.map(wideCell), ...cols.map(k => o.has(k) ? wideCell(o.get(k)) : '')].join(',') + '\r\n');
+      }
+      yield {text: out.join(''), info, pct: 50 + Math.round(50 * Math.min(list.length, i + chunk) / list.length)};
+    }
+  }
+  const wideCsv = (...a) => { let t = '', info; for (const c of wideChunks(...a)) { t += c.text; if (c.info) info = c.info; } return {text: t.replace(/\r\n$/, ''), ...info}; };
+  async function exportAll() {
+    if (!main) return;
+    const btn = document.getElementById('pfexportall'), label = document.getElementById('pfexportalltext');
+    if (btn && btn.disabled) return;
+    const say = t => { if (label) label.textContent = t; };
+    const was = label ? label.textContent : '';
+    if (btn) btn.disabled = true;
+    let note = '';
+    try {
+      say('Loading advanced data…');
+      try { await loadDetail(); } catch { note = 'Advanced details were unavailable, so the file has the main data only.'; }
+      say('Preparing…');
+      await new Promise(r => setTimeout(r, 0));
+      const parts = [];
+      let info = null;
+      for (const c of wideChunks(shown, main.alliances, main.tabs, detail && detail.players)) {
+        if (c.text) parts.push(c.text);
+        if (c.info) info = c.info;
+        say(`Preparing… ${c.pct ?? 0}%`);
+        await new Promise(r => setTimeout(r, 0));
+      }
+      download(parts, 'commanders-all-data');
+      if (info.dropped) note = `${info.dropped} columns did not fit Excel's limit and were left out. ${note}`;
+    } catch (e) {
+      console.error('All Commander Data export failed:', e);
+      note = 'Export failed. Try again.';
+    } finally {
+      if (btn) btn.disabled = false;
+      say(was);
+      const el = document.getElementById('pfexportnote');
+      if (el) { el.textContent = note; el.hidden = !note; }
+    }
   }
   const delta = pts => pts && pts.length > 1 ? pts[pts.length - 1][1] - pts[0][1] : null;
 
@@ -306,7 +436,7 @@ const Profiles = (() => {
         <label class="pf-check"><input type="checkbox" ${state.star ? 'checked' : ''} onchange="Profiles.set('star',this.checked)"> ★ advanced only</label>
         ${al ? `<label class="pf-check"><span class="pf-badge">${esc(al.b || al.n)} ✕</span><button type="button" class="pf-badge mute" onclick="Profiles.set('alliance',-1)">clear alliance</button></label>` : ''}
       </div>
-      <div class="database-toolbar"><span id="pfcount" role="status"></span><span class="database-hint">Click a column header to sort · Filled boxes must all match</span><button type="button" class="export-button" onclick="Profiles.exportCsv()" title="Every matching commander, in the current sort order, with full numbers"><svg class="icon-sm" data-lucide="download"></svg> <span id="pfexport">Export CSV</span></button></div>
+      <div class="database-toolbar"><span id="pfcount" role="status"></span><span class="database-hint">Click a column header to sort · Filled boxes must all match</span><button type="button" class="export-button" onclick="Profiles.exportCsv()" title="Every matching commander, in the current sort order, with full numbers"><svg class="icon-sm" data-lucide="download"></svg> <span id="pfexport">Export CSV</span></button><button type="button" class="export-button" id="pfexportall" onclick="Profiles.exportAll()" title="Same first columns, plus every other field we hold for each commander (advanced-profile data included), flat for a spreadsheet"><svg class="icon-sm" data-lucide="database"></svg> <span id="pfexportalltext">All Commander Data</span></button></div><p class="database-footnote" id="pfexportnote" role="status" hidden></p>
       <p class="database-mobile-hint">Swipe the table sideways to see all columns.</p>
       <div class="database-scroll" tabindex="0" aria-label="Sortable commanders"><table class="database-table" aria-label="Commanders"><thead><tr>
         ${cols.map(([k, l]) => `<th scope="col" aria-sort="${k === state.sort ? (state.dir < 0 ? 'descending' : 'ascending') : 'none'}"><button onclick="Profiles.set('sort','${k}')">${l}<span aria-hidden="true">${k === state.sort ? (state.dir < 0 ? '↓' : '↑') : '↕'}</span></button></th>`).join('')}
@@ -555,7 +685,7 @@ const Profiles = (() => {
     window.scrollTo(0, 0);
   }
 
-  const api = {owns, render, set, exportCsv, csv, peakOf, clean, fold, clearFilters, search, filtersActive, _reset: () => { main = null; detail = null; byUid = new Map(); loading = null; detailLoading = null; shown = []; rankCache = null; }, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
+  const api = {owns, render, set, exportCsv, exportAll, csv, wideCsv, wideChunks, peakOf, clean, fold, clearFilters, search, filtersActive, _reset: () => { main = null; detail = null; byUid = new Map(); loading = null; detailLoading = null; shown = []; rankCache = null; }, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
     helpers: {num, compact, dateStr, ago, humanize}, commanderSections};
   return api;
 })();
