@@ -5,7 +5,7 @@
 const Profiles = (() => {
   const MAIN = 'data/profiles.enc.json', DETAIL = 'data/profiles-detail.enc.json';
   const PAGE = 50;
-  const state = {q: '', server: '', exact: false, star: false, tab: '', sort: 'pw', dir: -1, page: 0, alliance: -1};
+  const state = {q: '', name: '', an: '', tag: '', server: '', exact: false, star: false, tab: '', sort: 'pw', dir: -1, page: 0, alliance: -1};
   let main = null, detail = null, byUid = new Map(), loading = null, detailLoading = null, shown = [];
 
   // ---------------------------------------------------------------- pure helpers
@@ -56,6 +56,7 @@ const Profiles = (() => {
     for (const p of players) {
       p.tabCount = p.tb ? p.tb.length : 0;
       p.search = `${p.n} ${p.b} ${p.an} ${p.u}`.toLowerCase();
+      p.nl = String(p.n).toLowerCase(); p.anl = String(p.an || '').toLowerCase(); p.bl = String(p.b || '').toLowerCase();
     }
     return payload;
   }
@@ -63,13 +64,16 @@ const Profiles = (() => {
     const q = s.q.trim().toLowerCase();
     const out = players.filter(p =>
       (!q || p.search.includes(q)) &&
+      (!s.name || p.nl.includes(s.name.trim().toLowerCase())) &&
+      (!s.an || p.anl.includes(s.an.trim().toLowerCase())) &&
+      (!s.tag || p.bl.includes(s.tag.trim().toLowerCase())) &&
       (!s.server || String(p.sv) === s.server) &&
       (!s.exact || (p.sv != null && !p.sx)) &&                    // exact servers only: from a leaderboard row or popup, not inferred
       (!s.star || p.st) &&
       (s.alliance < 0 || p.ai === s.alliance) &&
       (!s.tab || (p.tb && p.tb.some(t => String(t[0]) === s.tab))));
     const key = {pw: p => p.pw, kl: p => p.kl, ls: p => p.ls, tabs: p => p.tabCount * 10 + (p.st || 0),
-      name: p => p.n.toLowerCase(), alliance: p => (p.b || '').toLowerCase()}[s.sort] || (p => p.pw);
+      name: p => p.n.toLowerCase(), an: p => (p.an || '').toLowerCase(), alliance: p => (p.b || '').toLowerCase(), sv: p => p.sv}[s.sort] || (p => p.pw);
     return out.sort((a, b) => {
       const x = key(a), y = key(b);
       if (x == null && y == null) return 0;
@@ -214,26 +218,25 @@ const Profiles = (() => {
     const servers = [...new Set(players.map(p => p.sv).filter(v => v != null))].sort((a, b) => a - b);
     const al = state.alliance >= 0 ? main.alliances[state.alliance] : null;
     const withTabs = players.filter(p => p.tb).length;
-    view().innerHTML = `<section class="pf-hero"><p class="eyebrow">INTELLIGENCE / PROFILES</p>
-      <h1>Player <span>Profiles</span><span class="pf-beta">BETA</span></h1>
-      <p>Every survivor we have seen, built from alliance rosters and the in-game leaderboards. Roster stats exist for nearly everyone; players marked <span class="pf-star">★</span> appear on the global leaderboards or have had their commander popup captured, and get an advanced profile.</p></section>
-      <div class="pf-tiles">${stat('Profiles', num(m.players))}${stat('Advanced ★', num(m.stars), `both global boards or popup`)}${stat('On a leaderboard', num(withTabs), `${(100 * withTabs / m.players).toFixed(1)}% of profiles`)}${stat('Alliances', num(m.alliances))}${stat('Data refreshed', esc(ago(Date.parse(m.generatedAtUtc) / 1000)))}</div>
+    const cols = [['name', 'Player Name'], ['an', 'Alliance Name'], ['alliance', 'Alliance Tag'], ['sv', 'Server Number'], ['pw', 'Power'], ['kl', 'Kills']];
+    const filt = [['name', 'Player Name', 'Any part of a name'], ['an', 'Alliance Name', 'Any part of a name'], ['tag', 'Alliance Tag', 'e.g. PX1']];
+    view().innerHTML = `<section class="database-heading"><p class="eyebrow">INTELLIGENCE / PROFILES</p><h1>PLAYER <span>PROFILES</span><span class="pf-beta">BETA</span></h1>
+      <p>Every survivor we have seen, built from alliance rosters and the in-game leaderboards. Players marked <span class="pf-star">★</span> get an advanced profile. ${num(m.players)} profiles · ${num(m.stars)} advanced · ${num(withTabs)} on a leaderboard · refreshed ${esc(ago(Date.parse(m.generatedAtUtc) / 1000))}.</p></section>
+      <div class="database-filters" role="search" aria-label="Filter profiles">${filt.map(([k, l, hint]) => `<label class="database-filter"><span>${l}</span><input class="filter" type="search" placeholder="${hint}" value="${esc(state[k])}" oninput="Profiles.set('${k}',this.value)"></label>`).join('')}</div>
       <div class="pf-bar" role="search">
-        <label class="grow">Search<input type="search" id="pfq" placeholder="Name, alliance tag, alliance name or uid…" value="${esc(state.q)}" oninput="Profiles.set('q',this.value)"></label>
         <label>Server<select onchange="Profiles.set('server',this.value)"><option value="">All</option>${servers.map(s => `<option value="${s}"${String(s) === state.server ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
         <label>Leaderboard<select onchange="Profiles.set('tab',this.value)"><option value="">Any</option>${main.tabs.map((t, i) => `<option value="${i}"${String(i) === state.tab ? ' selected' : ''}>${esc(t.l)}</option>`).join('')}</select></label>
-        <label>Sort<select onchange="Profiles.set('sort',this.value)">${[['pw', 'Power'], ['kl', 'Kills'], ['ls', 'Last seen'], ['name', 'Name'], ['alliance', 'Alliance']].map(([k, l]) => `<option value="${k}"${state.sort === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
         <label class="pf-check" title="Hide players whose server is only inferred from their alliance (~)"><input type="checkbox" ${state.exact ? 'checked' : ''} onchange="Profiles.set('exact',this.checked)"> exact server only</label>
         <label class="pf-check"><input type="checkbox" ${state.star ? 'checked' : ''} onchange="Profiles.set('star',this.checked)"> ★ advanced only</label>
         ${al ? `<label class="pf-check"><span class="pf-badge">${esc(al.b || al.n)} ✕</span><button type="button" class="pf-badge mute" onclick="Profiles.set('alliance',-1)">clear alliance</button></label>` : ''}
       </div>
-      <div class="pf-count" id="pfcount" role="status"></div><div class="pf-actions"><button type="button" class="pf-badge mute" onclick="Profiles.exportCsv()" title="Download every matching profile, in the current sort order, with full numbers">Export CSV</button></div>
-      <p class="pf-note">Server: a <b>~</b> after the number means it is the server of the player's alliance, because the player's own server was not captured (the Server filter includes these). Without a ~ the server comes from a leaderboard row or the player's profile popup.</p>
-      <div class="pf-scroll"><table class="pf" aria-label="Player profiles"><thead><tr>
-        <th></th>${[['name', 'Player'], ['', 'Alliance name'], ['alliance', 'Tag'], ['', 'Server'], ['pw', 'Power'], ['kl', 'Kills'], ['ls', 'Last seen']].map(([k, l]) => `<th${k ? ` onclick="Profiles.set('sort','${k}')"` : ''} class="${k === state.sort ? 'sorted' : ''}${['pw', 'kl'].includes(k) ? ' n' : ''}">${l}${k === state.sort ? (state.dir < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('')}
+      <div class="database-toolbar"><span id="pfcount" role="status"></span><span class="database-hint">Click a column header to sort · Filled boxes must all match</span><button type="button" class="export-button" onclick="Profiles.exportCsv()" title="Every matching profile, in the current sort order, with full numbers"><svg class="icon-sm" data-lucide="download"></svg> <span id="pfexport">Export CSV</span></button></div>
+      <p class="database-mobile-hint">Swipe the table sideways to see all columns.</p>
+      <div class="database-scroll" tabindex="0" aria-label="Sortable player profiles"><table class="database-table" aria-label="Player profiles"><thead><tr>
+        ${cols.map(([k, l]) => `<th scope="col" aria-sort="${k === state.sort ? (state.dir < 0 ? 'descending' : 'ascending') : 'none'}"><button onclick="Profiles.set('sort','${k}')">${l}<span aria-hidden="true">${k === state.sort ? (state.dir < 0 ? '↓' : '↑') : '↕'}</span></button></th>`).join('')}
       </tr></thead><tbody id="pfrows"></tbody></table></div>
-      <div class="pf-pager"><button type="button" id="pfprev" onclick="Profiles.page(-1)">← Previous</button><span id="pfpage"></span><button type="button" id="pfnext" onclick="Profiles.page(1)">Next →</button></div>
-      <p class="pf-note">Beta. Each value carries its own capture date: rosters are refreshed whenever an alliance screen is opened, global leaderboard ranks only for players who were on a list when somebody looked. A blank means "never captured", not zero. Only global (cross-server) leaderboards are shown; server-only lists are left out because they only cover one server.</p>`;
+      <div class="database-pagination"><span id="pfpage" role="status"></span><div><button type="button" id="pfprev" onclick="Profiles.page(-1)">Previous</button><button type="button" id="pfnext" onclick="Profiles.page(1)">Next</button></div></div>
+      <p class="database-footnote">Export includes all matching rows in the current sort order, including other pages, with full numeric power values. Brackets show the highest power seen. A <b>~</b> after a server number means it is the server of the player's alliance, because the player's own server was not captured. Each value carries its own capture date; a blank means "never captured", not zero. Only global (cross-server) leaderboards are shown.</p>`;
     drawRows();
   }
 
@@ -242,16 +245,16 @@ const Profiles = (() => {
     const pages = Math.max(1, Math.ceil(shown.length / PAGE));
     state.page = Math.min(state.page, pages - 1);
     const slice = shown.slice(state.page * PAGE, state.page * PAGE + PAGE);
-    document.getElementById('pfcount').textContent = `${num(shown.length)} of ${num(main.players.length)} profiles`;
+    document.getElementById('pfcount').textContent = `${num(shown.length)} / ${num(main.players.length)} players`;
+    document.getElementById('pfexport').textContent = `Export ${num(shown.length)} players (CSV)`;
     document.getElementById('pfrows').innerHTML = slice.length ? slice.map(p => {
       const a = allianceOf(p);
-      return `<tr><td>${p.st ? `<span class="pf-star" title="Advanced profile">${stars(p.st)}</span>` : ''}</td>
-        <td><a href="#p/${esc(p.u)}">${esc(p.n)}</a></td>
-        <td class="pf-an">${esc((a && a.n) || p.an)}</td><td>${p.b ? esc(p.b) : '<span class="pf-badge mute">none</span>'}${a ? '' : p.b ? ' <span class="pf-badge mute" title="Not in the newest roster we captured for this alliance">left?</span>' : ''}</td>
-        <td${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>${p.sv != null ? esc(p.sv) : '—'}${p.sx ? '<small style="color:var(--text-faint)" aria-label="alliance server, inferred"> ~</small>' : ''}</td><td class="n">${p.pw != null ? num(p.pw) : '—'}${peakOf(p) != null && peakOf(p) !== p.pw ? ` <span class="power-peak" title="Highest power seen">(${num(peakOf(p))})</span>` : ''}</td>
-        <td class="n">${p.kl != null ? num(p.kl) : '—'}</td><td title="${esc(dateStr(p.ls))}">${esc(ago(p.ls))}</td></tr>`;
-    }).join('') : `<tr><td colspan="8" class="empty">No matches. Try another name, tag or server.</td></tr>`;
-    document.getElementById('pfpage').textContent = `Page ${state.page + 1} / ${pages}`;
+      return `<tr><td><a href="#p/${esc(p.u)}">${esc(p.n)}</a>${p.st ? ` <span class="pf-star" title="Advanced profile">${stars(p.st)}</span>` : ''}</td>
+        <td>${esc((a && a.n) || p.an)}</td><td>${p.b ? esc(p.b) : '<span class="pf-badge mute">none</span>'}${a ? '' : p.b ? ' <span class="pf-badge mute" title="Not in the newest roster we captured for this alliance">left?</span>' : ''}</td>
+        <td class="numeric"${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>${p.sv != null ? esc(p.sv) : '—'}${p.sx ? '<small style="color:var(--text-faint)" aria-label="alliance server, inferred"> ~</small>' : ''}</td><td class="numeric">${p.pw != null ? num(p.pw) : '—'}${peakOf(p) != null && peakOf(p) !== p.pw ? ` <span class="power-peak" title="Highest power seen">(${num(peakOf(p))})</span>` : ''}</td>
+        <td class="numeric">${p.kl != null ? num(p.kl) : '—'}</td></tr>`;
+    }).join('') : `<tr><td colspan="6" class="empty">No matches. Try another name, tag or server.</td></tr>`;
+    document.getElementById('pfpage').textContent = `Page ${num(state.page + 1)} of ${num(pages)}`;
     document.getElementById('pfprev').disabled = state.page === 0;
     document.getElementById('pfnext').disabled = state.page >= pages - 1;
   }
@@ -347,11 +350,11 @@ const Profiles = (() => {
     if (key === 'sort') {
       const same = state._last === value;
       state._last = value;
-      state.dir = same ? -state.dir : (value === 'name' || value === 'alliance' ? 1 : -1);
+      state.dir = same ? -state.dir : (['name', 'an', 'alliance', 'sv'].includes(value) ? 1 : -1);
     }
     state.page = 0;
     if (key === 'alliance') { location.hash = '#profiles'; if (document.getElementById('pfrows')) listView(); return; }
-    if (key === 'q') { clearTimeout(timer); timer = setTimeout(drawRows, 120); return; }
+    if (key === 'q' || key === 'name' || key === 'an' || key === 'tag') { clearTimeout(timer); timer = setTimeout(drawRows, 120); return; }
     if (key === 'sort' || key === 'tab' || key === 'server' || key === 'star' || key === 'exact') { listView(); const q = document.getElementById('pfq'); if (q && key === 'sort') q.blur(); }
   }
   function page(step) { state.page += step; drawRows(); document.getElementById('pfrows').scrollIntoView({block: 'start'}); }
