@@ -48,8 +48,7 @@ const Server = (() => {
   }
   function dimensionNote(m, now = Date.now()) {
     const age = ageDays(m.capturedAtUtc, now), stale = age != null && age > DIMENSION_DAYS;
-    const when = m.capturedAtUtc ? dateStr(Date.parse(m.capturedAtUtc) / 1000) : 'an unknown date';
-    return noteHtml(`<b>Dimension data is from the in-game season-map rankings.</b><span> The game lists only the top 150 players (and the top alliances) on each tab, from every server in the dimension${m.servers && m.servers.length ? ` (${esc(m.servers.length)} servers in this snapshot)` : ''}. Dimensions change about every 4 weeks, so this is the dimension as of ${esc(when)} and may no longer be current.</span>${
+    return noteHtml(`<b>Dimension data is from the in-game season-map rankings.</b><span> The game lists only the top 150 players (and the top alliances) on each tab, from every server in the dimension${m.servers && m.servers.length ? ` (${esc(m.servers.length)} servers in this snapshot)` : ''}.</span>${
       stale ? `<br><b class="sv-stale">This snapshot is ${esc(Math.floor(age))} days old, so the dimension has probably changed.</b>` : ''}`);
   }
 
