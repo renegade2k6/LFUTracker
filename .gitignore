@@ -28,3 +28,4 @@
 # Server tab: encrypted bundle only (scripts/profiles.py).
 !/data/server.enc.json
 !/data/dimension.enc.json
+!/data/power.enc.json

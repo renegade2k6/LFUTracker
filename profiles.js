@@ -286,7 +286,7 @@ const Profiles = (() => {
     const a = allianceOf(p);
     const trackerLink = a && typeof STATE !== 'undefined' && STATE.alliances.some(x => x.allianceId === a.id) ? `<a href="#a/${encodeURIComponent(a.id)}">tracker page →</a>` : '';
     const tabs = (p.tb || []).map(t => ({i: t[0], r: t[1], v: t[2], ts: t[3]}));
-    const hd = !p.pc || p.pcs ? delta(p.ph) : null;     // a CP tile never gets a delta computed from roster history
+    const hd = delta(p.ph);
     view().innerHTML = `<a class="back-btn" href="#profiles">&larr; All profiles</a>
       <div class="pf-card"><div class="pf-head"><div><p class="eyebrow">PLAYER PROFILE</p><h1>${esc(p.n)} ${p.st ? `<span class="pf-star" title="Advanced profile">${stars(p.st)}</span>` : ''}</h1>
         <div class="pf-meta">${p.b ? `<span class="pf-badge">${esc(p.b)}</span>` : '<span class="pf-badge mute">no alliance</span>'}<span>${esc(p.an)}</span>

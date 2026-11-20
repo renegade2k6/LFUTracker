@@ -113,7 +113,8 @@ function esc(v) {
   return String(v).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 }
 function activeMembers(a) { return (a.members || []).filter(m => !m.movedToAllianceId); }
-function sourceNote(source, at) { return source ? `from ${source === 'season-leaderboard' ? 'season leaderboard' : source} · ${relTime(at)}` : ''; }
+const SOURCE_LABELS = {'season-leaderboard': 'season leaderboard', 'commander-popup': 'commander popup', 'commander-cp': 'commander CP list'};
+function sourceNote(source, at) { return source ? `from ${SOURCE_LABELS[source] || source} · ${relTime(at)}` : ''; }
 function num(v) { const n = Number(v); return Number.isFinite(n) ? n.toLocaleString("en-US") : "0"; }
 function compactNum(v) {
   const n = Number(v) || 0;
@@ -758,14 +759,26 @@ function renderSample() {
   icons();
 }
 
-function startFull(unlocked) {
+// Commander-popup / commander-CP power observations (optional file): the same newest-wins merge uses them, so a player shows
+// the same power here as on the Profiles page. Missing or unreadable -> the page just uses its other sources.
+async function loadLatestPower() {
+  try {
+    const pw = SiteVault.saved();
+    if (!pw) return null;
+    const res = await fetch('data/power.enc.json', {cache: 'no-store'});
+    return res.ok ? await SiteVault.open(await res.json(), pw) : null;
+  } catch { return null; }
+}
+
+async function startFull(unlocked) {
   SAMPLE_MODE = false;
   document.body.classList.remove('locked');
   const alliances = unlocked.alliances || [], history = unlocked.history || {}, meta = unlocked.meta || null, leaderboard = unlocked.leaderboard || null;
 
   // Newest observation wins, whatever in-game source it came from (see merge.js).
+  const latestPower = await loadLatestPower();
   const merged = DataMerge.apply(alliances, history,
-    DataMerge.fromSeasonLeaderboard(leaderboard));
+    DataMerge.combine(DataMerge.fromSeasonLeaderboard(leaderboard), DataMerge.fromLatestPower(latestPower)));
   STATE.alliances = merged.alliances;
   STATE.history = merged.history;
   STATE.mergeReport = merged.report;

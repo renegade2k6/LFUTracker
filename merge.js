@@ -37,6 +37,19 @@ const DataMerge = (() => {
     return obs;
   }
 
+  /* Newest commander-popup / commander-CP power per player (data/power.enc.json, written by scripts/profiles.py).
+     Rows: [uid, power, capturedAtUtc, source]. They only ever update the power of a player already on the site. */
+  function fromLatestPower(payload) {
+    const obs = {alliances: [], players: [], history: []};
+    for (const r of (payload && Array.isArray(payload.players) ? payload.players : [])) {
+      const at = Array.isArray(r) ? time(r[2]) : null;
+      if (at !== null && r[0] != null && Number.isFinite(Number(r[1]))) obs.players.push({uid: String(r[0]), power: Number(r[1]), at, source: String(r[3] || 'commander')});
+    }
+    return obs;
+  }
+  const combine = (...list) => ({alliances: list.flatMap(o => (o && o.alliances) || []), players: list.flatMap(o => (o && o.players) || []),
+    history: list.flatMap(o => (o && o.history) || [])});
+
   /* ---------- merge ---------- */
   function apply(alliances, history, observations) {
     const report = {updatedAlliances: 0, addedAlliances: 0, updatedPlayers: 0, addedPlayers: 0, movedPlayers: 0, skipped: 0, removedEmpty: 0};
@@ -130,6 +143,6 @@ const DataMerge = (() => {
     return {alliances: listed, history: hist, report};
   }
 
-  return {apply, fromSeasonLeaderboard};
+  return {apply, fromSeasonLeaderboard, fromLatestPower, combine};
 })();
 if (typeof module !== 'undefined') module.exports = DataMerge;
