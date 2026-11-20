@@ -190,7 +190,7 @@ const Server = (() => {
   }
 
   const CSS = `
-  .sv{max-width:1100px}
+  .sv{max-width:none}
   .sv-note{display:flex;gap:.7rem;align-items:flex-start;background:var(--hazard-dim);border:1px solid var(--border-glow);border-radius:var(--radius);
     padding:.75rem 1rem;margin:1rem 0;color:var(--text);font-size:.88rem;line-height:1.5}
   .sv-note b{color:var(--hazard-text)} .sv-note span{color:var(--text-dim)} .sv-note b.sv-stale{color:#ff8a7a}
