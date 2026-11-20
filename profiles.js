@@ -110,10 +110,12 @@ const Profiles = (() => {
   };
   // CSV identical in layout to the All Players export (same columns, order, "power (highest seen)" format, UTC timestamps and
   // formula-safe cells). Power is the same single number the table and profile show.
+  // Players never seen with a name carry their id as `n`; All Players never exported those, so the CSV leaves them out.
+  const hasName = p => !((p.nraw ?? p.n) === p.u || !(p.nraw ?? p.n));
   function csv(rows, alliances, ext = trackerPeaks()) {
     const cell = v => { let t = String(v ?? ''); if (/^[\s]*[=+@-]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
     const head = ['Player Name', 'Alliance Name', 'Alliance Tag', 'Server Number', 'Power', 'Last Updated (UTC)'];
-    const body = rows.map(p => {
+    const body = rows.filter(hasName).map(p => {
       const al = p.ai != null && alliances ? alliances[p.ai] : null;
       const power = p.pw;
       const peak = peakOf(p, ext);
@@ -321,7 +323,7 @@ const Profiles = (() => {
     state.page = Math.min(state.page, pages - 1);
     const slice = shown.slice(state.page * PAGE, state.page * PAGE + PAGE);
     document.getElementById('pfcount').textContent = `${num(shown.length)} / ${num(main.players.length)} commanders`;
-    document.getElementById('pfexport').textContent = `Export ${num(shown.length)} commanders (CSV)`;
+    document.getElementById('pfexport').textContent = `Export ${num(shown.filter(hasName).length)} commanders (CSV)`;
     const clear = document.getElementById('pfclear');
     if (clear) clear.hidden = !filtersActive(state);
     document.getElementById('pfrows').innerHTML = slice.length ? slice.map(p => {
