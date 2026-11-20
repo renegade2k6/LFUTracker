@@ -51,9 +51,15 @@ const Profiles = (() => {
     // ids, indexes, levels and stars are shown raw; only genuine quantities get thousands separators
     return typeof v === 'number' && !/id$|index|level|star|quality|position/i.test(key) ? num(v) : String(v);
   }
+  // The game wraps some names in rich-text tags (<#0ff>name</color>, <color=#f00>, <b>, <size=20>): drop them for display.
+  const RICH = /<\/?(?:#[0-9a-f]{3,8}|color(?:=[^>]*)?|b|i|size(?:=[^>]*)?)>/gi;
+  const clean = v => v == null ? v : String(v).replace(RICH, '').replace(/\s{2,}/g, ' ').trim();
   function normalize(payload) {
     const players = payload.players;
+    for (const a of payload.alliances || []) { a.nraw = a.n; a.braw = a.b; a.n = clean(a.n); a.b = clean(a.b); }
     for (const p of players) {
+      p.nraw = p.n; p.anraw = p.an; p.braw = p.b;
+      p.n = clean(p.n) || p.n; p.an = clean(p.an); p.b = clean(p.b);
       p.tabCount = p.tb ? p.tb.length : 0;
       p.search = `${p.n} ${p.b} ${p.an} ${p.u}`.toLowerCase();
       p.nl = String(p.n).toLowerCase(); p.anl = String(p.an || '').toLowerCase(); p.bl = String(p.b || '').toLowerCase();
@@ -109,7 +115,7 @@ const Profiles = (() => {
       const power = p.pw;
       const peak = peakOf(p, ext);
       const shownPower = peak != null ? `${power ?? ''} (${peak})`.trim() : power;
-      return [p.n, (al && al.n) || p.an, (al && al.b) || p.b, p.sv, shownPower,
+      return [p.nraw ?? p.n, (al && (al.nraw ?? al.n)) || (p.anraw ?? p.an), (al && (al.braw ?? al.b)) || (p.braw ?? p.b), p.sv, shownPower,
               p.ls ? new Date(p.ls * 1000).toISOString().slice(0, 19).replace('T', ' ') : ''];
     });
     return '﻿' + [head, ...body].map(r => r.map(cell).join(',')).join('\r\n');
@@ -226,7 +232,10 @@ const Profiles = (() => {
   .pf-power b{display:block;font:700 clamp(2.2rem,5.2vw,3.6rem)/1.02 var(--display);letter-spacing:.01em;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff,#ffd9b3);-webkit-background-clip:text;background-clip:text;color:transparent}
   .pf-power .d{display:block;font-size:.84rem;margin-top:.3rem}.pf-power .pk{display:block;color:var(--text-dim);font-size:.84rem;margin-top:.15rem}.pf-power .pk em{font-style:normal;color:var(--text)}
   .pf-power .pf-spark{width:100%;height:34px;margin-top:.5rem;opacity:.9}
-  .pf-tiles.compact{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:1rem 0}
+  .pf-tiles.compact{grid-template-columns:repeat(var(--n,6),minmax(0,1fr));gap:.7rem;margin:1rem 0}
+  .pf-tiles.compact .pf-tile{padding:.75rem .9rem;min-width:0}.pf-tiles.compact .pf-tile b{font-size:1.35rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  @media(max-width:1000px){.pf-tiles.compact{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media(max-width:560px){.pf-tiles.compact{grid-template-columns:repeat(2,minmax(0,1fr))}}
   .pf-tiles.compact .pf-tile{position:relative;transition:transform .15s,border-color .15s}.pf-tiles.compact .pf-tile:hover{transform:translateY(-2px);border-color:var(--border-glow)}
   .pf-tile small{display:flex;align-items:center;gap:.4rem}.pf-tile small svg{width:13px;height:13px;color:var(--hazard-text)}
   .pf-tile .dim{color:var(--text-faint);font:500 1rem var(--body,inherit)}.pf-tile .of{font:500 .8rem var(--body,inherit);color:var(--text-faint);letter-spacing:0;text-transform:none;margin-left:.2rem}.pf-tile .of.pf-up{color:var(--good)}
@@ -382,14 +391,15 @@ const Profiles = (() => {
     const hd = delta(p.ph), pk = peakOf(p);
     const R = ranks(), gRank = R.global.get(p.u), group = p.ai != null ? R.groups.get(p.ai) : null;
     const aRank = group ? group.findIndex(x => x.u === p.u) + 1 : 0;
-    const initial = esc(Array.from(String(p.n))[0] || '?');
+    const initial = esc((String(p.n).match(/[\p{L}\p{N}]/u) || Array.from(String(p.n)))[0] || '?');
     const allianceName = (a && a.n) || p.an;
     const h = hue(p.b || p.u);
     const trail = [{label: 'Home', href: '#', icon: 'home'}, {label: 'Profiles', href: '#profiles'}];
     if (a) trail.push({label: allianceName || p.b, href: alliancePage || '#profiles', onclick: alliancePage ? '' : filterAlliance, title: tracked ? `Open ${allianceName} on the tracker` : `${allianceName}: all members`});
     trail.push({label: p.n});
-    const joined = p.jt ? `${dateStr(p.jt)} <span class="of pf-up">${Math.max(0, Math.round((Date.now() / 1000 - p.jt) / 86400))} days</span>` : '<span class="dim">Not captured</span>';
-    const tile = (icon, label, value) => `<div class="pf-tile"><small>${icn(icon)}${esc(label)}</small><b>${value}</b></div>`;
+    const joined = p.jt ? dateStr(p.jt) : '<span class="dim">Not captured</span>';
+    const joinedSub = p.jt ? `${Math.max(0, Math.round((Date.now() / 1000 - p.jt) / 86400))} days ago` : '';
+    const tile = (icon, label, value, sub) => `<div class="pf-tile"><small>${icn(icon)}${esc(label)}</small><b>${value}</b><span class="sub">${sub || '&nbsp;'}</span></div>`;
     const mates = a && group && group.length > 1 ? (() => {
       let list = group.slice(0, 8);
       if (aRank > 8) list = [...list.slice(0, 7), p];
@@ -422,13 +432,13 @@ const Profiles = (() => {
           ${pk != null && pk !== p.pw ? `<span class="pk">Highest seen <em>${num(pk)}</em></span>` : ''}
           ${p.ph && p.ph.length > 1 ? spark(p.ph, {w: 220, h: 34}) : ''}</div>
       </section>
-      <div class="pf-tiles compact">
-        ${tile('crown', 'Power rank', gRank ? `#${num(gRank)} <span class="of">of ${num(R.total)}</span>` : '<span class="dim">—</span>')}
-        ${aRank ? tile('shield', `Rank in ${p.b || 'alliance'}`, `#${num(aRank)} <span class="of">of ${num(group.length)}</span>`) : ''}
-        ${tile('swords', 'Kills', p.kl != null ? num(p.kl) : '<span class="dim">Not captured</span>')}
-        ${tile('calendar', 'Joined alliance', joined)}
-        ${tile('trophy', 'Leaderboards', tabs.length ? num(tabs.length) : '<span class="dim">None</span>')}
-        ${tile('clock', 'Last seen', esc(ago(p.ls)))}
+      <div class="pf-tiles compact" style="--n:${5 + (aRank ? 1 : 0)}">
+        ${tile('crown', 'Power rank', gRank ? `#${num(gRank)}` : '<span class="dim">—</span>', gRank ? `of ${num(R.total)} players` : '')}
+        ${aRank ? tile('shield', `Rank in ${p.b || 'alliance'}`, `#${num(aRank)}`, `of ${num(group.length)} members`) : ''}
+        ${tile('swords', 'Kills', p.kl != null ? num(p.kl) : '<span class="dim">Not captured</span>', p.kl != null ? 'units defeated' : '')}
+        ${tile('calendar', 'Joined alliance', joined, joinedSub)}
+        ${tile('trophy', 'Leaderboards', tabs.length ? num(tabs.length) : '<span class="dim">None</span>', tabs.length ? 'global lists' : '')}
+        ${tile('clock', 'Last seen', esc(ago(p.ls)), esc(dateStr(p.ls)))}
       </div>
       <div class="pf-cols${p.mv || p.al || p.cr || mates ? '' : ' solo'}">
         <div class="pf-main">
