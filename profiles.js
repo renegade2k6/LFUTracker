@@ -99,22 +99,28 @@ const Profiles = (() => {
     const v = [p.pk, p.pw, ext && ext.get(String(p.u))].filter(x => Number.isFinite(x));
     return v.length ? Math.max(...v) : null;
   };
-  // CSV of the rows as shown (same order), with full numbers. Cells starting with = + - @ are neutralised for spreadsheets.
+  // CSV identical in layout to the All Players export (same columns, order, "power (highest seen)" format, UTC timestamps and
+  // formula-safe cells) so the two files can be compared directly. Power is the alliance-list power All Players uses
+  // (`aw` when the table headline is the in-game CP); the peak is the same "highest seen" All Players shows.
   function csv(rows, alliances, ext = trackerPeaks()) {
     const cell = v => { let t = String(v ?? ''); if (/^[\s]*[=+@-]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
-    const head = ['Player Name', 'Alliance Name', 'Alliance Tag', 'Server Number', 'Power', 'Highest Power Seen', 'Kills', 'Last Seen (UTC)', 'uid'];
+    const head = ['Player Name', 'Alliance Name', 'Alliance Tag', 'Server Number', 'Power', 'Last Updated (UTC)'];
     const body = rows.map(p => {
       const al = p.ai != null && alliances ? alliances[p.ai] : null;
-      const pk = peakOf(p, ext);
-      return [p.n, (al && al.n) || p.an, (al && al.b) || p.b, p.sv, p.pw, pk != null && pk !== p.pw ? pk : '', p.kl, p.ls ? new Date(p.ls * 1000).toISOString().replace('T', ' ').slice(0, 19) : '', p.u];
+      const power = p.aw != null ? p.aw : p.pw;
+      const seen = [ext && ext.get(String(p.u)), power, p.pk && !p.pc ? p.pk : null].filter(x => Number.isFinite(x));
+      const peak = seen.length ? Math.max(...seen) : null;
+      const shownPower = peak != null ? `${power ?? ''} (${peak})`.trim() : power;
+      return [p.n, (al && al.n) || p.an, (al && al.b) || p.b, p.sv, shownPower,
+              p.ls ? new Date(p.ls * 1000).toISOString().slice(0, 19).replace('T', ' ') : ''];
     });
     return '﻿' + [head, ...body].map(r => r.map(cell).join(',')).join('\r\n');
   }
   function exportCsv() {
     if (!main) return;
-    const url = URL.createObjectURL(new Blob([csv(shown, main.alliances)], {type: 'text/csv;charset=utf-8'}));
+    const url = URL.createObjectURL(new Blob([csv(shown, main.alliances)], {type: 'text/csv;charset=utf-8;'}));
     const a = document.createElement('a');
-    a.href = url; a.download = `player-profiles-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.href = url; a.download = `players-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
   const delta = pts => pts && pts.length > 1 ? pts[pts.length - 1][1] - pts[0][1] : null;
@@ -355,7 +361,7 @@ const Profiles = (() => {
     state.page = 0;
     if (key === 'alliance') { location.hash = '#profiles'; if (document.getElementById('pfrows')) listView(); return; }
     if (key === 'q' || key === 'name' || key === 'an' || key === 'tag') { clearTimeout(timer); timer = setTimeout(drawRows, 120); return; }
-    if (key === 'sort' || key === 'tab' || key === 'server' || key === 'star' || key === 'exact') { listView(); const q = document.getElementById('pfq'); if (q && key === 'sort') q.blur(); }
+    if (key === 'sort' || key === 'tab' || key === 'server' || key === 'star' || key === 'exact') listView();
   }
   function page(step) { state.page += step; drawRows(); document.getElementById('pfrows').scrollIntoView({block: 'start'}); }
 
