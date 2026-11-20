@@ -685,7 +685,9 @@ const Profiles = (() => {
     window.scrollTo(0, 0);
   }
 
-  const api = {owns, render, set, exportCsv, exportAll, csv, wideCsv, wideChunks, peakOf, clean, fold, clearFilters, search, filtersActive, _reset: () => { main = null; detail = null; byUid = new Map(); loading = null; detailLoading = null; shown = []; rankCache = null; }, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
+  /* Total commanders seen (same figure as the Commanders page header); null if the bundle can't be read. */
+  const total = () => load().then(m => m && m.meta ? m.meta.players : null).catch(() => null);
+  const api = {owns, render, set, total, exportCsv, exportAll, csv, wideCsv, wideChunks, peakOf, clean, fold, clearFilters, search, filtersActive, _reset: () => { main = null; detail = null; byUid = new Map(); loading = null; detailLoading = null; shown = []; rankCache = null; }, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
     helpers: {num, compact, dateStr, ago, humanize}, commanderSections};
   return api;
 })();

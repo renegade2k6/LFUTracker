@@ -398,6 +398,11 @@ function renderList() {
   const ranking = rankingSummary();
   const sorted = ranking.sorted;
   const totalMembers = Directory.records(STATE.alliances, 'players').length;
+  // Roster count shows first; once the commander bundle loads, use its total so Overview matches the Commanders page.
+  if (typeof Profiles !== "undefined" && !SAMPLE_MODE) Profiles.total().then(n => {
+    const el = document.getElementById("survivorsTracked");
+    if (n && el) el.textContent = num(n);
+  });
   const totalPower = sorted.reduce((s, a) => s + (Number(a.fightPower) || 0), 0);
   const servers = new Set(sorted.map(a => a.originServerId)).size;
 
@@ -420,7 +425,7 @@ function renderList() {
     </div>
     <div class="stats">
       <div class="stat"><svg data-lucide="flag"></svg><div><div class="label">Alliances Tracked</div><div class="value">${sorted.length}</div></div></div>
-      <div class="stat"><svg data-lucide="users"></svg><div><div class="label">Survivors Tracked</div><div class="value">${num(totalMembers)}</div></div></div>
+      <div class="stat"><svg data-lucide="users"></svg><div><div class="label">Survivors Tracked</div><div class="value" id="survivorsTracked">${num(totalMembers)}</div></div></div>
       <div class="stat"><svg data-lucide="flame"></svg><div><div class="label">Combined Power</div><div class="value">${compactNum(totalPower)}</div></div></div>
       <div class="stat"><svg data-lucide="radio-tower"></svg><div><div class="label">Servers Spanned</div><div class="value">${servers}</div></div></div>
     </div>
