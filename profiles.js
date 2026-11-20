@@ -100,16 +100,14 @@ const Profiles = (() => {
     return v.length ? Math.max(...v) : null;
   };
   // CSV identical in layout to the All Players export (same columns, order, "power (highest seen)" format, UTC timestamps and
-  // formula-safe cells) so the two files can be compared directly. Power is the alliance-list power All Players uses
-  // (`aw` when the table headline is the in-game CP); the peak is the same "highest seen" All Players shows.
+  // formula-safe cells). Power is the same single number the table and profile show.
   function csv(rows, alliances, ext = trackerPeaks()) {
     const cell = v => { let t = String(v ?? ''); if (/^[\s]*[=+@-]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
     const head = ['Player Name', 'Alliance Name', 'Alliance Tag', 'Server Number', 'Power', 'Last Updated (UTC)'];
     const body = rows.map(p => {
       const al = p.ai != null && alliances ? alliances[p.ai] : null;
-      const power = p.aw != null ? p.aw : p.pw;
-      const seen = [ext && ext.get(String(p.u)), power, p.pk && !p.pc ? p.pk : null].filter(x => Number.isFinite(x));
-      const peak = seen.length ? Math.max(...seen) : null;
+      const power = p.pw;
+      const peak = peakOf(p, ext);
       const shownPower = peak != null ? `${power ?? ''} (${peak})`.trim() : power;
       return [p.n, (al && al.n) || p.an, (al && al.b) || p.b, p.sv, shownPower,
               p.ls ? new Date(p.ls * 1000).toISOString().slice(0, 19).replace('T', ' ') : ''];
@@ -207,7 +205,7 @@ const Profiles = (() => {
   const view = () => document.getElementById('view');
   const owns = hash => /^#?(profiles|p\/)/.test(hash || '');
   const locked = () => typeof SAMPLE_MODE !== 'undefined' && SAMPLE_MODE;
-  const stat = (label, value, sub) => `<div class="pf-tile"><small ${label === 'Alliance power' ? 'title="Power as shown in the in-game alliance member list. Can differ from Total CP on Commander Info."' : label === 'Power' ? 'title="In-game Total CP (Commander Info)"' : ''}>${esc(label)}</small><b>${value}</b>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`;
+  const stat = (label, value, sub) => `<div class="pf-tile"><small ${label === 'Power' ? 'title="The newest player power we captured (commander CP, the season-map Player Power list or an alliance member list)"' : ''}>${esc(label)}</small><b>${value}</b>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`;
   const allianceOf = p => p.ai != null ? main.alliances[p.ai] : null;
   const tabName = i => main.tabs[i].l;
 
@@ -295,10 +293,10 @@ const Profiles = (() => {
         ${a ? `<a href="#profiles" onclick="Profiles.set('alliance',${p.ai});return true">${num(a.m)} members →</a> ${trackerLink}` : p.b ? '<span class="pf-badge mute" title="Missing from the newest roster we captured for this alliance (left, kicked or just not captured yet)">not in latest roster</span>' : ''}
         ${p.sv != null ? `<span${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>Server ${esc(p.sv)}${p.sx ? ' ~ <small>(alliance server)</small>' : ''}</span>` : ''}${p.on != null ? `<span class="pf-badge ${p.on ? 'good' : 'mute'}">${p.on ? 'online at capture' : 'offline at capture'}</span>` : ''}</div></div>
         <div class="pf-meta"><span>uid ${esc(p.u)}</span><span title="${esc(dateStr(p.ls))}">last seen ${esc(ago(p.ls))}</span></div></div></div>
-      <div class="pf-tiles">${stat(p.pc ? 'Power' : 'Alliance power', p.pw != null ? num(p.pw) : '—', hd != null ? `<span class="${hd >= 0 ? 'pf-up' : 'pf-down'}">${hd >= 0 ? '+' : ''}${compact(hd)} since ${esc(dateStr(p.ph[0][0]))}</span>` : '')}
-        ${peakOf(p) != null && peakOf(p) !== p.pw ? stat('Peak power', num(peakOf(p)), '<span>highest seen</span>') : ''}${p.aw != null ? stat('Alliance power', num(p.aw), '<span>as in the alliance member list</span>') : ''}${stat('Kills', p.kl != null ? num(p.kl) : '—')}${stat('Joined alliance', p.jt ? esc(dateStr(p.jt)) : '—')}
+      <div class="pf-tiles">${stat('Power', p.pw != null ? num(p.pw) : '—', hd != null ? `<span class="${hd >= 0 ? 'pf-up' : 'pf-down'}">${hd >= 0 ? '+' : ''}${compact(hd)} since ${esc(dateStr(p.ph[0][0]))}</span>` : '')}
+        ${peakOf(p) != null && peakOf(p) !== p.pw ? stat('Peak power', num(peakOf(p)), '<span>highest seen</span>') : ''}${stat('Kills', p.kl != null ? num(p.kl) : '—')}${stat('Joined alliance', p.jt ? esc(dateStr(p.jt)) : '—')}
 </div>
-      <div class="pf-grid2">${chartCard(p.pcs ? 'Power over time' : 'Alliance power over time', p.ph, compact)}${chartCard('Kills over time', p.kh, compact)}</div>
+      <div class="pf-grid2">${chartCard('Power over time', p.ph, compact)}${chartCard('Kills over time', p.kh, compact)}</div>
       ${p.cr ? `<div class="pf-card"><h2>Cultural relics</h2><div class="pf-grid"><div class="pf-tab"><h3><span>Relic power</span><span>${p.cr[2] != null ? 'Server ' + esc(p.cr[2]) : 'Server list'}</span></h3>
         <div class="rank">#${esc(p.cr[1])}</div><div class="val">${esc(num(p.cr[0]))} <time>· ${esc(dateStr(p.cr[3]))}</time></div>
         ${p.ch && p.ch.length > 1 ? spark(p.ch, {w: 200, h: 36}) : ''}<div class="x">Rank within that server's list only, shown where we captured it.</div></div></div></div>` : ''}
