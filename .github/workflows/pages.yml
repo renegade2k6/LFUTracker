@@ -23,7 +23,7 @@ jobs:
         run: |
           mkdir -p _site/data
           cp index.html theme.css directory.js rankings.js player-power.js merge.js vault.js profiles.js server.js _site/
-          cp logo.png favicon-32.png apple-touch-icon.png hero-radar.png _site/
+          cp logo.png favicon-32.png apple-touch-icon.png hero-radar.png og-image.png robots.txt sitemap.xml _site/
           cp -r img _site/
           cp data/site.enc.json data/sample.json data/profiles.enc.json data/profiles-detail.enc.json data/server.enc.json data/dimension.enc.json data/power.enc.json _site/data/
           touch _site/.nojekyll

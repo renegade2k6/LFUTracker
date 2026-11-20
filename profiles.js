@@ -1,4 +1,4 @@
-/* Profiles (Beta) tab. Self-contained: loads data/profiles.enc.json (every player) and, on demand,
+/* Commanders tab (was Profiles (Beta); the addresses #profiles and #p/<uid> are unchanged). Self-contained: loads data/profiles.enc.json (every player) and, on demand,
    data/profiles-detail.enc.json (advanced "star" players), both written by scripts/profiles.py and
    decrypted in the browser with the same site password as the tracker (vault.js).
    Pure helpers are exported for tests (tests/profiles.test.cjs); everything below `render` needs a DOM. */
@@ -51,6 +51,10 @@ const Profiles = (() => {
     // ids, indexes, levels and stars are shown raw; only genuine quantities get thousands separators
     return typeof v === 'number' && !/id$|index|level|star|quality|position/i.test(key) ? num(v) : String(v);
   }
+  /* Search folding, identical to Directory.fold (a drift test keeps the copies equal): names fake spaces with blank-looking
+     characters, so search ignores them on both sides and compares case-insensitively. Every search box matches what you SEE. */
+  const BLANK = /[\s\p{Cc}\p{Cf}\u115F\u1160\u3164\uFFA0\u2800]/gu;
+  const fold = v => String(v ?? '').replace(BLANK, '').toLocaleLowerCase();
   // The game wraps some names in rich-text tags (<#0ff>name</color>, <color=#f00>, <b>, <size=20>): drop them for display.
   const RICH = /<\/?(?:#[0-9a-f]{3,8}|color(?:=[^>]*)?|b|i|size(?:=[^>]*)?)>/gi;
   const clean = v => v == null ? v : String(v).replace(RICH, '').replace(/\s{2,}/g, ' ').trim();
@@ -61,18 +65,17 @@ const Profiles = (() => {
       p.nraw = p.n; p.anraw = p.an; p.braw = p.b;
       p.n = clean(p.n) || p.n; p.an = clean(p.an) || p.an; p.b = clean(p.b) || p.b;
       p.tabCount = p.tb ? p.tb.length : 0;
-      p.search = `${p.n} ${p.b} ${p.an} ${p.u} ${p.nraw} ${p.anraw} ${p.braw}`.toLowerCase();     // raw markup is searchable too
-      p.nl = String(p.n).toLowerCase(); p.anl = String(p.an || '').toLowerCase(); p.bl = String(p.b || '').toLowerCase();
+      p.nl = fold(p.n); p.anl = fold(p.an); p.bl = fold(p.b); p.ul = fold(p.u); p.svl = fold(p.sv);
     }
     return payload;
   }
   function applyFilters(players, s, alliances) {
-    const q = s.q.trim().toLowerCase();
+    const q = fold(s.q), fName = fold(s.name), fAn = fold(s.an), fTag = fold(s.tag);
     const out = players.filter(p =>
-      (!q || p.search.includes(q)) &&
-      (!s.name || p.nl.includes(s.name.trim().toLowerCase())) &&
-      (!s.an || p.anl.includes(s.an.trim().toLowerCase())) &&
-      (!s.tag || p.bl.includes(s.tag.trim().toLowerCase())) &&
+      (!q || p.nl.includes(q) || p.anl.includes(q) || p.bl.includes(q) || p.ul.includes(q) || p.svl.includes(q)) &&     // any field, like All Alliances
+      (!fName || p.nl.includes(fName)) &&
+      (!fAn || p.anl.includes(fAn)) &&
+      (!fTag || p.bl.includes(fTag)) &&
       (!s.server || String(p.sv) === s.server) &&
       (!s.exact || (p.sv != null && !p.sx)) &&                    // exact servers only: from a leaderboard row or popup, not inferred
       (!s.star || p.st) &&
@@ -124,7 +127,7 @@ const Profiles = (() => {
     if (!main) return;
     const url = URL.createObjectURL(new Blob([csv(shown, main.alliances)], {type: 'text/csv;charset=utf-8;'}));
     const a = document.createElement('a');
-    a.href = url; a.download = `players-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.href = url; a.download = `commanders-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
   const delta = pts => pts && pts.length > 1 ? pts[pts.length - 1][1] - pts[0][1] : null;
@@ -153,7 +156,7 @@ const Profiles = (() => {
   // ---------------------------------------------------------------- styles (injected: no theme.css change needed)
   const CSS = `
   .pf-hero h1{font-family:var(--display);font-size:clamp(2.2rem,5vw,3.6rem);margin:.2rem 0;letter-spacing:.02em;text-transform:uppercase}
-  .pf-hero h1 span{color:var(--hazard)} .pf-beta{display:inline-block;font:600 .7rem var(--mono);padding:.15rem .5rem;border:1px solid var(--border-glow);border-radius:99px;color:var(--hazard-text);vertical-align:middle;margin-left:.5rem}
+  .pf-hero h1 span{color:var(--hazard)} 
   .pf-hero p{color:var(--text-dim);max-width:70ch}
   .pf-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem;margin:1.2rem 0}
   .pf-tile{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius);padding:.8rem 1rem}
@@ -277,11 +280,11 @@ const Profiles = (() => {
   const tabName = i => main.tabs[i].l;
 
   function lockedView() {
-    view().innerHTML = `<div class="pf-card pf-lock"><h2>Profiles (Beta)</h2><p>Player profiles are part of the protected data. Log in to view them.</p>
+    view().innerHTML = `<div class="pf-card pf-lock"><h2>Commanders</h2><p>Commander profiles are part of the protected data. Log in to view them.</p>
       <button type="button" class="primary-action" onclick="showLogin()">Log in</button></div>`;
   }
   function errorView(e) {
-    view().innerHTML = `<div class="pf-card pf-lock"><h2>Profiles unavailable</h2><p>${esc(e.message === 'locked' ? 'Log in first.' : 'Could not load the profile data (' + e.message + '). Run Deploy again, or refresh the page.')}</p></div>`;
+    view().innerHTML = `<div class="pf-card pf-lock"><h2>Commanders unavailable</h2><p>${esc(e.message === 'locked' ? 'Log in first.' : 'Could not load the commander data (' + e.message + '). Run Deploy again, or refresh the page.')}</p></div>`;
   }
 
   function listView() {
@@ -291,9 +294,9 @@ const Profiles = (() => {
     const withTabs = players.filter(p => p.tb).length;
     const cols = [['name', 'Player Name'], ['an', 'Alliance Name'], ['alliance', 'Alliance Tag'], ['sv', 'Server Number'], ['pw', 'Power'], ['kl', 'Kills']];
     const filt = [['name', 'Player Name', 'Any part of a name'], ['an', 'Alliance Name', 'Any part of a name'], ['tag', 'Alliance Tag', 'e.g. PX1']];
-    view().innerHTML = `<section class="database-heading"><p class="eyebrow">INTELLIGENCE / PROFILES</p><h1>PLAYER <span>PROFILES</span><span class="pf-beta">BETA</span></h1>
-      <p>Every survivor we have seen, built from alliance rosters and the in-game leaderboards. Players marked <span class="pf-star">★</span> get an advanced profile. ${num(m.players)} profiles · ${num(m.stars)} advanced · ${num(withTabs)} on a leaderboard · refreshed ${esc(ago(Date.parse(m.generatedAtUtc) / 1000))}.</p></section>
-      <div class="database-filters" role="search" aria-label="Filter profiles">${filt.map(([k, l, hint]) => `<label class="database-filter"><span>${l}</span><input class="filter" type="search" placeholder="${hint}" value="${esc(state[k])}" oninput="Profiles.set('${k}',this.value)"></label>`).join('')}</div>
+    view().innerHTML = `<section class="database-heading"><p class="eyebrow">INTELLIGENCE / COMMANDERS</p><h1>ALL <span>COMMANDERS</span><span class="database-dot">.</span></h1>
+      <p>Every commander we have seen, built from alliance rosters and the in-game leaderboards. Commanders marked <span class="pf-star">★</span> get an advanced profile. ${num(m.players)} commanders · ${num(m.stars)} advanced · ${num(withTabs)} on a leaderboard · refreshed ${esc(ago(Date.parse(m.generatedAtUtc) / 1000))}.</p></section>
+      <div class="database-filters" role="search" aria-label="Filter commanders">${filt.map(([k, l, hint]) => `<label class="database-filter"><span>${l}</span><input class="filter" type="search" placeholder="${hint}" value="${esc(state[k])}" oninput="Profiles.set('${k}',this.value)"></label>`).join('')}<button type="button" class="clear-filters" id="pfclear" onclick="Profiles.clearFilters()"${filtersActive(state) ? '' : ' hidden'}>Clear filters</button></div>
       <div class="pf-bar" role="search">
         <label>Server<select onchange="Profiles.set('server',this.value)"><option value="">All</option>${servers.map(s => `<option value="${s}"${String(s) === state.server ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
         <label>Leaderboard<select onchange="Profiles.set('tab',this.value)"><option value="">Any</option>${main.tabs.map((t, i) => `<option value="${i}"${String(i) === state.tab ? ' selected' : ''}>${esc(t.l)}</option>`).join('')}</select></label>
@@ -301,9 +304,9 @@ const Profiles = (() => {
         <label class="pf-check"><input type="checkbox" ${state.star ? 'checked' : ''} onchange="Profiles.set('star',this.checked)"> ★ advanced only</label>
         ${al ? `<label class="pf-check"><span class="pf-badge">${esc(al.b || al.n)} ✕</span><button type="button" class="pf-badge mute" onclick="Profiles.set('alliance',-1)">clear alliance</button></label>` : ''}
       </div>
-      <div class="database-toolbar"><span id="pfcount" role="status"></span><span class="database-hint">Click a column header to sort · Filled boxes must all match</span><button type="button" class="export-button" onclick="Profiles.exportCsv()" title="Every matching profile, in the current sort order, with full numbers"><svg class="icon-sm" data-lucide="download"></svg> <span id="pfexport">Export CSV</span></button></div>
+      <div class="database-toolbar"><span id="pfcount" role="status"></span><span class="database-hint">Click a column header to sort · Filled boxes must all match</span><button type="button" class="export-button" onclick="Profiles.exportCsv()" title="Every matching commander, in the current sort order, with full numbers"><svg class="icon-sm" data-lucide="download"></svg> <span id="pfexport">Export CSV</span></button></div>
       <p class="database-mobile-hint">Swipe the table sideways to see all columns.</p>
-      <div class="database-scroll" tabindex="0" aria-label="Sortable player profiles"><table class="database-table" aria-label="Player profiles"><thead><tr>
+      <div class="database-scroll" tabindex="0" aria-label="Sortable commanders"><table class="database-table" aria-label="Commanders"><thead><tr>
         ${cols.map(([k, l]) => `<th scope="col" aria-sort="${k === state.sort ? (state.dir < 0 ? 'descending' : 'ascending') : 'none'}"><button onclick="Profiles.set('sort','${k}')">${l}<span aria-hidden="true">${k === state.sort ? (state.dir < 0 ? '↓' : '↑') : '↕'}</span></button></th>`).join('')}
       </tr></thead><tbody id="pfrows"></tbody></table></div>
       <div class="database-pagination"><span id="pfpage" role="status"></span><div><button type="button" id="pfprev" onclick="Profiles.page(-1)">Previous</button><button type="button" id="pfnext" onclick="Profiles.page(1)">Next</button></div></div>
@@ -312,15 +315,18 @@ const Profiles = (() => {
   }
 
   function drawRows() {
+    if (!main || typeof document === 'undefined' || !document.getElementById('pfcount')) return;      // the list is not on screen
     shown = applyFilters(main.players, state, main.alliances);
     const pages = Math.max(1, Math.ceil(shown.length / PAGE));
     state.page = Math.min(state.page, pages - 1);
     const slice = shown.slice(state.page * PAGE, state.page * PAGE + PAGE);
-    document.getElementById('pfcount').textContent = `${num(shown.length)} / ${num(main.players.length)} players`;
-    document.getElementById('pfexport').textContent = `Export ${num(shown.length)} players (CSV)`;
+    document.getElementById('pfcount').textContent = `${num(shown.length)} / ${num(main.players.length)} commanders`;
+    document.getElementById('pfexport').textContent = `Export ${num(shown.length)} commanders (CSV)`;
+    const clear = document.getElementById('pfclear');
+    if (clear) clear.hidden = !filtersActive(state);
     document.getElementById('pfrows').innerHTML = slice.length ? slice.map(p => {
       const a = allianceOf(p);
-      return `<tr><td><a href="#p/${esc(p.u)}">${esc(p.n)}</a>${p.st ? ` <span class="pf-star" title="Advanced profile">${stars(p.st)}</span>` : ''}</td>
+      return `<tr><td><a href="#p/${esc(p.u)}">${esc(p.n)}</a>${p.st ? ` <span class="pf-star" title="Advanced commander profile">${stars(p.st)}</span>` : ''}</td>
         <td>${esc((a && a.n) || p.an)}</td><td>${p.b ? esc(p.b) : '<span class="pf-badge mute">none</span>'}${a ? '' : p.b ? ' <span class="pf-badge mute" title="Not in the newest roster we captured for this alliance">left?</span>' : ''}</td>
         <td class="numeric"${p.sx ? ' title="Server of this player\'s alliance (their own server was not captured)"' : ''}>${p.sv != null ? esc(p.sv) : '—'}${p.sx ? '<small style="color:var(--text-faint)" aria-label="alliance server, inferred"> ~</small>' : ''}</td><td class="numeric">${p.pw != null ? num(p.pw) : '—'}${peakOf(p) != null && peakOf(p) !== p.pw ? ` <span class="power-peak" title="Highest power seen">(${num(peakOf(p))})</span>` : ''}</td>
         <td class="numeric">${p.kl != null ? num(p.kl) : '—'}</td></tr>`;
@@ -382,7 +388,7 @@ const Profiles = (() => {
 
   function profileView(uid) {
     const p = byUid.get(uid);
-    if (!p) { view().innerHTML = crumbs([{label: 'Home', href: '#', icon: 'home'}, {label: 'Profiles', href: '#profiles'}, {label: 'Not found'}], {href: '#profiles', label: 'All profiles'}) + `<div class="pf-card empty">Profile not found in the current export.</div>`; return; }
+    if (!p) { view().innerHTML = crumbs([{label: 'Home', href: '#', icon: 'home'}, {label: 'Commanders', href: '#profiles'}, {label: 'Not found'}], {href: '#profiles', label: 'All commanders'}) + `<div class="pf-card empty">Commander not found in the current export.</div>`; return; }
     const a = allianceOf(p);
     const tracked = a && typeof STATE !== 'undefined' && STATE.alliances.some(x => x.allianceId === a.id);
     const alliancePage = tracked ? `#a/${encodeURIComponent(a.id)}` : null;       // the tracker's alliance page, when we track that alliance
@@ -394,7 +400,7 @@ const Profiles = (() => {
     const initial = esc((String(p.n).match(/[\p{L}\p{N}]/u) || Array.from(String(p.n)))[0] || '?');
     const allianceName = (a && a.n) || p.an;
     const h = hue(p.b || p.u);
-    const trail = [{label: 'Home', href: '#', icon: 'home'}, {label: 'Profiles', href: '#profiles'}];
+    const trail = [{label: 'Home', href: '#', icon: 'home'}, {label: 'Commanders', href: '#profiles'}];
     if (a) trail.push({label: allianceName || p.b, href: alliancePage || '#profiles', onclick: alliancePage ? '' : filterAlliance, title: tracked ? `Open ${allianceName} on the tracker` : `${allianceName}: all members`});
     trail.push({label: p.n});
     const joined = p.jt ? dateStr(p.jt) : '<span class="dim">Not captured</span>';
@@ -410,12 +416,12 @@ const Profiles = (() => {
       }).join('')}</ul><a class="pf-more" href="${alliancePage || '#profiles'}"${alliancePage ? '' : ` onclick="${filterAlliance}"`}>${alliancePage ? 'Open the full roster on the tracker →' : `All ${num(group.length)} members →`}</a></div>`;
     })() : '';
     view().innerHTML = `<div class="pf-page" style="--pf-accent:hsl(${h} 85% 55%);--pf-accent2:hsl(${(h + 40) % 360} 70% 28%);--pf-tint:hsl(${h} 85% 55% / .15)">
-      ${crumbs(trail, {href: '#profiles', label: 'All profiles'})}
+      ${crumbs(trail, {href: '#profiles', label: 'All commanders'})}
       <section class="pf-profile">
         <div class="pf-id">
           <div class="pf-avatar" aria-hidden="true">${initial}</div>
-          <div class="pf-idtext"><p class="eyebrow">PLAYER PROFILE</p>
-            <h1>${esc(p.n)} ${p.st ? `<span class="pf-star" title="Advanced profile">${stars(p.st)}</span>` : ''}</h1>
+          <div class="pf-idtext"><p class="eyebrow">COMMANDER PROFILE</p>
+            <h1>${esc(p.n)} ${p.st ? `<span class="pf-star" title="Advanced commander profile">${stars(p.st)}</span>` : ''}</h1>
             <div class="pf-chips">
               ${a ? `<a class="pf-chip alliance" href="${alliancePage || '#profiles'}"${alliancePage ? '' : ` onclick="${filterAlliance}"`} title="${tracked ? 'Open this alliance on the tracker' : 'See every member of this alliance'}">${icn('shield')}${p.b ? `<span class="pf-chip tag" style="padding:.05rem .45rem">${esc(p.b)}</span>` : ''}${esc(allianceName)}</a>`
                 : p.b ? `<span class="pf-chip tag">${esc(p.b)}</span>${allianceName ? `<span class="pf-chip">${esc(allianceName)}</span>` : ''}` : '<span class="pf-chip">no alliance</span>'}
@@ -444,7 +450,7 @@ const Profiles = (() => {
         <div class="pf-main">
           <div class="pf-grid2">${chartCard('Power over time', p.ph, compact)}${chartCard('Kills over time', p.kh, compact)}</div>
           ${tabs.length ? `<div class="pf-card"><h2>Global leaderboards (${tabs.length})</h2><div class="pf-grid" id="pftabs">${tabs.map(t => tabCard(t)).join('')}</div>
-            ${p.st ? '<p class="pf-note" id="pfdetailnote">Loading the advanced profile…</p>' : ''}</div>` : ''}
+            ${p.st ? '<p class="pf-note" id="pfdetailnote">Loading the advanced commander profile…</p>' : ''}</div>` : ''}
           <div id="pfextra"></div>
         </div>
         <aside class="pf-side">
@@ -514,24 +520,40 @@ const Profiles = (() => {
     if (key === 'q' || key === 'name' || key === 'an' || key === 'tag') { clearTimeout(timer); timer = setTimeout(drawRows, 120); return; }
     if (key === 'sort' || key === 'tab' || key === 'server' || key === 'star' || key === 'exact') listView();
   }
+  const filtersActive = s => !!(s.q || s.name || s.an || s.tag || s.server || s.tab || s.exact || s.star || s.alliance >= 0);
+  const syncHeader = () => { if (typeof document === 'undefined') return; const h = document.getElementById('searchInput'); if (h) { if (h.value !== state.q) h.value = state.q; h.setAttribute('aria-label', 'Search commanders'); h.placeholder = 'Search commanders (name, tag, alliance, server, uid)...'; } };
+  // Empty every filter (the sort order stays) and show the whole list again.
+  function clearFilters() {
+    Object.assign(state, {q: '', name: '', an: '', tag: '', server: '', tab: '', exact: false, star: false, alliance: -1, page: 0});
+    syncHeader();
+    if (typeof document !== 'undefined' && document.getElementById('pfrows')) listView();
+  }
+  // The header search box on this tab: filters the list (from a player page it jumps to the list first).
+  function search(value) {
+    state.q = value; state.page = 0;
+    clearTimeout(timer);
+    if (location.hash.startsWith('#p/')) { location.hash = '#profiles'; return; }
+    timer = setTimeout(drawRows, 120);
+  }
   function page(step) { state.page += step; drawRows(); document.getElementById('pfrows').scrollIntoView({block: 'start'}); }
 
   async function render() {
     ensureStyle();
     document.querySelectorAll('[data-nav]').forEach(l => l.dataset.nav === 'profiles' ? l.setAttribute('aria-current', 'page') : l.removeAttribute('aria-current'));
     const label = document.getElementById('pageLabel');
-    if (label) label.textContent = 'Profiles (Beta)';
+    if (label) label.textContent = 'Commanders';
     if (locked()) { lockedView(); return; }
     const hash = location.hash;
-    if (!main) view().innerHTML = '<div class="empty" role="status">Loading profiles…</div>';
+    if (!main) view().innerHTML = '<div class="empty" role="status">Loading commanders…</div>';
     try { await load(); } catch (e) { if (location.hash === hash) errorView(e); return; }
     if (location.hash !== hash) return;
-    if (hash.startsWith('#p/')) profileView(decodeURIComponent(hash.slice(3))); else listView();
+    if (hash.startsWith('#p/')) profileView(decodeURIComponent(hash.slice(3))); else { listView(); }
+    syncHeader();
     if (window.lucide) lucide.createIcons();
     window.scrollTo(0, 0);
   }
 
-  const api = {owns, render, set, exportCsv, csv, peakOf, clean, _reset: () => { main = null; detail = null; byUid = new Map(); loading = null; detailLoading = null; shown = []; rankCache = null; }, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
+  const api = {owns, render, set, exportCsv, csv, peakOf, clean, fold, clearFilters, search, filtersActive, _reset: () => { main = null; detail = null; byUid = new Map(); loading = null; detailLoading = null; shown = []; rankCache = null; }, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
     helpers: {num, compact, dateStr, ago, humanize}, commanderSections};
   return api;
 })();

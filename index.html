@@ -3,9 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Alliance Tracker · Last Fortress</title>
-<meta name="description" content="Explore Last Fortress alliances and players, compare power, and export sortable lists to CSV.">
-<meta name="theme-color" content="#000000">
+<title>LFU Tracker · Last Fortress Alliance &amp; Commander Intelligence</title>
+<meta name="description" content="Last Fortress: Underground alliance and commander tracker: power, rankings, rank changes and season-map leaderboards across servers and dimensions.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#07090e">
+<meta name="color-scheme" content="dark">
+<meta name="application-name" content="LFU Tracker">
+<link rel="canonical" href="https://renegade2k6.github.io/LFUTracker/">
+<!-- Open Graph / social previews. Public and generic on purpose: the site is password-locked, so nothing here names a player or alliance. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LFU Tracker">
+<meta property="og:title" content="LFU Tracker · Last Fortress Alliance &amp; Commander Intelligence">
+<meta property="og:description" content="Last Fortress: Underground alliance and commander tracker: power, rankings, rank changes and season-map leaderboards across servers and dimensions.">
+<meta property="og:url" content="https://renegade2k6.github.io/LFUTracker/">
+<meta property="og:locale" content="en_GB">
+<meta property="og:image" content="https://renegade2k6.github.io/LFUTracker/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="LFU Tracker: alliance and commander intelligence for Last Fortress: Underground, with the phoenix shield logo and a radar.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LFU Tracker · Last Fortress Alliance &amp; Commander Intelligence">
+<meta name="twitter:description" content="Last Fortress: Underground alliance and commander tracker: power, rankings, rank changes and season-map leaderboards across servers and dimensions.">
+<meta name="twitter:image" content="https://renegade2k6.github.io/LFUTracker/og-image.png">
+<meta name="twitter:image:alt" content="LFU Tracker: alliance and commander intelligence for Last Fortress: Underground, with the phoenix shield logo and a radar.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"LFU Tracker","alternateName":"Last Fortress Alliance Tracker","url":"https://renegade2k6.github.io/LFUTracker/","description":"Last Fortress: Underground alliance and commander tracker: power, rankings, rank changes and season-map leaderboards across servers and dimensions.","inLanguage":"en","about":{"@type":"VideoGame","name":"Last Fortress: Underground"}}</script>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,7 +52,7 @@
         <a href="#alliances" data-nav="alliances"><svg class="icon" data-lucide="flag"></svg>Directory</a>
         <a href="#leaders" data-nav="leaders"><svg class="icon" data-lucide="trophy"></svg>Leaders</a>
         <a href="#all-alliances" data-nav="all-alliances"><svg class="icon" data-lucide="shield"></svg>All Alliances</a>
-        <a href="#profiles" data-nav="profiles"><svg class="icon" data-lucide="contact"></svg>Profiles (Beta)</a>
+        <a href="#profiles" data-nav="profiles"><svg class="icon" data-lucide="contact"></svg>Commanders</a>
         <a href="#server" data-nav="server"><svg class="icon" data-lucide="server"></svg>Homeworld 21</a>
         <a href="#dimension" data-nav="dimension"><svg class="icon" data-lucide="orbit"></svg>Dimension</a>
       </nav>
@@ -39,7 +61,7 @@
       <a class="breadcrumb" href="#" style="display:none">Intelligence <span>/</span> <strong id="pageLabel">Overview</strong></a>
       <div class="search">
         <svg class="icon" data-lucide="search" aria-hidden="true"></svg>
-        <input id="searchInput" type="search" placeholder="Search alliances, survivors ( / )..." oninput="onSearch(this.value)" aria-label="Search alliances or players">
+        <input id="searchInput" type="search" placeholder="Search alliances, survivors ( / )..." oninput="onSearch(this.value)" aria-label="Search alliances or commanders">
       </div>
       <div class="topbar-meta" id="topMeta"></div>
     </header>
@@ -49,7 +71,12 @@
 
 <main class="wrap" id="app" tabindex="-1">
   <div id="error" class="error hidden" role="alert"></div>
-  <div id="view"><div class="empty" role="status">Loading alliance intelligence…</div></div>
+  <div id="view">
+    <section class="database-heading"><p class="eyebrow">LAST FORTRESS / COMMUNITY INTELLIGENCE</p><h1>LFU <span>TRACKER</span><span class="database-dot">.</span></h1>
+      <p>Last Fortress: Underground alliance and commander tracker: power, rankings, rank changes and season-map leaderboards across servers and dimensions.</p></section>
+    <div class="empty" role="status">Loading alliance intelligence…</div>
+    <noscript><div class="empty">LFU Tracker needs JavaScript to show alliance and commander data.</div></noscript>
+  </div>
 </main>
 <footer class="site-footer"><span>Last Fortress <span aria-hidden="true">/</span> Alliance Tracker</span><span>Created by Renegade2k6 · <a href="https://renegade2k6.github.io/LFULeaks/">LFU Leaks ↗</a></span></footer>
 <button id="backToTop" type="button" aria-label="Back to top" class="back-to-top hidden" onclick="window.scrollTo({top:0,behavior:'smooth'})"><svg class="icon-sm" data-lucide="arrow-up"></svg></button>
@@ -297,30 +324,39 @@ function sortTable(th) {
 }
 window.sortTable = sortTable;
 
+// Roster filter: matches the member's NAME only (not rank numbers or power digits), folded like every other search box.
 function filterTable(input) {
   const table = input.closest(".filter-row").nextElementSibling;
-  const q = input.value.trim().toLowerCase();
+  const q = Directory.fold(input.value);
   table.querySelectorAll("tbody tr").forEach(tr => {
-    tr.style.display = tr.textContent.toLowerCase().includes(q) ? "" : "none";
+    const name = tr.querySelector(".name-cell");
+    tr.style.display = !q || Directory.fold(name ? name.textContent : tr.textContent).includes(q) ? "" : "none";
   });
 }
 window.filterTable = filterTable;
 
+// The header search is contextual: on Commanders / Homeworld / Dimension it filters that page, on All Alliances it filters the table, elsewhere it
+// searches alliances and their members. Every one of them folds text the same way (Directory.fold).
 function onSearch(q) {
-  if (location.hash === "#all-alliances" || location.hash === "#all-players") { directoryState.query = q; renderDirectoryRows(); return; }
-  q = q.trim().toLowerCase();
+  const h = location.hash;
+  if (typeof Profiles !== "undefined" && Profiles.owns(h)) { Profiles.search(q); return; }
+  if (typeof Server !== "undefined" && Server.owns(h)) { Server.search(q); return; }
+  if (h === "#all-alliances" || h === "#all-players") { directoryState.query = q; renderDirectoryRows(); return; }
+  const raw = q.trim();
+  q = Directory.fold(q);
   if (!q) { render(); return; }
   const view = document.getElementById("view");
   const ranking = rankingSummary();
   const matches = ranking.sorted.filter(a =>
-    (a.name || "").toLowerCase().includes(q) ||
-    (a.abbr || "").toLowerCase().includes(q) ||
-    activeMembers(a).some(m => (m.name || "").toLowerCase().includes(q))
+    Directory.fold(a.name).includes(q) ||
+    Directory.fold(a.abbr).includes(q) ||
+    Directory.fold(a.originServerId).includes(q) ||
+    activeMembers(a).some(m => Directory.fold(m.name).includes(q))
   );
-  view.innerHTML = `<h2 class="section-title"><svg class="icon-sm" data-lucide="search"></svg>Results for "${esc(q)}"</h2>` +
+  view.innerHTML = `<h2 class="section-title"><svg class="icon-sm" data-lucide="search"></svg>Results for "${esc(raw)}"</h2>` +
     (matches.length
       ? `<div class="grid">${matches.map(a => renderCardHtml(a, ranking)).join("")}</div>`
-      : `<div class="empty">No alliances or players match "${esc(q)}".</div>`);
+      : `<div class="empty">No alliances or commanders match "${esc(raw)}".</div>`);
   icons();
   drawDirectorySparks(matches);
 }
@@ -376,7 +412,7 @@ function renderList() {
       <div>
         <p class="eyebrow"><span class="status-dot"></span> LAST FORTRESS / COMMUNITY INTELLIGENCE</p>
         <h2>Alliance intelligence.<br><span>A clearer view.</span></h2>
-        <div class="hero-actions"><a class="primary-action" href="#all-alliances">Alliance database <span aria-hidden="true">↗</span></a><a class="secondary-action" href="#profiles">Browse players →</a></div>
+        <div class="hero-actions"><a class="primary-action" href="#all-alliances">Alliance database <span aria-hidden="true">↗</span></a><a class="secondary-action" href="#profiles">Browse commanders →</a></div>
       </div>
       <div class="hero-radar"><div class="hero-scope" aria-hidden="true"></div><p class="scope-label">ALLIANCE INTELLIGENCE</p><p class="scope-caption">${servers} SERVERS / ${sorted.length} ALLIANCES</p></div>
     </div>
@@ -485,7 +521,7 @@ function renderDetail(allianceId) {
     return `
     <tr>
       <td class="rank-cell num">${i + 1}</td>
-      <td><span class="name-cell"><span class="dot ${m.online ? "on" : "off"}" title="${m.online ? "Online" : "Offline"}"></span>${m.uid != null && m.uid !== '' ? `<a class="member-link" href="#p/${encodeURIComponent(m.uid)}" title="Open this player's profile">${esc(m.name)}</a>` : esc(m.name)}${m.movedToAllianceId ? ` <a class="player-history-note" href="#a/${encodeURIComponent(m.movedToAllianceId)}">moved →</a>` : ''}</span></td>
+      <td><span class="name-cell"><span class="dot ${m.online ? "on" : "off"}" title="${m.online ? "Online" : "Offline"}"></span>${m.uid != null && m.uid !== '' ? `<a class="member-link" href="#p/${encodeURIComponent(m.uid)}" title="Open this commander's profile">${esc(m.name)}</a>` : esc(m.name)}${m.movedToAllianceId ? ` <a class="player-history-note" href="#a/${encodeURIComponent(m.movedToAllianceId)}">moved →</a>` : ''}</span></td>
       <td data-label="Power" class="num power-cell" data-sort="${Number(m.power) || 0}">
         <div class="roster-power-num">${num(m.power)}</div>
         <div class="roster-power-bar"><i style="width:${pct}%"></i></div>
@@ -653,7 +689,7 @@ function render() {
     trackedAlliances = STATE.alliances;
   }
   const s = document.getElementById("searchInput");
-  if (s) s.value = "";
+  if (s) { s.value = ""; s.placeholder = "Search alliances, survivors ( / )..."; s.setAttribute("aria-label", "Search alliances or commanders"); }
   const route = currentRoute();
   const section = location.hash.slice(1);
   document.querySelectorAll('[data-nav]').forEach(link => {
@@ -669,7 +705,7 @@ function render() {
   document.getElementById('pageLabel').textContent = route.view === 'detail' ? 'Alliance profile' : section === 'alliances' ? 'Alliance directory' : section === 'leaders' ? 'Leaderboards' : 'Overview';
   if (route.view === "detail") renderDetail(route.id);
   else if (section === "all-alliances" || section === "all-players") {
-    document.getElementById("pageLabel").textContent = section === "all-players" ? "All players" : "All alliances";
+    document.getElementById("pageLabel").textContent = section === "all-players" ? "Commanders" : "All alliances";
     renderFullDirectory(section === "all-players" ? "players" : "alliances");
   } else renderList();
   requestAnimationFrame(() => {
@@ -732,7 +768,7 @@ function renderSample() {
   const lockRow = what => `<button type="button" class="board-lock" onclick="showLogin()"><svg class="icon-sm" data-lucide="lock"></svg>${what} <span aria-hidden="true">→</span></button>`;
   const stamp = SAMPLE.meta ? new Date(SAMPLE.meta.generatedAtUtc).toISOString().replace('T', ' ').slice(0, 16) + ' UTC' : '';
   const perks = [['flag', 'Every alliance', 'Full directory with member counts, levels and servers'],
-    ['users', 'Every player', 'Search and filter all survivors, with highest power seen'],
+    ['users', 'Every commander', 'Search and filter all commanders, with highest power seen'],
     ['trending-up', 'Power history', 'Trend charts and rank movement over time'],
     ['download', 'CSV export', 'Take the sorted, filtered data with you']];
   document.getElementById('view').innerHTML = `
@@ -752,9 +788,9 @@ function renderSample() {
         ${SAMPLE.alliances.map((a, i) => row(i, a.name, '', a.power, maxA)).join('')}
         ${lockRow('Log in to see every alliance')}</div>
         <div class="perks"><p class="eyebrow">BEHIND THE LOGIN</p>${perks.map(([icon, title, text]) => `<div class="perk"><svg data-lucide="${icon}"></svg><div><strong>${title}</strong><span>${text}</span></div></div>`).join('')}</div></div>
-      <div class="board"><div class="board-title"><svg class="icon-sm" data-lucide="swords"></svg>Top ${SAMPLE.players.length} players</div>
+      <div class="board"><div class="board-title"><svg class="icon-sm" data-lucide="swords"></svg>Top ${SAMPLE.players.length} commanders</div>
         ${SAMPLE.players.map((p, i) => row(i, p.name, p.alliance, p.power, maxP)).join('')}
-        ${lockRow('Log in to see every player')}</div>
+        ${lockRow('Log in to see every commander')}</div>
     </div>`;
   icons();
 }

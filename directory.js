@@ -66,6 +66,6 @@ const Directory = (() => {
     const value = (r, key) => kind === 'players' && key === 'power' && r.peak != null ? `${r.power ?? ''} (${r.peak})`.trim() : r[key];
     return '\uFEFF' + [cols.map(c => c[1]), ...rows.map(r => cols.map(c => value(r, c[0])))].map(r => r.map(cell).join(',')).join('\r\n');
   }
-  return {columns, peaks, records, sorted, csv, clean};
+  return {columns, peaks, records, sorted, csv, clean, fold};
 })();
 if (typeof module !== 'undefined') module.exports = Directory;

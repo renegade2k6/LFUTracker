@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# The encrypted data bundles are not pages; keep them out of search results.
+Disallow: /LFUTracker/data/
+
+Sitemap: https://renegade2k6.github.io/LFUTracker/sitemap.xml

@@ -58,10 +58,13 @@ const Server = (() => {
       stale ? `<br><b class="sv-stale">This snapshot is ${esc(Math.floor(age))} days old, so the dimension has probably changed.</b>` : ''}`);
   }
 
+  // Same folding as every other search box (see Directory.fold): invisible filler characters and case are ignored; matches what you see.
+  const BLANK = /[\s\p{Cc}\p{Cf}\u115F\u1160\u3164\uFFA0\u2800]/gu;
+  const fold = v => String(v ?? '').replace(BLANK, '').toLocaleLowerCase();
   function filterRows(board, q) {
-    const needle = (q || '').trim().toLowerCase();
+    const needle = fold(q);
     if (!needle) return board.rows;
-    return board.rows.filter(r => `${r[2]} ${r[3]} ${r[1]}${r[6] != null ? ` #${r[6]}` : ''}`.toLowerCase().includes(needle));
+    return board.rows.filter(r => [r[2], r[3], r[1], r[6] != null ? `#${r[6]}` : ''].some(f => fold(f).includes(needle)));
   }
 
   // Detail text for a row: suit pieces / war machine build. Names come from the table dump when it was available.
@@ -320,6 +323,7 @@ const Server = (() => {
   }
 
   function drawRows() {
+    if (!data || !data.boards || typeof document === 'undefined' || !document.getElementById('svcount') || !document.getElementById('svtable')) return;   // no board on screen
     const b = data.boards.find(x => x.k === state.board);
     if (!b) return;
     const rows = filterRows(b, state.q);
@@ -340,8 +344,16 @@ const Server = (() => {
     drawRows();                                   // the page keeps its scroll position; the menu is sticky, so it stays in reach
   }
 
+  // The header search box on these tabs searches the open board (and mirrors the box above the list).
+  function search(value) {
+    state.q = value;
+    if (typeof document !== 'undefined') { const own = document.getElementById('svq'); if (own && own.value !== value) own.value = value; }
+    drawRows();
+  }
+  const syncHeader = () => { if (typeof document === 'undefined') return; const h = document.getElementById('searchInput'); if (h) { if (h.value !== (state.q || '')) h.value = state.q || ''; h.setAttribute('aria-label', 'Search this board'); h.placeholder = 'Search this board (name, tag, server, uid)...'; } };
   function set(key, value) {
     state[key] = value;
+    if (key === 'q') syncHeader();
     if (key === 'board') { if (data) switchBoard(value); else location.hash = `#${scope}/${encodeURIComponent(value)}`; return; }
     drawRows();
   }
@@ -369,10 +381,11 @@ const Server = (() => {
     data = datas[sc];
     if (!data.boards.length) { view().innerHTML = card(what, '<p>No boards captured yet.</p>'); return; }
     boardView(boardFromHash(hash) || state.board);
+    syncHeader();
     if (window.lucide) lucide.createIcons();
     window.scrollTo(0, 0);
   }
 
-  return {owns, scopeOf, dimensionFacts, ageDays, dimensionNote, homeworldNote, render, set, state, switchBoard, cleanNames, _setData: d => { data = d; datas[scope] = d; }, filterRows, extraText, setText, detailText, buildHtml, rowHtml, fmtValue, exName, gearTier, boardFromHash, nameOf, helpers: {num, dateStr}};
+  return {owns, scopeOf, dimensionFacts, ageDays, dimensionNote, homeworldNote, render, set, search, fold, state, switchBoard, cleanNames, _setData: d => { data = d; datas[scope] = d; }, filterRows, extraText, setText, detailText, buildHtml, rowHtml, fmtValue, exName, gearTier, boardFromHash, nameOf, helpers: {num, dateStr}};
 })();
 if (typeof module !== 'undefined') module.exports = Server;
