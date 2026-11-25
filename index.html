@@ -555,7 +555,7 @@ function renderDetail(allianceId) {
         <div class="roster-power-num">${num(m.power)}</div>
         <div class="roster-power-bar"><i style="width:${pct}%"></i></div>
         ${playerChangeHtml(m, m.capturedAtUtc || a.capturedAtUtc)}
-        ${m.powerSource ? `<small class="player-history-note">${esc(sourceNote(m.powerSource, m.capturedAtUtc))}</small>` : ''}
+        ${m.powerSource ? `<small class="player-history-note">${esc(sourceNote(m.powerSource, m.powerAtUtc || m.capturedAtUtc))}</small>` : ''}
       </td>
     </tr>
   `;

@@ -12,10 +12,9 @@ const DataMerge = (() => {
   const iso = t => new Date(t).toISOString();
   const nameKey = (abbr, name) => `${String(abbr ?? '').trim()}|${String(name ?? '').trim()}`;
   const allianceTime = a => time(a.updatedAtUtc) ?? time(a.capturedAtUtc) ?? -Infinity;
-  // The alliance roster is a lagging server cache; a live reading (commander popup / Commander CP list) taken within
-  // LIVE_WINDOW before it is the truer number, so the roster does not override it. Mirrors note_power() in profiles.py.
+  // A live reading (commander popup / Commander CP list) is the in-game figure; the roster number can leave buffs out.
+  // A live reading is never replaced by a roster/season one, however old. Mirrors note_power() in profiles.py.
   const LIVE_SOURCES = new Set(['commander-popup', 'commander-cp']);
-  const LIVE_WINDOW = 24 * 3600 * 1000;
   const memberTime = (a, m) => time(m.capturedAtUtc) ?? time(a.capturedAtUtc) ?? -Infinity;
   // When a complete, ownership-verified Members-list capture was taken (null if the alliance has none).
   const verifiedRosterTime = a => String(a.captureSource ?? '').toLowerCase() === 'al.rank' && a.ownershipVerified === true && a.rosterComplete === true
@@ -124,13 +123,17 @@ const DataMerge = (() => {
       if (found && (!target || found.a === target)) {
         if (o.rank != null) found.m.ranks = {...(found.m.ranks || {}), [o.source]: o.rank};
         const mt = memberTime(found.a, found.m);
-        const liveBeatsRoster = LIVE_SOURCES.has(o.source) && !LIVE_SOURCES.has(found.m.powerSource) && o.at <= mt && mt - o.at <= LIVE_WINDOW;
-        const rosterAfterLive = o.at > mt && !LIVE_SOURCES.has(o.source) && LIVE_SOURCES.has(found.m.powerSource) && o.at - mt <= LIVE_WINDOW;
-        if ((o.at > mt && !rosterAfterLive) || liveBeatsRoster) {
-          Object.assign(found.m, {...fields, name: o.name ?? found.m.name, originServerId: o.originServerId ?? found.m.originServerId});
-          // The live reading replaces the power only: the listing keeps the roster's time, or the "newest sighting owns the
-          // player" step below would see this alliance's listing as older than another one and mark the member as moved.
-          if (liveBeatsRoster) found.m.capturedAtUtc = iso(mt);
+        const oLive = LIVE_SOURCES.has(o.source), curLive = LIVE_SOURCES.has(found.m.powerSource);
+        const pt = time(found.m.powerAtUtc) ?? mt;
+        // A live reading beats a roster/season one however old; live vs live and roster vs roster: newest wins.
+        const powerWins = oLive ? (!curLive || o.at > pt) : (!curLive && o.at > mt);
+        if (o.at > mt || powerWins) {
+          const keepLive = !oLive && curLive;       // newer roster after a live reading: update the listing, keep the live power
+          const base = keepLive ? {name: o.name, capturedAtUtc: iso(o.at)} : {...fields, powerAtUtc: iso(o.at)};
+          Object.assign(found.m, {...base, name: o.name ?? found.m.name, originServerId: o.originServerId ?? found.m.originServerId});
+          // A live reading older than the listing replaces the power only: the listing keeps the roster's time, or the "newest
+          // sighting owns the player" step below would see this alliance's listing as older than another one and mark the member as moved.
+          if (powerWins && o.at <= mt) found.m.capturedAtUtc = iso(mt);
           report.updatedPlayers++;
         }
       } else if (target && o.at <= (verifiedRosterTime(target) ?? -Infinity)) {
