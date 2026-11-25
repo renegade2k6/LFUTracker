@@ -262,15 +262,18 @@ const Profiles = (() => {
     }
   }
   const wideCsv = (...a) => { let t = '', info; for (const c of wideChunks(...a)) { t += c.text; if (c.info) info = c.info; } return {text: t.replace(/\r\n$/, ''), ...info}; };
-  async function exportAll() {
-    if (!main) return;
-    const btn = document.getElementById('pfexportall'), label = document.getElementById('pfexportalltext');
+  // Shared by the Commanders page and the alliance page. `pick` returns the rows once the data is loaded.
+  async function runExport(pick, file, ids) {
+    const btn = document.getElementById(ids.btn), label = document.getElementById(ids.label);
     if (btn && btn.disabled) return;
     const say = t => { if (label) label.textContent = t; };
     const was = label ? label.textContent : '';
     if (btn) btn.disabled = true;
     let note = '';
     try {
+      say('Loading commanders…');
+      await load();
+      const rows = pick();
       say('Loading advanced data…');
       try { await loadDetail(); } catch { note = 'Advanced details were unavailable, so the file has the main data only.'; }
       say('Loading Homeworld and Dimension boards…');
@@ -280,13 +283,13 @@ const Profiles = (() => {
       await new Promise(r => setTimeout(r, 0));
       const parts = [];
       let info = null;
-      for (const c of wideChunks(shown, main.alliances, main.tabs, detail && detail.players, trackerPeaks(), 500, bd.index)) {
+      for (const c of wideChunks(rows, main.alliances, main.tabs, detail && detail.players, trackerPeaks(), 500, bd.index)) {
         if (c.text) parts.push(c.text);
         if (c.info) info = c.info;
         say(`Preparing… ${c.pct ?? 0}%`);
         await new Promise(r => setTimeout(r, 0));
       }
-      download(parts, 'commanders-all-data');
+      download(parts, file);
       if (info.dropped) note = `${info.dropped} columns did not fit Excel's limit and were left out. ${note}`;
     } catch (e) {
       console.error('All Commander Data export failed:', e);
@@ -294,9 +297,27 @@ const Profiles = (() => {
     } finally {
       if (btn) btn.disabled = false;
       say(was);
-      const el = document.getElementById('pfexportnote');
+      const el = document.getElementById(ids.note);
       if (el) { el.textContent = note; el.hidden = !note; }
     }
+  }
+  const exportAll = () => main ? runExport(() => shown, 'commanders-all-data', {btn: 'pfexportall', label: 'pfexportalltext', note: 'pfexportnote'}) : undefined;
+  // Every commander of one alliance: the Commanders records whose alliance id matches, plus roster members the Commanders data
+  // does not hold yet (minimal row from the tracker roster).
+  function allianceRows(allianceId, members) {
+    const inAl = main.players.filter(p => p.ai != null && main.alliances[p.ai] && String(main.alliances[p.ai].id) === String(allianceId));
+    const have = new Set(inAl.map(p => String(p.u)));
+    const extra = [];
+    for (const m of members || []) {
+      if (m.uid == null || m.uid === '' || have.has(String(m.uid))) continue;
+      have.add(String(m.uid));
+      extra.push(byUid.get(String(m.uid)) || normalize({players: [{u: String(m.uid), n: m.name, pw: Number(m.power) || undefined}]}).players[0]);
+    }
+    return [...inAl, ...extra];
+  }
+  function exportAlliance(allianceId, members, tag) {
+    const safe = String(tag || 'alliance').replace(/[^\w-]+/g, '') || 'alliance';
+    return runExport(() => allianceRows(allianceId, members), `alliance-${safe}-all-data`, {btn: 'afexportall', label: 'afexportalltext', note: 'afexportnote'});
   }
   const delta = pts => pts && pts.length > 1 ? pts[pts.length - 1][1] - pts[0][1] : null;
 
@@ -723,7 +744,7 @@ const Profiles = (() => {
 
   /* Total commanders seen (same figure as the Commanders page header); null if the bundle can't be read. */
   const total = () => load().then(m => m && m.meta ? m.meta.players : null).catch(() => null);
-  const api = {owns, render, set, total, exportCsv, exportAll, csv, wideCsv, wideChunks, boardIndex, peakOf, clean, fold, clearFilters, search, filtersActive, _reset: () => { main = null; detail = null; byUid = new Map(); loading = null; detailLoading = null; shown = []; rankCache = null; }, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
+  const api = {owns, render, set, total, exportCsv, exportAll, csv, wideCsv, wideChunks, boardIndex, exportAlliance, allianceRows, peakOf, clean, fold, clearFilters, search, filtersActive, _setMain: x => { main = normalize(x); byUid = new Map(main.players.map(y => [y.u, y])); }, _reset: () => { main = null; detail = null; byUid = new Map(); loading = null; detailLoading = null; shown = []; rankCache = null; }, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
     helpers: {num, compact, dateStr, ago, humanize}, commanderSections};
   return api;
 })();

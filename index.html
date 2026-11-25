@@ -527,6 +527,11 @@ function setDirectoryView(list) {
   drawDirectorySparks(rankingSummary().sorted);
 }
 
+function exportAllianceData(allianceId) {
+  const a = STATE.alliances.find(x => x.allianceId === allianceId);
+  if (a && typeof Profiles !== 'undefined') Profiles.exportAlliance(allianceId, activeMembers(a), a.abbr || a.name);
+}
+
 function renderDetail(allianceId) {
   const a = STATE.alliances.find(x => x.allianceId === allianceId);
   const view = document.getElementById("view");
@@ -571,7 +576,7 @@ function renderDetail(allianceId) {
           <span class="chip">Troops <b>${memberCount}</b>/${a.maxMember == null ? '—' : esc(a.maxMember)}</span>
           ${a.alliancePoint == null ? '' : `<span class="chip">Alliance Points <b>${num(a.alliancePoint)}</b></span>`}
         </div>
-        
+        ${typeof Profiles !== 'undefined' ? `<div class="chips"><button type="button" class="export-button" id="afexportall" onclick="exportAllianceData(${esc(JSON.stringify(allianceId))})" title="One row per member with every field we hold: power, kills, history, Homeworld and Dimension boards and advanced-profile data"><svg class="icon-sm" data-lucide="database"></svg> <span id="afexportalltext">Export all member data (CSV)</span></button></div><p class="database-footnote" id="afexportnote" role="status" hidden></p>` : ''}
       </div>
     </div>
 
