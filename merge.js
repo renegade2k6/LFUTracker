@@ -168,6 +168,13 @@ const DataMerge = (() => {
     return {alliances: listed, history: hist, report};
   }
 
-  return {apply, fromSeasonLeaderboard, fromLatestPower, combine};
+  /* power.enc.json records the tracker build it was made next to (meta.siteContentId); site.enc.json carries meta.contentId.
+     Both present and different = the files come from different builds (a failed Commanders run, or a deploy caught half-way):
+     the power file must not be applied. Either missing (older bundles) = assume they belong together. */
+  const sameBuild = (siteMeta, powerPayload) => {
+    const a = siteMeta && siteMeta.contentId, b = powerPayload && powerPayload.meta && powerPayload.meta.siteContentId;
+    return !a || !b || a === b;
+  };
+  return {apply, fromSeasonLeaderboard, fromLatestPower, combine, sameBuild};
 })();
 if (typeof module !== 'undefined') module.exports = DataMerge;

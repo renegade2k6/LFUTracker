@@ -841,7 +841,9 @@ async function startFull(unlocked) {
   const alliances = unlocked.alliances || [], history = unlocked.history || {}, meta = unlocked.meta || null, leaderboard = unlocked.leaderboard || null;
 
   // Newest observation wins, whatever in-game source it came from (see merge.js).
-  const latestPower = await loadLatestPower();
+  let latestPower = await loadLatestPower();
+  const powerStale = !!latestPower && !DataMerge.sameBuild(meta, latestPower);
+  if (powerStale) { console.warn('power.enc.json belongs to a different build than site.enc.json; its power values are not applied'); latestPower = null; }
   const merged = DataMerge.apply(alliances, history,
     DataMerge.combine(DataMerge.fromSeasonLeaderboard(leaderboard), DataMerge.fromLatestPower(latestPower)));
   STATE.alliances = merged.alliances;
@@ -852,7 +854,7 @@ async function startFull(unlocked) {
   STATE.history = merged.history;
   STATE.mergeReport = merged.report;
   STATE.peaks = Directory.peaks(unlocked.playerPeaks, leaderboard);
-  document.getElementById("topMeta").innerHTML = `${meta ? `Updated ${esc(relTime(meta.generatedAtUtc))} · ` : ""}<button type="button" class="lock-button" onclick="lockSite()">Lock</button>`;
+  document.getElementById("topMeta").innerHTML = `${meta ? `Updated ${esc(relTime(meta.generatedAtUtc))} · ` : ""}${powerStale ? 'Commander power data is from an older build · ' : ""}<button type="button" class="lock-button" onclick="lockSite()">Lock</button>`;
   if (!((typeof Profiles !== "undefined" && Profiles.owns(location.hash)) || (typeof Server !== "undefined" && Server.owns(location.hash)))) location.hash = "";  // keep shared Profiles/Server links
   render();
 }
