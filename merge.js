@@ -12,6 +12,10 @@ const DataMerge = (() => {
   const iso = t => new Date(t).toISOString();
   const nameKey = (abbr, name) => `${String(abbr ?? '').trim()}|${String(name ?? '').trim()}`;
   const allianceTime = a => time(a.updatedAtUtc) ?? time(a.capturedAtUtc) ?? -Infinity;
+  // The alliance roster is a lagging server cache; a live reading (commander popup / Commander CP list) taken within
+  // LIVE_WINDOW before it is the truer number, so the roster does not override it. Mirrors note_power() in profiles.py.
+  const LIVE_SOURCES = new Set(['commander-popup', 'commander-cp']);
+  const LIVE_WINDOW = 24 * 3600 * 1000;
   const memberTime = (a, m) => time(m.capturedAtUtc) ?? time(a.capturedAtUtc) ?? -Infinity;
   // When a complete, ownership-verified Members-list capture was taken (null if the alliance has none).
   const verifiedRosterTime = a => String(a.captureSource ?? '').toLowerCase() === 'al.rank' && a.ownershipVerified === true && a.rosterComplete === true
@@ -113,7 +117,10 @@ const DataMerge = (() => {
       const fields = {name: o.name, power: Number(o.power), capturedAtUtc: iso(o.at), powerSource: o.source};
       if (found && (!target || found.a === target)) {
         if (o.rank != null) found.m.ranks = {...(found.m.ranks || {}), [o.source]: o.rank};
-        if (o.at > memberTime(found.a, found.m)) {
+        const mt = memberTime(found.a, found.m);
+        const liveBeatsRoster = LIVE_SOURCES.has(o.source) && !LIVE_SOURCES.has(found.m.powerSource) && o.at <= mt && mt - o.at <= LIVE_WINDOW;
+        const rosterAfterLive = o.at > mt && !LIVE_SOURCES.has(o.source) && LIVE_SOURCES.has(found.m.powerSource) && o.at - mt <= LIVE_WINDOW;
+        if ((o.at > mt && !rosterAfterLive) || liveBeatsRoster) {
           Object.assign(found.m, {...fields, name: o.name ?? found.m.name, originServerId: o.originServerId ?? found.m.originServerId});
           report.updatedPlayers++;
         }
