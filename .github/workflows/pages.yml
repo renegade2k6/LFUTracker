@@ -30,6 +30,9 @@ jobs:
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site
+      - name: Wait for artifact to become visible
+        # deploy-pages looks the artifact up right after upload; GitHub's API is sometimes ~1s behind ("Found 0 artifact(s)").
+        run: sleep 20
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
