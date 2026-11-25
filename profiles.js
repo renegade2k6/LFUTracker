@@ -140,7 +140,8 @@ const Profiles = (() => {
   /* "All Commander Data": the first six columns exactly as the normal export, then everything else we hold, one flat row per
      commander for a spreadsheet. Numbers stay numbers (no brackets or separators), dates are UTC, a blank means never captured.
      Histories are summarised (points, first/last, lowest/highest), never packed into a cell. Advanced-profile fields (popup stats,
-     per-leaderboard extras, equipment/hero snapshots) are flattened to one column per path; columns are the union across players. */
+     per-leaderboard extras, equipment/hero snapshots) are flattened to one column per path; columns are the union across players.
+     Homeworld (server.enc.json) and Dimension (dimension.enc.json) player boards add Rank/Value/Server/Captured/Details columns. */
   const MAX_COLS = 16384;                                   // Excel's column limit
   const NO_SERVER = /^(cur)?server(id)?$/i;                 // merged host servers on leaderboard rows are not the player's
   const FIXED = ['Player ID', 'Power (number)', 'Highest Power Seen', 'Server Is Exact', 'Advanced Profile', 'Kills', 'City Level', 'Position ID',
@@ -165,7 +166,7 @@ const Profiles = (() => {
     if (vs.length) { out.set(`${name} · Lowest`, Math.min(...vs)); out.set(`${name} · Highest`, Math.max(...vs)); }
   }
   // Every column after the first six, as a Map(column name -> value). d is the advanced profile (or undefined).
-  function extraCells(p, tabs, d, ext) {
+  function extraCells(p, tabs, d, ext, boards) {
     const o = new Map();
     const put = (k, v) => { if (v != null && v !== '') o.set(k, v); };
     put('Player ID', p.u); put('Power (number)', p.pw); put('Highest Power Seen', peakOf(p, ext));
@@ -198,7 +199,39 @@ const Profiles = (() => {
         flatten({...(d.popup.player || {}), ...(d.popup.moreInfo || {})}, 'Commander Info', o);
       }
     }
+    for (const e of (boards && boards.get(String(p.u))) || []) {
+      const b = `${e.scope} · ${e.label}`;
+      put(`${b} · Rank`, e.rank); put(`${b} · Value`, e.value); put(`${b} · Server`, e.server);
+      put(`${b} · Captured (UTC)`, utc(e.ts)); put(`${b} · Details`, e.text);
+    }
     return o;
+  }
+  // Homeworld and Dimension leaderboards (server.enc.json / dimension.enc.json) -> Map(uid -> entries). Alliance boards are skipped.
+  function boardIndex(bundles) {
+    const idx = new Map();
+    for (const [scope, d] of bundles) {
+      if (!d || !d.boards) continue;
+      for (const b of d.boards) {
+        if (b.x === 'al') continue;
+        for (const r of b.rows || []) {
+          if (r[1] == null) continue;
+          let text = '';
+          try { text = (typeof Server !== 'undefined' && b.x && r[5]) ? Server.extraText(b.x, r[5], d.names) : ''; } catch { text = ''; }
+          const value = b.f === 'stage' && typeof Server !== 'undefined' ? Server.fmtValue(b, r[4]) : r[4];
+          const list = idx.get(String(r[1])) || [];
+          list.push({scope, label: b.l, rank: r[0], value, server: r[6], ts: b.ts, text});
+          idx.set(String(r[1]), list);
+        }
+      }
+    }
+    return idx;
+  }
+  async function loadBoards() {
+    const get = async (scope, path) => {
+      try { const d = await fetchBundle(path); if (typeof Server !== 'undefined') Server.cleanNames(d); return [scope, d]; } catch { return [scope, null]; }
+    };
+    const got = await Promise.all([get('Homeworld', 'data/server.enc.json'), get('Dimension', 'data/dimension.enc.json')]);
+    return {index: boardIndex(got), missing: got.filter(g => !g[1]).map(g => g[0])};
   }
   function wideCell(v) {
     if (typeof v === 'number') return Number.isFinite(v) ? String(v) : '';
@@ -207,11 +240,11 @@ const Profiles = (() => {
     return '"' + t.replace(/"/g, '""') + '"';
   }
   // Yields CSV text in chunks ({text, info}); the async exporter pauses between chunks so the page never freezes.
-  function* wideChunks(rows, alliances, tabs, detailPlayers, ext = trackerPeaks(), chunk = 500) {
+  function* wideChunks(rows, alliances, tabs, detailPlayers, ext = trackerPeaks(), chunk = 500, boards = null) {
     const list = rows.filter(hasName);
     const cells = [], dynamic = [], seen = new Set(FIXED);
     for (let i = 0; i < list.length; i++) {                // pass 1: every row's fields and the column union, yielding so the page can repaint
-      const o = extraCells(list[i], tabs || [], detailPlayers && detailPlayers[list[i].u], ext);
+      const o = extraCells(list[i], tabs || [], detailPlayers && detailPlayers[list[i].u], ext, boards);
       cells.push(o);
       for (const k of o.keys()) if (!seen.has(k)) { seen.add(k); dynamic.push(k); }
       if (i % chunk === chunk - 1) yield {text: '', info: null, pct: Math.round(50 * (i + 1) / list.length)};
@@ -240,11 +273,14 @@ const Profiles = (() => {
     try {
       say('Loading advanced data…');
       try { await loadDetail(); } catch { note = 'Advanced details were unavailable, so the file has the main data only.'; }
+      say('Loading Homeworld and Dimension boards…');
+      const bd = await loadBoards();
+      if (bd.missing.length) note = `${bd.missing.join(' and ')} leaderboard data was unavailable, so those columns are missing. ${note}`.trim();
       say('Preparing…');
       await new Promise(r => setTimeout(r, 0));
       const parts = [];
       let info = null;
-      for (const c of wideChunks(shown, main.alliances, main.tabs, detail && detail.players)) {
+      for (const c of wideChunks(shown, main.alliances, main.tabs, detail && detail.players, trackerPeaks(), 500, bd.index)) {
         if (c.text) parts.push(c.text);
         if (c.info) info = c.info;
         say(`Preparing… ${c.pct ?? 0}%`);
@@ -687,7 +723,7 @@ const Profiles = (() => {
 
   /* Total commanders seen (same figure as the Commanders page header); null if the bundle can't be read. */
   const total = () => load().then(m => m && m.meta ? m.meta.players : null).catch(() => null);
-  const api = {owns, render, set, total, exportCsv, exportAll, csv, wideCsv, wideChunks, peakOf, clean, fold, clearFilters, search, filtersActive, _reset: () => { main = null; detail = null; byUid = new Map(); loading = null; detailLoading = null; shown = []; rankCache = null; }, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
+  const api = {owns, render, set, total, exportCsv, exportAll, csv, wideCsv, wideChunks, boardIndex, peakOf, clean, fold, clearFilters, search, filtersActive, _reset: () => { main = null; detail = null; byUid = new Map(); loading = null; detailLoading = null; shown = []; rankCache = null; }, page, state, ensureStyle, formatValue, applyFilters, normalize, spark, describe, delta, stars,
     helpers: {num, compact, dateStr, ago, humanize}, commanderSections};
   return api;
 })();
