@@ -103,7 +103,13 @@ const DataMerge = (() => {
 
     // Players: newest observation owns power, name and alliance membership.
     const members = new Map();
-    out.forEach(a => a.members.forEach(m => m.uid != null && members.set(String(m.uid), {a, m})));
+    // A player listed in several rosters is tracked through the listing with the newest sighting, never just the last one in
+    // the array: a stale old roster must not receive (and so become the newest holder of) a fresher reading.
+    out.forEach(a => a.members.forEach(m => {
+      if (m.uid == null) return;
+      const k = String(m.uid), cur = members.get(k);
+      if (!cur || memberTime(a, m) >= memberTime(cur.a, cur.m)) members.set(k, {a, m});
+    }));
     for (const o of [...(obs.players || [])].sort((x, y) => x.at - y.at)) {
       let target = o.allianceId ? byId.get(o.allianceId) || null : null;
       if (!target && String(o.allianceAbbr ?? '').trim()) {
@@ -122,6 +128,9 @@ const DataMerge = (() => {
         const rosterAfterLive = o.at > mt && !LIVE_SOURCES.has(o.source) && LIVE_SOURCES.has(found.m.powerSource) && o.at - mt <= LIVE_WINDOW;
         if ((o.at > mt && !rosterAfterLive) || liveBeatsRoster) {
           Object.assign(found.m, {...fields, name: o.name ?? found.m.name, originServerId: o.originServerId ?? found.m.originServerId});
+          // The live reading replaces the power only: the listing keeps the roster's time, or the "newest sighting owns the
+          // player" step below would see this alliance's listing as older than another one and mark the member as moved.
+          if (liveBeatsRoster) found.m.capturedAtUtc = iso(mt);
           report.updatedPlayers++;
         }
       } else if (target && o.at <= (verifiedRosterTime(target) ?? -Infinity)) {
